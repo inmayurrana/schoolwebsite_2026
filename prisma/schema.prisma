@@ -1,0 +1,319 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String     @id @default(uuid())
+  name            String
+  email           String     @unique
+  password        String
+  role            String     @default("STAFF_EDITOR") // SUPER_ADMIN, PRINCIPAL, STAFF_EDITOR, ADMISSIONS_OFFICER
+  department      String?
+  permissionsJson String?    // JSON array of permission strings
+  avatar          String?
+  phone           String?
+  isActive        Boolean    @default(true)
+  twoFactor       Boolean    @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  auditLogs       AuditLog[]
+}
+
+model AdmissionApplication {
+  id                 String   @id @default(uuid())
+  applicationNo      String   @unique
+  studentName        String
+  dob                String
+  gender             String
+  bloodGroup         String?
+  gradeApplying      String
+  academicYear       String   @default("2025-2026")
+  stream             String?  // Science (Medical), Science (Non-Medical), Commerce, Humanities
+  fatherName         String
+  fatherPhone        String
+  fatherOccupation   String?
+  motherName         String
+  motherPhone        String
+  motherOccupation   String?
+  email              String
+  phone              String
+  address            String
+  city               String   @default("Mandi")
+  state              String   @default("Himachal Pradesh")
+  pincode            String   @default("175001")
+  previousSchool     String?
+  previousGrade      String?
+  previousMarks      String?
+  status             String   @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, INTERVIEW_SCHEDULED, PROVISIONALLY_ADMITTED, ADMITTED, REJECTED
+  transportRequired  Boolean  @default(false)
+  hostelRequired     Boolean  @default(false)
+  documentsJson      String?  // JSON string storing uploaded doc paths
+  remarks            String?
+  interviewDate      DateTime?
+  feeReceiptNo       String?
+  submittedAt        DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Inquiry {
+  id            String   @id @default(uuid())
+  name          String
+  email         String
+  phone         String
+  studentGrade  String?
+  inquiryType   String   @default("GENERAL") // GENERAL, ADMISSION, VISIT, TRANSPORT, HOSTEL, FEE
+  subject       String
+  message       String
+  status        String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED, CLOSED
+  responseNotes String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model News {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  coverImage  String
+  mediaType   String   @default("IMAGE") // IMAGE, VIDEO
+  videoUrl    String?
+  category    String   @default("Academics") // Academics, Sports, Cultural, Achievements, Announcements
+  isPublished Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  views       Int      @default(0)
+  author      String   @default("Admin Office")
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id              String   @id @default(uuid())
+  title           String
+  slug            String   @unique
+  description     String
+  venue           String   @default("Main Auditorium, CIS Mandi")
+  startDate       DateTime
+  endDate         DateTime?
+  category        String   @default("Academic") // Academic, Sports, Cultural, Competition, Celebration
+  coverImage      String
+  mediaType       String   @default("IMAGE") // IMAGE, VIDEO
+  videoUrl        String?
+  isPublished     Boolean  @default(true)
+  registrationUrl String?
+  rsvpCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model GalleryAlbum {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  category    String        @default("Campus") // Campus, Sports, Annual Day, Science & Robotics, Excursions, Celebrations
+  description String?
+  coverImage  String
+  isFeatured  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       GalleryItem[]
+}
+
+model GalleryItem {
+  id        String       @id @default(uuid())
+  albumId   String
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  type      String       @default("IMAGE") // IMAGE, VIDEO
+  url       String
+  title     String?
+  caption   String?
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+}
+
+model Document {
+  id             String   @id @default(uuid())
+  title          String
+  category       String   // CIRCULAR, SYLLABUS, DATESHEET, PROSPECTUS, MANDATORY_DISCLOSURE, CBSE_DOC, FORM, BOOK_LIST
+  docNumber      String?
+  fileUrl        String
+  fileType       String   @default("application/pdf")
+  fileSize       String?  // e.g. "2.4 MB"
+  targetAudience String   @default("ALL") // ALL, PARENTS, STUDENTS, STAFF
+  isPublic       Boolean  @default(true)
+  downloadsCount Int      @default(0)
+  publishedDate  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  studentName String
+  grade       String
+  title       String
+  category    String   // ACADEMIC, SPORTS, ROBOTICS, ARTS, OLYMPIAD
+  year        String   @default("2024-2025")
+  rank        String?  // e.g. "1st Position", "Gold Medal", "State Rank 1"
+  description String
+  photoUrl    String
+  mediaType   String   @default("IMAGE") // IMAGE, VIDEO
+  videoUrl    String?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Faculty {
+  id            String   @id @default(uuid())
+  name          String
+  designation   String
+  department    String   // Administration, Sciences, Mathematics, Humanities, Languages, Sports, Arts & Performing
+  qualification String
+  experience    String
+  email         String?
+  photoUrl      String
+  bio           String?
+  sortOrder     Int      @default(0)
+  isLeadership  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model JobOpening {
+  id            String           @id @default(uuid())
+  title         String
+  department    String
+  qualification String
+  experience    String
+  type          String           @default("FULL_TIME") // FULL_TIME, PART_TIME, CONTRACT
+  vacancies     Int              @default(1)
+  deadline      DateTime?
+  status        String           @default("OPEN") // OPEN, CLOSED
+  description   String
+  requirements  String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  applications  JobApplication[]
+}
+
+model JobApplication {
+  id            String     @id @default(uuid())
+  jobId         String
+  job           JobOpening @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantName String
+  email         String
+  phone         String
+  qualification String
+  experience    String
+  currentCtc    String?
+  expectedCtc   String?
+  coverLetter   String?
+  resumeUrl     String
+  status        String     @default("PENDING") // PENDING, SHORTLISTED, INTERVIEWED, HIRED, REJECTED
+  appliedAt     DateTime   @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName  String
+  action    String   // LOGIN, CREATE_NEWS, UPDATE_PAGE, APPROVE_ADMISSION, DELETE_DOC, etc.
+  entity    String   // Admission, News, Document, Gallery, User, Setting
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  category    String   @default("GENERAL") // GENERAL, CONTACT, ADMISSION, SEO, SOCIAL
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model PageContent {
+  id                  String   @id @default(uuid())
+  slug                String   @unique // home, about, facilities, academics, admissions, student-life, contact, etc.
+  pageName            String
+  heroBadge           String?
+  heroTitle           String?
+  heroSubtitle        String?
+  heroImage           String?
+  heroMediaType       String   @default("VIDEO") // VIDEO, IMAGE, SPLIT
+  heroVideoUrl        String?  @default("https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-school-campus-41551-large.mp4")
+  heroOverlayOpacity  Float    @default(0.45)
+  heroCtaText         String?
+  heroCtaLink         String?
+  sectionsJson        String   @default("[]") // JSON string storing array of modular sections
+  customStylesJson    String?  // JSON string storing custom colors/background overrides
+  isPublished         Boolean  @default(true)
+  updatedBy           String?  @default("Admin")
+  updatedAt           DateTime @updatedAt
+  createdAt           DateTime @default(now())
+}
+
+model ThemeConfig {
+  id                  String   @id @default(uuid())
+  name                String   @default("Default")
+  primaryColor        String   @default("#0A2540")
+  secondaryColor      String   @default("#0066FF")
+  accentColor         String   @default("#F4B400")
+  darkBgColor         String   @default("#030816")
+  cardBgColor         String   @default("#0f172a")
+  textColor           String   @default("#FFFFFF")
+  glassOpacity        Float    @default(0.85)
+  glowIntensity       Float    @default(1.0)
+  fontFamily          String   @default("Inter")
+  borderRadius        String   @default("1.5rem")
+  logoMode            String   @default("TEXT_AND_ICON") // IMAGE_ONLY, TEXT_AND_ICON, IMAGE_AND_TEXT
+  logoImageUrl        String?
+  logoHeight          Int      @default(48)
+  customCss           String?
+  headerButtonsJson   String?  // JSON array of custom CTA / Login action buttons
+  isActive            Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}
+
+model Notice {
+  id        String   @id @default(uuid())
+  text      String
+  link      String   @default("/news")
+  badge     String   @default("Notice Board")
+  priority  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MandatoryDisclosure {
+  id                      String   @id @default(uuid())
+  schoolName              String   @default("CAMBRIDGE INTERNATIONAL SCHOOL, LUNAPANI, MANDI")
+  affiliationNo           String   @default("630270")
+  schoolCode              String   @default("41824")
+  address                 String   @default("CAMBRIDGE INTERNATIONAL SCHOOL, LUNAPANI, TEHSIL BALH, DISTT MANDI, H.P, MANDI , HIMACHAL PRADESH - 175021")
+  principalName           String   @default("Priyanka Jamwal")
+  principalQualification  String   @default("BSc. (Hons), MSc. BEd")
+  schoolEmail             String   @default("41824@cbseshiksha.in")
+  contactDetails          String   @default("9805039389")
+  documentsJson           String   @default("[]") // Array of { slNo, title, docUrl, updatedAt }
+  academicResultsJson     String   @default("[]") // Array of { slNo, title, docUrl } & Class X/XII tables
+  staffInfoJson           String   @default("{}") // Object of staff numbers
+  infrastructureJson      String   @default("{}") // Object of campus infrastructure details
+  updatedBy               String?  @default("Admin")
+  updatedAt               DateTime @updatedAt
+  createdAt               DateTime @default(now())
+}
+

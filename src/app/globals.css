@@ -1,0 +1,425 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-school-primary: #0A2540;
+    --color-school-secondary: #0066FF;
+    --color-school-accent: #F4B400;
+    --color-school-dark: #051329;
+    --color-school-card: #0d1f33;
+    --glass-opacity: 1.0;
+    --glow-intensity: 1.0;
+    --site-font: "Inter", system-ui, sans-serif;
+
+    --background: 240 247 255;
+    --foreground: 10 37 64;
+    --card: 255 255 255;
+    --card-foreground: 10 37 64;
+    --primary: 10 37 64;
+    --primary-foreground: 255 255 255;
+    --secondary: 0 102 255;
+    --secondary-foreground: 255 255 255;
+    --accent: 244 180 0;
+    --accent-foreground: 10 37 64;
+    --border: 219 234 254;
+    --radius: 1.25rem;
+  }
+
+  .dark {
+    --background: 5 19 41;
+    --foreground: 240 247 255;
+    --card: 13 31 51;
+    --card-foreground: 240 247 255;
+    --primary: 0 102 255;
+    --primary-foreground: 255 255 255;
+    --secondary: 244 180 0;
+    --secondary-foreground: 10 37 64;
+    --accent: 244 180 0;
+    --accent-foreground: 10 37 64;
+    --border: 21 61 102;
+  }
+
+  html, body {
+    @apply bg-[#f0f7ff] dark:bg-[#051329] text-slate-800 dark:text-slate-100 antialiased font-sans transition-colors duration-300;
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight text-school-primary dark:text-white font-bold;
+  }
+}
+
+/* Fluid Full-Width Container System */
+.full-bleed-container {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.site-wide-container {
+  width: 100%;
+  max-width: 1920px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 3.5vw, 4rem);
+  padding-right: clamp(1rem, 3.5vw, 4rem);
+}
+
+/* ==========================================================================
+   CLEAN & CRISP SOLID MODERN UI STYLES (RICH CAMBRIDGE SAPPHIRE BLUE PALETTE)
+   ========================================================================== */
+
+/* 1. Solid Clean Sticky Navigation */
+.glass-nav, .clean-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #dbeafe;
+  box-shadow: 0 4px 20px -2px rgba(10, 37, 64, 0.08);
+}
+
+.dark .glass-nav, .dark .clean-nav {
+  background: #051329;
+  border-bottom: 1px solid #153d66;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+/* 2. Solid Clean Cards */
+.glass-card, .clean-card {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 4px 16px -2px rgba(10, 37, 64, 0.06);
+  transition: all 0.25s ease;
+}
+
+.dark .glass-card, .dark .clean-card {
+  background: #0d1f33;
+  border: 1px solid #153d66;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* 3. Interactive Hover Solid Card */
+.glass-card-interactive, .clean-card-interactive {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 4px 16px -2px rgba(10, 37, 64, 0.06);
+  transition: all 0.25s ease;
+}
+
+.glass-card-interactive:hover, .clean-card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: #0066FF;
+  box-shadow: 0 12px 30px -4px rgba(0, 102, 255, 0.16);
+}
+
+.dark .glass-card-interactive, .dark .clean-card-interactive {
+  background: #0d1f33;
+  border: 1px solid #153d66;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.dark .glass-card-interactive:hover, .dark .clean-card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: #0066FF;
+  box-shadow: 0 12px 30px -4px rgba(0, 102, 255, 0.3);
+}
+
+/* 4. Solid Clean Panels */
+.glass-panel, .clean-panel {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 10px 30px -5px rgba(10, 37, 64, 0.08);
+}
+
+.dark .glass-panel, .dark .clean-panel {
+  background: #0d1f33;
+  border: 1px solid #153d66;
+  box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* 5. Solid Crisp Badges */
+.glass-badge, .clean-badge {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #0066FF;
+}
+
+.dark .glass-badge, .dark .clean-badge {
+  background: #0f2744;
+  border: 1px solid #1d4ed8;
+  color: #93c5fd;
+}
+
+.glass-badge-gold, .clean-badge-gold {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  color: #b45309;
+}
+
+.dark .glass-badge-gold, .dark .clean-badge-gold {
+  background: #2e1a05;
+  border: 1px solid #854d0e;
+  color: #fde047;
+}
+
+/* 6. Solid Clean Buttons */
+.glass-btn, .clean-btn {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  color: #0A2540;
+  box-shadow: 0 1px 2px rgba(10, 37, 64, 0.05);
+  transition: all 0.2s ease;
+}
+
+.glass-btn:hover, .clean-btn:hover {
+  background: #e0edff;
+  border-color: #0066FF;
+  transform: translateY(-1px);
+}
+
+.dark .glass-btn, .dark .clean-btn {
+  background: #0f2744;
+  border: 1px solid #1d4ed8;
+  color: #f0f7ff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .glass-btn:hover, .dark .clean-btn:hover {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+/* 7. Solid Clean Form Inputs */
+.glass-input, .clean-input {
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  color: #0A2540;
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus, .clean-input:focus {
+  border-color: #0066FF;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.15);
+  outline: none;
+}
+
+.dark .glass-input, .dark .clean-input {
+  background: #0d1f33;
+  border: 1px solid #153d66;
+  color: #ffffff;
+}
+
+.dark .glass-input:focus, .dark .clean-input:focus {
+  border-color: #0066FF;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25);
+  outline: none;
+}
+
+/* 8. Solid Clean Modals */
+.glass-modal-overlay {
+  background: rgba(5, 19, 41, 0.85);
+}
+
+.glass-modal-box {
+  background: #0d1f33;
+  border: 1px solid #153d66;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* 9. Hide all ambient glowing background orbs */
+.glass-orb-blue,
+.glass-orb-gold,
+.glass-orb-purple {
+  display: none !important;
+}
+
+/* Himalayan Mountain Background Mesh */
+.mountain-glow-bg {
+  background: radial-gradient(circle at 50% -20%, rgba(0, 102, 255, calc(0.18 * var(--glow-intensity, 1))), transparent 60%),
+              radial-gradient(circle at 90% 40%, rgba(244, 180, 0, calc(0.12 * var(--glow-intensity, 1))), transparent 50%),
+              radial-gradient(circle at 10% 70%, rgba(10, 37, 64, 0.08), transparent 50%);
+}
+
+.dark .mountain-glow-bg {
+  background: radial-gradient(circle at 50% -20%, rgba(0, 102, 255, calc(0.25 * var(--glow-intensity, 1))), transparent 60%),
+              radial-gradient(circle at 90% 40%, rgba(244, 180, 0, calc(0.16 * var(--glow-intensity, 1))), transparent 50%),
+              radial-gradient(circle at 10% 70%, rgba(3, 8, 22, 0.8), transparent 50%);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #030816;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Hide Next.js Dev Indicator ("N" Icon) */
+nextjs-portal,
+#nextjs-dev-tools,
+[data-nextjs-toast],
+[data-nextjs-dialog-overlay],
+[data-nextjs-route-announcer],
+div[data-nextjs-toast-wrapper],
+div[data-nextjs-dev-tools-button],
+button[data-nextjs-dev-tools-button],
+div[class*="nextjs-toast"],
+div[class*="next-dev-tools"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* ==========================================================================
+   HERO SECTION CINEMATIC TEXT EFFECTS & TYPOGRAPHY SHIMMER
+   ========================================================================== */
+
+@keyframes textShimmerWave {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes lightSweepBeam {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(250%) rotate(25deg);
+  }
+}
+
+@keyframes heroGlowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 18px rgba(0, 102, 255, 0.45)) drop-shadow(0 0 35px rgba(244, 180, 0, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 30px rgba(0, 102, 255, 0.75)) drop-shadow(0 0 55px rgba(244, 180, 0, 0.5));
+  }
+}
+
+.hero-headline-shimmer {
+  background: linear-gradient(
+    115deg,
+    #ffffff 0%,
+    #ffffff 30%,
+    #ffd166 48%,
+    #ffffff 65%,
+    #93c5fd 85%,
+    #ffffff 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerWave 8s ease-in-out infinite;
+}
+
+.hero-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f59e0b 0%,
+    #fbbf24 25%,
+    #fef08a 50%,
+    #f59e0b 75%,
+    #d97706 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerWave 5s ease-in-out infinite;
+}
+
+.hero-azure-shimmer {
+  background: linear-gradient(
+    90deg,
+    #38bdf8 0%,
+    #60a5fa 35%,
+    #bfdbfe 50%,
+    #3b82f6 75%,
+    #2563eb 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShimmerWave 6s ease-in-out infinite;
+}
+
+.hero-text-shadow-deep {
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.85),
+               0 1px 3px rgba(0, 0, 0, 0.9),
+               0 10px 40px rgba(0, 102, 255, 0.3);
+}
+
+.hero-cta-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta-sweep::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%) rotate(25deg);
+  animation: lightSweepBeam 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+

@@ -1,0 +1,23 @@
+services:
+  cismandi-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cismandi-web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/dev.db
+      - JWT_SECRET=cis_mandi_super_secret_jwt_key_2025_himachal_pradesh_cbse_987654
+      - NODE_OPTIONS=--max-old-space-size=400
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./dev.db:/app/dev.db
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 256M
