@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -457,7 +457,7 @@ export default function AdminEventsPage() {
                     <div className="space-y-1.5">
                       <label className="font-semibold text-slate-400 text-[11px]">Or Image Link:</label>
                       <input
-                        type="url"
+                        type="text"
                         value={formData.coverImage}
                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
                         className="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 font-mono text-xs focus:border-amber-400 focus:outline-none"
@@ -499,7 +499,7 @@ export default function AdminEventsPage() {
                     <div className="space-y-1.5">
                       <label className="font-semibold text-slate-400 text-[11px]">Or YouTube Link:</label>
                       <input
-                        type="url"
+                        type="text"
                         value={formData.videoUrl}
                         onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                         className="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 font-mono text-xs focus:border-amber-400 focus:outline-none"

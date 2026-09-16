@@ -1,3 +1,4 @@
+export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import { ShieldCheck, Lock, FileText, CheckCircle2 } from "lucide-react";

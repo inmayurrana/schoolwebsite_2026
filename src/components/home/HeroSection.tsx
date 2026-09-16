@@ -75,6 +75,9 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
     }
   );
 
+  const [affiliationNo, setAffiliationNo] = useState("630198");
+  const [schoolLevel, setSchoolLevel] = useState("Senior Secondary");
+
   useEffect(() => {
     async function loadDynamicHero() {
       try {
@@ -93,6 +96,21 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               heroCtaText: data.page.heroCtaText,
               heroCtaLink: data.page.heroCtaLink,
             });
+          }
+        }
+
+        // Fetch dynamic site settings for affiliation number
+        const settingsRes = await fetch("/api/settings");
+        if (settingsRes.ok) {
+          const sData = await settingsRes.json();
+          if (sData.settingsMap?.cbse_affiliation_no) {
+            setAffiliationNo(sData.settingsMap.cbse_affiliation_no);
+          } else if (Array.isArray(sData.settings)) {
+            const found = sData.settings.find((s: any) => s.key === "cbse_affiliation_no");
+            if (found?.value) setAffiliationNo(found.value);
+          }
+          if (sData.settingsMap?.school_level) {
+            setSchoolLevel(sData.settingsMap.school_level);
           }
         }
       } catch (err) {
@@ -120,18 +138,18 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
       }
     }, 1500);
 
-    const interval = setInterval(() => {
+    const qualityTimer = setTimeout(() => {
       if (iframeRef.current && iframeRef.current.contentWindow) {
         iframeRef.current.contentWindow.postMessage(
           JSON.stringify({ event: "command", func: "setPlaybackQuality", args: ["hd1080"] }),
           "*"
         );
       }
-    }, 2000);
+    }, 2500);
 
     return () => {
       clearTimeout(unmuteTimer);
-      clearInterval(interval);
+      clearTimeout(qualityTimer);
     };
   }, [heroData.heroVideoUrl]);
 
@@ -207,6 +225,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
             <iframe
               ref={iframeRef}
               src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=0&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
+              loading="lazy"
               title="Campus YouTube Hero Video in 1080p HD"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               style={{
@@ -367,10 +386,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               </div>
               <div>
                 <span className="text-xs font-black text-white block tracking-wide">
-                  CBSE Affiliated 630198
+                  CBSE Affiliated {affiliationNo || "630198"}
                 </span>
                 <span className="text-[11px] text-blue-200 font-medium block mt-0.5">
-                  Senior Secondary
+                  {schoolLevel || "Senior Secondary"}
                 </span>
               </div>
             </div>

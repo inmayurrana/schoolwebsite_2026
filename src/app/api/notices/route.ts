@@ -2,37 +2,53 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { logAuditAction } from "@/lib/audit";
+import { appCache } from "@/lib/cache";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const all = searchParams.get("all") === "true";
 
-    let notices = await prisma.notice.findMany({
-      where: all ? undefined : { isActive: true },
-      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-    });
+    const cacheKey = all ? "notices:all" : "notices:active";
 
-    if (notices.length === 0) {
-      const defaults = [
-        { text: "🌟 Admissions Open for Session 2025-2026: Nursery to Grade XI (Science, Commerce, Humanities)", link: "/admissions/apply", badge: "Admissions 2025-26", priority: 50 },
-        { text: "🏆 Cambridge Mandi Robotics Team Wins National STEM Olympiad 2025 Gold Medal in New Delhi", link: "/news", badge: "Olympiad & Laurels", priority: 40 },
-        { text: "📅 Annual Cultural Extravaganza 'Udaan 2025' scheduled for next month — Book your visitor pass", link: "/events", badge: "Events", priority: 30 },
-        { text: "📄 CBSE Mandatory Public Disclosure SARAS Documents for Session 2025-26 updated", link: "/mandatory-disclosure", badge: "CBSE", priority: 20 },
-        { text: "🏅 100% CBSE Class X & XII Board Exam Pass Rate with 42 State Distinctions", link: "/results", badge: "Academics", priority: 10 },
-      ];
+    const notices = await appCache.getOrSet(
+      cacheKey,
+      async () => {
+        let list = await prisma.notice.findMany({
+          where: all ? undefined : { isActive: true },
+          orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+        });
 
-      for (const d of defaults) {
-        await prisma.notice.create({ data: d });
-      }
+        if (list.length === 0) {
+          const defaults = [
+            { text: "🌟 Admissions Open for Session 2025-2026: Nursery to Grade XI (Science, Commerce, Humanities)", link: "/admissions/apply", badge: "Admissions 2025-26", priority: 50 },
+            { text: "🏆 Cambridge Mandi Robotics Team Wins National STEM Olympiad 2025 Gold Medal in New Delhi", link: "/news", badge: "Olympiad & Laurels", priority: 40 },
+            { text: "📅 Annual Cultural Extravaganza 'Udaan 2025' scheduled for next month — Book your visitor pass", link: "/events", badge: "Events", priority: 30 },
+            { text: "📄 CBSE Mandatory Public Disclosure SARAS Documents for Session 2025-26 updated", link: "/mandatory-disclosure", badge: "CBSE", priority: 20 },
+            { text: "🏅 100% CBSE Class X & XII Board Exam Pass Rate with 42 State Distinctions", link: "/results", badge: "Academics", priority: 10 },
+          ];
 
-      notices = await prisma.notice.findMany({
-        where: all ? undefined : { isActive: true },
-        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-      });
-    }
+          for (const d of defaults) {
+            await prisma.notice.create({ data: d });
+          }
 
-    return NextResponse.json({ success: true, notices });
+          list = await prisma.notice.findMany({
+            where: all ? undefined : { isActive: true },
+            orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+          });
+        }
+
+        return list;
+      },
+      300 // 5 minutes TTL
+    );
+
+    const response = NextResponse.json({ success: true, notices });
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=60, stale-while-revalidate=300"
+    );
+    return response;
   } catch (error: any) {
     console.error("Fetch notices error:", error);
     return NextResponse.json({ error: "Failed to fetch notices" }, { status: 500 });
@@ -57,6 +73,9 @@ export async function POST(req: Request) {
         isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
       },
     });
+
+    // Invalidate notice cache
+    appCache.invalidate("notices:");
 
     await logAuditAction({
       userId: user?.id,

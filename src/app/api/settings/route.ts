@@ -2,11 +2,28 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { logAuditAction } from "@/lib/audit";
+import { appCache } from "@/lib/cache";
 
 export async function GET() {
   try {
-    const settings = await prisma.siteSetting.findMany();
-    return NextResponse.json({ success: true, settings });
+    const rawSettings = await prisma.siteSetting.findMany();
+    const settingsMap: Record<string, string> = {};
+    if (Array.isArray(rawSettings)) {
+      rawSettings.forEach((s) => {
+        settingsMap[s.key] = s.value;
+      });
+    }
+
+    const response = NextResponse.json({
+      success: true,
+      settings: rawSettings,
+      settingsMap,
+    });
+    response.headers.set(
+      "Cache-Control",
+      "no-cache, no-store, must-revalidate"
+    );
+    return response;
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to fetch settings" }, { status: 500 });
   }
@@ -35,6 +52,9 @@ export async function POST(req: Request) {
         });
       }
     }
+
+    // Invalidate settings in cache immediately
+    appCache.invalidate("settings");
 
     await logAuditAction({
       userId: user.id,

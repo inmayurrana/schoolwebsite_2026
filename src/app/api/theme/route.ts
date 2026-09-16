@@ -1,33 +1,46 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { appCache } from "@/lib/cache";
 
 export async function GET() {
   try {
-    let theme = await prisma.themeConfig.findFirst({
-      where: { isActive: true },
-    });
+    const theme = await appCache.getOrSet(
+      "theme:active",
+      async () => {
+        let activeTheme = await prisma.themeConfig.findFirst({
+          where: { isActive: true },
+        });
 
-    if (!theme) {
-      theme = await prisma.themeConfig.create({
-        data: {
-          name: "Cambridge Royal Gold & Deep Navy",
-          primaryColor: "#0A2540",
-          secondaryColor: "#0066FF",
-          accentColor: "#F4B400",
-          darkBgColor: "#030816",
-          cardBgColor: "#0f172a",
-          textColor: "#FFFFFF",
-          glassOpacity: 0.85,
-          glowIntensity: 1.0,
-          fontFamily: "Inter",
-          borderRadius: "1.5rem",
-          isActive: true,
-        },
-      });
-    }
+        if (!activeTheme) {
+          activeTheme = await prisma.themeConfig.create({
+            data: {
+              name: "Cambridge Royal Gold & Deep Navy",
+              primaryColor: "#0A2540",
+              secondaryColor: "#0066FF",
+              accentColor: "#F4B400",
+              darkBgColor: "#030816",
+              cardBgColor: "#0f172a",
+              textColor: "#FFFFFF",
+              glassOpacity: 0.85,
+              glowIntensity: 1.0,
+              fontFamily: "Inter",
+              borderRadius: "1.5rem",
+              isActive: true,
+            },
+          });
+        }
+        return activeTheme;
+      },
+      300 // 5 minutes TTL
+    );
 
-    return NextResponse.json({ theme });
+    const response = NextResponse.json({ theme });
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=60, stale-while-revalidate=300"
+    );
+    return response;
   } catch (error: any) {
     console.error("Theme GET error:", error);
     return NextResponse.json({ error: "Failed to fetch theme" }, { status: 500 });
@@ -91,6 +104,9 @@ export async function POST(req: Request) {
         },
       });
     }
+
+    // Invalidate theme cache immediately
+    appCache.invalidate("theme");
 
     // Record audit log entry in database
     await prisma.auditLog.create({

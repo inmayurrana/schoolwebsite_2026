@@ -1,3 +1,4 @@
+export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
@@ -14,6 +15,7 @@ import {
   MapPin,
 } from "lucide-react";
 import Campus3DViewer from "@/components/3d/Campus3DViewer";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export const metadata = {
   title: "Campus Facilities | Cambridge International School, Mandi",
@@ -114,10 +116,10 @@ export default function FacilitiesHubPage() {
                   className="glass-card rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between"
                 >
                   <div className="relative h-44 overflow-hidden">
-                    <img
+                    <OptimizedImage
                       src={fac.image}
                       alt={fac.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-school-primary/80 via-transparent to-transparent flex items-end p-3.5">
                       <div className="flex items-center space-x-2 text-white">

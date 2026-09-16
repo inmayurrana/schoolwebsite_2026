@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
-const JWT_SECRET = process.env.JWT_SECRET || "cis_mandi_secret_token_key_2025";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  "cis_mandi_super_secret_jwt_key_2025_himachal_pradesh_cbse_987654";
 const COOKIE_NAME = "cis_admin_token";
 
 export interface SessionUser {

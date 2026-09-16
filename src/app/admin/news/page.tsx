@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -494,7 +494,7 @@ export default function AdminNewsPage() {
                         Or Direct Image Link / URL:
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         placeholder="https://images.unsplash.com/..."
                         value={formData.coverImage}
                         onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
@@ -542,7 +542,7 @@ export default function AdminNewsPage() {
                         Or YouTube / Vimeo / Video Link:
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         placeholder="https://youtu.be/... or https://www.youtube.com/watch?v=..."
                         value={formData.videoUrl}
                         onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}

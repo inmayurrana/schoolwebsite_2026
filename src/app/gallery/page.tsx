@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Image as ImageIcon, X, ChevronLeft, ChevronRight, Sparkles, Filter, Video } from "lucide-react";
 import Link from "next/link";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 interface GalleryItem {
   id: string;
@@ -144,10 +145,10 @@ export default function GalleryPage() {
                 onClick={() => openLightbox(idx)}
                 className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800"
               >
-                <img
+                <OptimizedImage
                   src={item.url}
                   alt={item.title || "Campus Gallery"}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-school-primary/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 text-white">
                   <p className="text-xs font-bold">{item.title || "Cambridge Mandi"}</p>

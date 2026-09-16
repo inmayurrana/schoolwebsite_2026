@@ -1,8 +1,7 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import { Quote, ArrowRight, Award, GraduationCap, CheckCircle } from "lucide-react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export default function LeadershipMessages() {
   return (
@@ -34,10 +33,10 @@ export default function LeadershipMessages() {
 
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
-                  alt="Chairman"
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400 shadow-md flex-shrink-0"
+                <OptimizedImage
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=75"
+                  alt="Chairman Sh. Arvind Thakur"
+                  className="w-20 h-20 rounded-2xl border-2 border-amber-400 shadow-md flex-shrink-0"
                 />
                 <div>
                   <h3 className="text-xl font-bold text-school-primary dark:text-white">
@@ -89,10 +88,10 @@ export default function LeadershipMessages() {
 
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
-                <img
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80"
-                  alt="Principal"
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-school-secondary shadow-md flex-shrink-0"
+                <OptimizedImage
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=75"
+                  alt="Principal Mrs. Priyanka Jamwal"
+                  className="w-20 h-20 rounded-2xl border-2 border-school-secondary shadow-md flex-shrink-0"
                 />
                 <div>
                   <h3 className="text-xl font-bold text-school-primary dark:text-white">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -668,7 +668,7 @@ export default function AdminThemeStudio() {
               <div className="space-y-1 text-xs">
                 <label className="text-[11px] text-slate-400">Or Paste Public Logo Image URL</label>
                 <input
-                  type="url"
+                  type="text"
                   value={formData.logoImageUrl}
                   onChange={(e) => setFormData({ ...formData, logoImageUrl: e.target.value })}
                   placeholder="https://..."

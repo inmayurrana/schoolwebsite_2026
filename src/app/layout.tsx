@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 import NoticeTicker from "@/components/ui/NoticeTicker";
+import PageVisibilityGuard from "@/components/ui/PageVisibilityGuard";
+import InstantNavigation from "@/components/navigation/InstantNavigation";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -60,11 +62,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className={`${poppins.variable} ${inter.variable} min-h-screen flex flex-col font-sans antialiased selection:bg-amber-400 selection:text-slate-950`}>
         <ThemeProvider>
+          <InstantNavigation />
           <NoticeTicker />
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            <PageVisibilityGuard>{children}</PageVisibilityGuard>
+          </main>
           <Footer />
         </ThemeProvider>
       </body>

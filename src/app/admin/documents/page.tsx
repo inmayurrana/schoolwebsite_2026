@@ -34,6 +34,27 @@ interface DocItem {
   isPublic?: boolean;
 }
 
+
+function isImageFile(url: string, fileType?: string): boolean {
+  if (!url) return false;
+  const clean = url.split("?")[0].toLowerCase();
+  return (
+    clean.endsWith(".jpg") ||
+    clean.endsWith(".jpeg") ||
+    clean.endsWith(".png") ||
+    clean.endsWith(".webp") ||
+    clean.endsWith(".svg") ||
+    clean.endsWith(".gif") ||
+    (fileType && fileType.toLowerCase().includes("image"))
+  );
+}
+
+function isPdfFile(url: string, fileType?: string): boolean {
+  if (!url) return false;
+  const clean = url.split("?")[0].toLowerCase();
+  return clean.endsWith(".pdf") || (fileType && fileType.toLowerCase().includes("pdf"));
+}
+
 export default function AdminDocumentsPage() {
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +67,7 @@ export default function AdminDocumentsPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [previewDoc, setPreviewDoc] = useState<DocItem | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -376,7 +398,7 @@ export default function AdminDocumentsPage() {
                       <span>{uploadingFile ? "Uploading to Storage..." : "Upload File"}</span>
                       <input
                         type="file"
-                        accept=".pdf,.doc,.docx,.xlsx"
+                        accept=".pdf,.doc,.docx,.xlsx,.png,.jpg,.jpeg,.webp"
                         onChange={handleFileUpload}
                         className="hidden"
                       />
@@ -470,7 +492,7 @@ export default function AdminDocumentsPage() {
                   key={doc.id}
                   className="bg-slate-950 rounded-2xl p-5 border border-slate-800 shadow-xl flex flex-col justify-between group hover:border-slate-700 transition-all space-y-4"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="bg-school-secondary/20 text-school-secondary border border-school-secondary/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                         {doc.category.replace("_", " ")}
@@ -478,12 +500,81 @@ export default function AdminDocumentsPage() {
                       <span className="text-[10px] text-slate-400 font-mono">{formatDate(doc.publishedDate)}</span>
                     </div>
 
-                    <h3 className="font-bold text-sm text-white line-clamp-2 leading-snug">{doc.title}</h3>
-                    {doc.docNumber && (
-                      <span className="text-[11px] text-amber-400/90 font-mono block">
-                        Ref: {doc.docNumber}
-                      </span>
+                    {/* Document Thumbnail Preview (Image or PDF) */}
+                    {isPdfFile(doc.fileUrl, doc.fileType) ? (
+                      <div
+                        onClick={() => setPreviewDoc(doc)}
+                        className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-900 border border-slate-800/80 cursor-pointer group/thumb shadow-inner"
+                        title="Click to preview PDF"
+                      >
+                        <iframe
+                          src={`${doc.fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+                          className="w-full h-full pointer-events-none opacity-90 group-hover/thumb:opacity-100 transition-opacity scale-100 origin-top-left"
+                          title={doc.title}
+                          loading="lazy"
+                        />
+                        <div className="absolute top-2 left-2 flex items-center space-x-1 bg-rose-600/90 text-white text-[9px] font-extrabold px-2 py-0.5 rounded shadow">
+                          <span>PDF</span>
+                        </div>
+                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-slate-900/95 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-2xl flex items-center space-x-1.5">
+                            <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Preview PDF</span>
+                          </span>
+                        </div>
+                      </div>
+                    ) : isImageFile(doc.fileUrl, doc.fileType) ? (
+                      <div
+                        onClick={() => setPreviewDoc(doc)}
+                        className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-900 border border-slate-800/80 cursor-pointer group/thumb shadow-inner"
+                        title="Click to preview image"
+                      >
+                        <img
+                          src={doc.fileUrl}
+                          alt={doc.title}
+                          className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                        <div className="absolute top-2 left-2 flex items-center space-x-1 bg-blue-600/90 text-white text-[9px] font-extrabold px-2 py-0.5 rounded shadow">
+                          <span>IMAGE</span>
+                        </div>
+                        <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-slate-900/95 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-2xl flex items-center space-x-1.5">
+                            <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span>View Image</span>
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => setPreviewDoc(doc)}
+                        className="relative w-full h-28 rounded-xl overflow-hidden bg-slate-900 border border-slate-800/80 cursor-pointer flex items-center justify-center space-x-3 p-4 group/thumb hover:border-slate-700 transition-colors"
+                        title="Click to preview file"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-bold text-slate-300 block truncate">
+                            {doc.title.split(".").pop()?.toUpperCase() || "DOCUMENT"} FILE
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {doc.fileSize || "Preview file"}
+                          </span>
+                        </div>
+                      </div>
                     )}
+
+                    <div>
+                      <h3 className="font-bold text-sm text-white line-clamp-2 leading-snug">{doc.title}</h3>
+                      {doc.docNumber && (
+                        <span className="text-[11px] text-amber-400/90 font-mono block mt-0.5">
+                          Ref: {doc.docNumber}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
@@ -548,6 +639,81 @@ export default function AdminDocumentsPage() {
                 {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>{deleting ? "Deleting..." : "Yes, Delete Document"}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+    
+      {/* Lightbox / Document Full Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 bg-slate-950/80">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-school-secondary/20 text-school-secondary flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-white truncate">{previewDoc.title}</h3>
+                  <p className="text-[11px] text-slate-400 font-mono">
+                    {previewDoc.docNumber ? `Ref: ${previewDoc.docNumber} • ` : ""}
+                    {previewDoc.category} • {formatDate(previewDoc.publishedDate)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 shrink-0">
+                <a
+                  href={previewDoc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors border border-slate-700"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Download</span>
+                </a>
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-auto bg-slate-950 p-4 flex items-center justify-center min-h-[400px]">
+              {isImageFile(previewDoc.fileUrl, previewDoc.fileType) ? (
+                <img
+                  src={previewDoc.fileUrl}
+                  alt={previewDoc.title}
+                  className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl border border-slate-800"
+                />
+              ) : isPdfFile(previewDoc.fileUrl, previewDoc.fileType) ? (
+                <iframe
+                  src={previewDoc.fileUrl}
+                  className="w-full h-[70vh] rounded-xl border border-slate-800"
+                  title={previewDoc.title}
+                />
+              ) : (
+                <div className="text-center space-y-4 p-8">
+                  <FileText className="w-16 h-16 text-slate-600 mx-auto" />
+                  <p className="text-sm text-slate-300">
+                    Preview not supported in-browser for this file format.
+                  </p>
+                  <a
+                    href={previewDoc.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-school-secondary text-white font-bold text-xs shadow-lg"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download File</span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

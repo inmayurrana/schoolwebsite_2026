@@ -5,7 +5,7 @@ import { logAuditAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, rememberMe } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       action: "LOGIN",
       entity: "User",
       entityId: user.id,
-      details: `Successful login with role ${user.role}`,
+      details: `Successful login with role ${user.role} (${rememberMe ? "Remembered" : "Session"})`,
     });
 
     const response = NextResponse.json({
@@ -63,13 +63,19 @@ export async function POST(req: Request) {
       user: sessionUser,
     });
 
-    response.cookies.set("cis_admin_token", token, {
+    // If rememberMe is checked, cookie lasts 7 days; otherwise it's a browser session cookie
+    const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
       path: "/",
-    });
+    };
+
+    if (rememberMe) {
+      cookieOptions.maxAge = 7 * 24 * 60 * 60; // 7 days
+    }
+
+    response.cookies.set("cis_admin_token", token, cookieOptions);
 
     return response;
   } catch (error: any) {

@@ -133,7 +133,7 @@ export default function AdminLayout({
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 glass-panel border-r border-slate-200/50 dark:border-white/10 p-5 flex flex-col justify-between transition-transform duration-300 ${
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 glass-panel bg-white/95 dark:bg-slate-950/95 border-r border-slate-200 dark:border-white/10 p-5 flex flex-col justify-between transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -144,7 +144,7 @@ export default function AdminLayout({
               <GraduationCap className="w-6 h-6" />
             </div>
             <div>
-              <span className="font-heading font-extrabold text-sm text-white block tracking-tight">
+              <span className="font-heading font-extrabold text-sm text-slate-900 dark:text-white block tracking-tight">
                 CAMBRIDGE MANDI
               </span>
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">
@@ -163,15 +163,15 @@ export default function AdminLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-school-secondary to-blue-600 text-white shadow-lg font-bold border border-blue-400/40"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? "bg-gradient-to-r from-school-secondary to-blue-600 text-white shadow-lg font-bold border border-blue-400/40 hover:text-black hover:bg-amber-400 hover:from-amber-400 hover:to-amber-400 hover:border-amber-400"
+                      : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-black hover:bg-slate-100 dark:hover:bg-amber-400/20 hover:font-bold"
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5">
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
+                  <div className="flex items-center space-x-2.5 transition-colors group-hover:text-black">
+                    <Icon className="w-4 h-4 transition-colors group-hover:text-black" />
+                    <span className="transition-colors group-hover:text-black">{item.label}</span>
                   </div>
                   {item.badge && (
                     <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow">
@@ -191,7 +191,7 @@ export default function AdminLayout({
               {user?.name ? user.name[0] : "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">{user?.name || "Admin"}</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user?.name || "Admin"}</p>
               <span className="text-[10px] font-semibold text-emerald-400 block truncate">
                 {user?.role || "SUPER_ADMIN"}
               </span>
@@ -202,7 +202,7 @@ export default function AdminLayout({
             <Link
               href="/"
               target="_blank"
-              className="flex-1 inline-flex items-center justify-center space-x-1.5 glass-btn text-slate-300 text-[11px] font-medium py-2 rounded-xl transition-all"
+              className="flex-1 inline-flex items-center justify-center space-x-1.5 glass-btn text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-black hover:bg-slate-100 dark:hover:bg-white/10 text-[11px] font-medium py-2 rounded-xl transition-all"
             >
               <span>View Site</span>
               <ExternalLink className="w-3 h-3" />

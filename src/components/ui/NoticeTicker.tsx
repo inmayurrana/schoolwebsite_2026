@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, ArrowRight } from "lucide-react";
 
 interface Notice {
@@ -19,15 +20,20 @@ const DEFAULT_NOTICES: Notice[] = [
   { text: "🏅 100% CBSE Class X & XII Board Exam Pass Rate with 42 State Distinctions", link: "/results", badge: "Academics" },
 ];
 
+let cachedNotices: Notice[] | null = null;
+
 export default function NoticeTicker() {
-  const [notices, setNotices] = useState<Notice[]>(DEFAULT_NOTICES);
+  const pathname = usePathname();
+  const [notices, setNotices] = useState<Notice[]>(cachedNotices || DEFAULT_NOTICES);
 
   useEffect(() => {
+    if (cachedNotices) return;
     const loadNotices = async () => {
       try {
         const res = await fetch("/api/notices");
         const data = await res.json();
         if (data.notices && data.notices.length > 0) {
+          cachedNotices = data.notices;
           setNotices(data.notices);
         }
       } catch (err) {
@@ -36,6 +42,10 @@ export default function NoticeTicker() {
     };
     loadNotices();
   }, []);
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   const displayList = notices.length > 0 ? notices.concat(notices) : DEFAULT_NOTICES.concat(DEFAULT_NOTICES);
 

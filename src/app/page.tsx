@@ -1,3 +1,5 @@
+import VisitorCountWidget from "@/components/ui/VisitorCountWidget";
+﻿export const revalidate = 60;
 import React from "react";
 import Link from "next/link";
 import {
@@ -20,6 +22,7 @@ import WhyChooseUs from "@/components/home/WhyChooseUs";
 import AcademicStreams from "@/components/home/AcademicStreams";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import Campus3DViewer from "@/components/3d/Campus3DViewer";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 
@@ -31,26 +34,29 @@ export default async function HomePage() {
   let galleryAlbums: any[] = [];
 
   try {
-    newsList = await prisma.news.findMany({
-      where: { isPublished: true },
-      orderBy: { publishedAt: "desc" },
-      take: 3,
-    });
-
-    eventsList = await prisma.event.findMany({
-      where: { isPublished: true },
-      orderBy: { startDate: "asc" },
-      take: 3,
-    });
-
-    achievementsList = await prisma.achievement.findMany({
-      where: { isFeatured: true },
-      take: 3,
-    });
-
-    galleryAlbums = await prisma.galleryAlbum.findMany({
-      take: 3,
-    });
+    const [news, events, achievements, albums] = await Promise.all([
+      prisma.news.findMany({
+        where: { isPublished: true },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+      }),
+      prisma.event.findMany({
+        where: { isPublished: true },
+        orderBy: { startDate: "asc" },
+        take: 3,
+      }),
+      prisma.achievement.findMany({
+        where: { isFeatured: true },
+        take: 3,
+      }),
+      prisma.galleryAlbum.findMany({
+        take: 3,
+      }),
+    ]);
+    newsList = news;
+    eventsList = events;
+    achievementsList = achievements;
+    galleryAlbums = albums;
   } catch (error) {
     console.error("Database query fallback in home page:", error);
   }
@@ -112,10 +118,10 @@ export default async function HomePage() {
                 className="glass-card-interactive rounded-3xl overflow-hidden shadow-xl group flex flex-col justify-between"
               >
                 <div className="relative h-52 overflow-hidden">
-                  <img
+                  <OptimizedImage
                     src={ach.photoUrl}
                     alt={ach.studentName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
                   <span className="absolute top-3 left-3 bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-full shadow-lg border border-amber-300">
@@ -174,10 +180,10 @@ export default async function HomePage() {
                     href={`/news`}
                     className="glass-card-interactive rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 group block"
                   >
-                    <img
+                    <OptimizedImage
                       src={item.coverImage}
                       alt={item.title}
-                      className="w-full sm:w-36 h-28 rounded-xl object-cover flex-shrink-0 group-hover:scale-105 transition-transform"
+                      className="w-full sm:w-36 h-28 rounded-xl flex-shrink-0 group-hover:scale-105 transition-transform"
                     />
                     <div className="flex flex-col justify-between space-y-1">
                       <div>
@@ -298,6 +304,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 11. Official Live Visitor Count Widget */}
+      <VisitorCountWidget />
     </div>
   );
 }

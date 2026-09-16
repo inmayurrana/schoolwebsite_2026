@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -84,6 +84,7 @@ const DEFAULT_NAV_LINKS: NavItem[] = [
       { title: "Mission & Vision", href: "/about/mission-vision", desc: "Core values, philosophy & global perspective" },
       { title: "Chairman's Message", href: "/about/chairman-message", desc: "Guiding vision & leadership ethos" },
       { title: "Principal's Desk", href: "/about/principal-message", desc: "Welcome address & academic excellence" },
+      { title: "Faculty & Mentors", href: "/about/faculty", desc: "Our experienced teachers, department heads & academic guides" },
     ],
   },
   {

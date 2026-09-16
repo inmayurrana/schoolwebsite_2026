@@ -1,9 +1,11 @@
+export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { Calendar, User, Eye, ArrowRight, Bell, Sparkles, Video, Play } from "lucide-react";
 import Link from "next/link";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export const metadata = {
   title: "School News & Circulars | Cambridge International School, Mandi",
@@ -69,17 +71,17 @@ export default async function NewsPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <img
+                      <OptimizedImage
                         src={item.coverImage}
                         alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                       />
                     )
                   ) : (
-                    <img
+                    <OptimizedImage
                       src={item.coverImage}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full group-hover:scale-105 transition-transform duration-500"
                     />
                   )}
 

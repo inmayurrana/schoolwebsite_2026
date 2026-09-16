@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   GraduationCap,
   MapPin,
@@ -40,6 +41,7 @@ const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
       { label: "Primary Wing (Grade 1-5)", href: "/academics/primary" },
       { label: "Middle Wing (Grade 6-8)", href: "/academics/middle-school" },
       { label: "Senior Secondary (Science/Comm/Arts)", href: "/academics/senior-secondary" },
+      { label: "Faculty & Mentors Directory", href: "/about/faculty" },
       { label: "STEM & AI Robotics Lab", href: "/facilities/robotics-lab" },
       { label: "Olympic Sports Complex", href: "/facilities/sports-complex" },
       { label: "Himalayan Residential Hostel", href: "/facilities/hostel" },
@@ -86,6 +88,73 @@ export default function Footer() {
   });
 
   const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(DEFAULT_FOOTER_COLUMNS);
+  const [disabledSlugs, setDisabledSlugs] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    async function loadVisibility() {
+      try {
+        const res = await fetch("/api/pages/visibility", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.visibility) {
+            const set = new Set<string>();
+            Object.entries(data.visibility).forEach(([k, v]) => {
+              if (v === false) {
+                set.add(k.toLowerCase().trim());
+                set.add("/" + k.toLowerCase().trim());
+              }
+            });
+            setDisabledSlugs(set);
+          }
+        }
+      } catch (_) {}
+    }
+    loadVisibility();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "cis_page_visibility_updated") {
+        loadVisibility();
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    const handleCustomVisibility = () => {
+      loadVisibility();
+    };
+    window.addEventListener("cis_visibility_changed", handleCustomVisibility);
+
+    let channel: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        channel = new BroadcastChannel("cis_visibility_channel");
+        channel.onmessage = () => {
+          loadVisibility();
+        };
+      } catch (_) {}
+    }
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("cis_visibility_changed", handleCustomVisibility);
+      if (channel) {
+        channel.close();
+      }
+    };
+  }, []);
+
+  const isPathDisabled = (href: string): boolean => {
+    if (!href || href.startsWith("http") || href.startsWith("#")) return false;
+    const clean = href.replace(/^\/+/, "").replace(/\/+$/, "").toLowerCase();
+    const lastSeg = clean.split("/").pop() || "";
+    return (
+      disabledSlugs.has(clean) ||
+      disabledSlugs.has("/" + clean) ||
+      disabledSlugs.has(lastSeg) ||
+      disabledSlugs.has("/" + lastSeg) ||
+      disabledSlugs.has(href.toLowerCase())
+    );
+  };
+
 
   useEffect(() => {
     async function loadSettings() {
@@ -127,6 +196,12 @@ export default function Footer() {
   const footerLogoUrl = siteSettings.footer_logo_url || themeConfig?.logoImageUrl || "";
   const footerLogoHeight = parseInt(siteSettings.footer_logo_height) || themeConfig?.logoHeight || 52;
   const footerLogoContainer = siteSettings.footer_logo_container || "WHITE_CONTAINER";
+
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <footer className="bg-gradient-to-b from-[#020617] via-[#051322] to-slate-950 text-white relative overflow-hidden border-t border-white/10 w-full">

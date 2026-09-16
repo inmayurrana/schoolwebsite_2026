@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Sparkles, CheckCircle2, ArrowRight, Lightbulb, Compass, Award } from "lucide-react";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 interface StreamWing {
   id: string;
@@ -145,10 +146,10 @@ export default function AcademicStreams() {
           </div>
 
           <div className="lg:col-span-6 relative group overflow-hidden rounded-2xl shadow-xl border border-white/20">
-            <img
+            <OptimizedImage
               src={activeWing.image}
               alt={activeWing.title}
-              className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-80 sm:h-96 group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>
