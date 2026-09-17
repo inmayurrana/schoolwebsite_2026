@@ -25,7 +25,39 @@ export async function PUT(
         coverImage: body.coverImage,
         isFeatured: body.isFeatured !== undefined ? Boolean(body.isFeatured) : undefined,
       },
-      include: { items: true },
+    });
+
+    // If items array is provided, sync items
+    if (body.items && Array.isArray(body.items)) {
+      // Remove old items and re-create to keep exact order and captions
+      await prisma.galleryItem.deleteMany({
+        where: { albumId: id },
+      });
+
+      for (let i = 0; i < body.items.length; i++) {
+        const item = body.items[i];
+        if (item.url) {
+          await prisma.galleryItem.create({
+            data: {
+              albumId: id,
+              type: item.type || "IMAGE",
+              url: item.url,
+              title: item.title || "",
+              caption: item.caption || "",
+              sortOrder: item.sortOrder ?? i + 1,
+            },
+          });
+        }
+      }
+    }
+
+    const finalAlbum = await prisma.galleryAlbum.findUnique({
+      where: { id },
+      include: {
+        items: {
+          orderBy: { sortOrder: "asc" },
+        },
+      },
     });
 
     await logAuditAction({
@@ -34,10 +66,10 @@ export async function PUT(
       action: "UPDATE_ALBUM",
       entity: "GalleryAlbum",
       entityId: id,
-      details: `Updated gallery album: "${updated.title}"`,
+      details: `Updated gallery album: "${updated.title}" with ${body.items?.length || 0} items`,
     });
 
-    return NextResponse.json({ success: true, album: updated });
+    return NextResponse.json({ success: true, album: finalAlbum });
   } catch (error: any) {
     console.error("Update album error:", error);
     return NextResponse.json({ error: "Failed to update album" }, { status: 500 });

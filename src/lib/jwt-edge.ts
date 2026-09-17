@@ -72,8 +72,8 @@ export async function verifyJWTEdge(
     const isValid = await crypto.subtle.verify(
       "HMAC",
       key,
-      signatureBytes,
-      dataToVerify
+      signatureBytes as unknown as BufferSource,
+      dataToVerify as unknown as BufferSource
     );
 
     if (!isValid) return null;

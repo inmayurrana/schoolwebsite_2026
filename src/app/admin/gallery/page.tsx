@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Image as ImageIcon,
   Plus,
@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   X,
   Loader2,
-  Video,
   Upload,
   Link as LinkIcon,
   ArrowLeft,
@@ -17,28 +16,49 @@ import {
   Search,
   Sparkles,
   AlertTriangle,
+  FolderPlus,
+  Star,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 
-interface AlbumItem {
+interface GalleryPhotoItem {
+  id?: string;
+  url: string;
+  title?: string;
+  caption?: string;
+  type?: string;
+  sortOrder?: number;
+}
+
+interface AlbumGroup {
   id: string;
   title: string;
+  slug: string;
   category: string;
   coverImage: string;
   description?: string | null;
   isFeatured: boolean;
-  items: { id: string; url: string; title?: string; type?: string }[];
+  items: GalleryPhotoItem[];
+  createdAt?: string;
 }
 
-function extractYouTubeId(url?: string | null): string | null {
-  if (!url) return null;
-  const m = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/
-  );
-  return m ? m[1] : null;
-}
+const CATEGORIES = [
+  "Campus",
+  "Sports",
+  "Annual Day",
+  "Science & Robotics",
+  "Excursions",
+  "Celebrations",
+  "Academics",
+];
 
 export default function AdminGalleryPage() {
-  const [albums, setAlbums] = useState<AlbumItem[]>([]);
+  const [albums, setAlbums] = useState<AlbumGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"LIST" | "EDITOR">("LIST");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -46,19 +66,26 @@ export default function AdminGalleryPage() {
   const [savedToast, setSavedToast] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [uploadingMedia, setUploadingMedia] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
+  // Multi-upload state
+  const [uploadingBatch, setUploadingBatch] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const batchFileInputRef = useRef<HTMLInputElement | null>(null);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
     category: "Campus",
     coverImage: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800",
     description: "",
     isFeatured: false,
-    mediaType: "IMAGE" as "IMAGE" | "VIDEO",
-    videoUrl: "",
+    items: [] as GalleryPhotoItem[],
   });
+
+  const [urlInput, setUrlInput] = useState("");
 
   const fetchAlbums = async () => {
     try {
@@ -85,69 +112,174 @@ export default function AdminGalleryPage() {
       coverImage: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800",
       description: "",
       isFeatured: false,
-      mediaType: "IMAGE",
-      videoUrl: "",
+      items: [],
     });
     setViewMode("EDITOR");
   };
 
-  const openEditEditor = (alb: AlbumItem) => {
+  const openEditEditor = (alb: AlbumGroup) => {
     setEditingId(alb.id);
     setFormData({
       title: alb.title,
-      category: alb.category,
+      category: alb.category || "Campus",
       coverImage: alb.coverImage || "",
       description: alb.description || "",
       isFeatured: alb.isFeatured,
-      mediaType: alb.coverImage.includes(".mp4") || alb.coverImage.includes("youtu") ? "VIDEO" : "IMAGE",
-      videoUrl: alb.coverImage.includes(".mp4") || alb.coverImage.includes("youtu") ? alb.coverImage : "",
+      items: (alb.items || []).map((it, idx) => ({ ...it, sortOrder: it.sortOrder ?? idx + 1 })),
     });
     setViewMode("EDITOR");
   };
 
-  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "IMAGE" | "VIDEO") => {
+  // Upload Cover Image
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadingMedia(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const json = await res.json();
-
       if (json.url) {
-        if (type === "IMAGE") {
-          setFormData((prev) => ({ ...prev, coverImage: json.url, mediaType: "IMAGE" }));
-        } else {
-          setFormData((prev) => ({ ...prev, coverImage: json.url, videoUrl: json.url, mediaType: "VIDEO" }));
-        }
+        setFormData((prev) => ({ ...prev, coverImage: json.url }));
       }
     } catch (err) {
-      console.error("Upload error:", err);
-    } finally {
-      setUploadingMedia(false);
+      console.error("Cover upload error:", err);
     }
   };
 
+  // Multi-Image Batch Upload
+  const handleBatchImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingBatch(true);
+    const total = files.length;
+    setUploadProgress({ current: 0, total });
+
+    const newUploadedItems: GalleryPhotoItem[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        const json = await res.json();
+        if (json.url) {
+          newUploadedItems.push({
+            id: `photo_${Date.now()}_${i}`,
+            url: json.url,
+            title: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+            caption: "",
+            type: "IMAGE",
+            sortOrder: formData.items.length + newUploadedItems.length + 1,
+          });
+        }
+      } catch (err) {
+        console.error("Batch upload failed for file:", file.name, err);
+      }
+      setUploadProgress({ current: i + 1, total });
+    }
+
+    setFormData((prev) => {
+      const combined = [...prev.items, ...newUploadedItems];
+      // If cover is default placeholder, set first uploaded image as cover
+      const newCover =
+        prev.coverImage.includes("unsplash") && newUploadedItems.length > 0
+          ? newUploadedItems[0].url
+          : prev.coverImage;
+      return {
+        ...prev,
+        coverImage: newCover,
+        items: combined,
+      };
+    });
+
+    setUploadingBatch(false);
+    setUploadProgress(null);
+    if (batchFileInputRef.current) batchFileInputRef.current.value = "";
+  };
+
+  // Add Single URL Image
+  const handleAddUrlImage = () => {
+    if (!urlInput.trim()) return;
+    const newItem: GalleryPhotoItem = {
+      id: `photo_${Date.now()}`,
+      url: urlInput.trim(),
+      title: "Campus Photo",
+      caption: "",
+      type: "IMAGE",
+      sortOrder: formData.items.length + 1,
+    };
+    setFormData((prev) => ({
+      ...prev,
+      items: [...prev.items, newItem],
+    }));
+    setUrlInput("");
+  };
+
+  // Remove Photo from Group
+  const handleRemovePhoto = (idx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== idx),
+    }));
+  };
+
+  // Update Photo metadata
+  const handleUpdatePhoto = (idx: number, updates: Partial<GalleryPhotoItem>) => {
+    setFormData((prev) => {
+      const items = [...prev.items];
+      if (!items[idx]) return prev;
+      items[idx] = { ...items[idx], ...updates };
+      return { ...prev, items };
+    });
+  };
+
+  // Move Photo Left / Right
+  const handleMovePhoto = (idx: number, direction: "left" | "right") => {
+    const targetIdx = direction === "left" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= formData.items.length) return;
+    setFormData((prev) => {
+      const items = [...prev.items];
+      const [moved] = items.splice(idx, 1);
+      items.splice(targetIdx, 0, moved);
+      return { ...prev, items };
+    });
+  };
+
+  // Set as Cover
+  const handleSetAsCover = (url: string) => {
+    setFormData((prev) => ({ ...prev, coverImage: url }));
+  };
+
+  // Save Album & All Images to Database
   const handleSaveAlbum = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      alert("Album title is required.");
+      alert("Please enter an Album / Group Title.");
       return;
     }
 
     setSubmitting(true);
     setSavedToast(false);
 
-    const finalCover = formData.mediaType === "VIDEO" ? (formData.videoUrl || formData.coverImage) : formData.coverImage;
-
     try {
+      const payload = {
+        title: formData.title,
+        category: formData.category,
+        coverImage: formData.coverImage,
+        description: formData.description,
+        isFeatured: formData.isFeatured,
+        items: formData.items,
+      };
+
       if (editingId) {
         const res = await fetch(`/api/gallery/${editingId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...formData, coverImage: finalCover }),
+          body: JSON.stringify(payload),
         });
         const json = await res.json();
         if (res.ok && json.success) {
@@ -164,7 +296,7 @@ export default function AdminGalleryPage() {
         const res = await fetch("/api/gallery", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...formData, coverImage: finalCover }),
+          body: JSON.stringify(payload),
         });
         const json = await res.json();
         if (res.ok && json.success) {
@@ -180,12 +312,13 @@ export default function AdminGalleryPage() {
       }
     } catch (err) {
       console.error("Save album error:", err);
-      alert("Error saving album to database.");
+      alert("Network error while saving album.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Delete Album
   const handleDeleteAlbum = async (id: string) => {
     setDeleting(true);
     try {
@@ -200,426 +333,528 @@ export default function AdminGalleryPage() {
       }
     } catch (err) {
       console.error("Delete album error:", err);
-      alert("Error deleting album from database.");
     } finally {
       setDeleting(false);
     }
   };
 
   const filteredAlbums = albums.filter((alb) => {
-    const matchCat = selectedCategory === "ALL" || alb.category === selectedCategory;
-    const matchSearch =
+    const matchesSearch =
       alb.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (alb.description && alb.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCat && matchSearch;
+    const matchesCat = selectedCategory === "ALL" || alb.category === selectedCategory;
+    return matchesSearch && matchesCat;
   });
 
-  const ytId = extractYouTubeId(formData.videoUrl);
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2.5">
-            <ImageIcon className="w-6 h-6 text-amber-400" />
-            <h1 className="text-xl sm:text-2xl font-black text-white font-heading">
-              Media Gallery & Video Albums Studio
-            </h1>
+    <div className="space-y-6 pb-20">
+      {/* Hidden File Inputs */}
+      <input
+        type="file"
+        ref={coverFileInputRef}
+        onChange={handleCoverUpload}
+        accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={batchFileInputRef}
+        onChange={handleBatchImageUpload}
+        multiple
+        accept="image/*"
+        className="hidden"
+      />
+
+      {/* TOP HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 p-6 rounded-3xl border border-slate-800">
+        <div>
+          <div className="flex items-center space-x-2">
+            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+              <ImageIcon className="w-6 h-6" />
+            </span>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-white">
+                Photo Gallery & Albums Studio
+              </h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Create photo groups, upload batch images, and organize campus memories with interactive lightbox.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-400">
-            Publish photo albums, annual function galleries, and campus video documentaries in full workspace.
-          </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          {viewMode === "EDITOR" ? (
+        <div className="flex items-center space-x-2">
+          {viewMode === "LIST" ? (
+            <>
+              <Link
+                href="/gallery"
+                target="_blank"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-all"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>View Public Gallery</span>
+              </Link>
+              <button
+                type="button"
+                onClick={openCreateEditor}
+                className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl flex items-center space-x-1.5 shadow-lg transition-all cursor-pointer"
+              >
+                <FolderPlus className="w-4 h-4" />
+                <span>+ Create Album Group</span>
+              </button>
+            </>
+          ) : (
             <button
+              type="button"
               onClick={() => setViewMode("LIST")}
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors border border-slate-700"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl flex items-center space-x-1.5 transition-all cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Albums</span>
-            </button>
-          ) : (
-            <button
-              onClick={openCreateEditor}
-              className="inline-flex items-center space-x-2 bg-gradient-to-r from-school-secondary to-blue-600 hover:from-blue-600 hover:to-school-primary text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-lg transition-all duration-300"
-            >
-              <Plus className="w-4 h-4 text-amber-300" />
-              <span>Create Album in Full Workspace</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* VIEW 1: FULL WORKSPACE GALLERY EDITOR */}
-      {viewMode === "EDITOR" && (
-        <form onSubmit={handleSaveAlbum} className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8 shadow-2xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-              <div className="space-y-1">
-                <span className="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-wider">
-                  {editingId ? "✏️ Edit Media Album" : "✨ Create New Gallery Album"}
-                </span>
-                <h2 className="text-lg sm:text-xl font-extrabold text-white">
-                  {formData.title || "Untitled Media Album"}
-                </h2>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={() => setDeleteConfirmId(editingId)}
-                    className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white text-xs font-bold border border-rose-800/80 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete Album</span>
-                  </button>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50"
-                >
-                  {savedToast ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-amber-300" />
-                      <span>Saved in Database!</span>
-                    </>
-                  ) : submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Saving Album...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>{editingId ? "Save Changes" : "Publish Album"}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-xs">
-              <div className="lg:col-span-7 space-y-5">
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300 uppercase tracking-wider">Album Title *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Annual Day Celebrations & Himalayan Panorama"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full bg-slate-950 text-white p-3.5 rounded-xl border border-slate-800 text-sm font-semibold focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-300 uppercase tracking-wider">Category</label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 font-semibold focus:border-amber-400 focus:outline-none"
-                    >
-                      <option value="Campus">🏛️ Campus & Infrastructure</option>
-                      <option value="Sports">⚽ Sports & Athletics</option>
-                      <option value="Annual Day">🎭 Annual Day & Fest</option>
-                      <option value="Science & Robotics">🤖 Science & Robotics</option>
-                      <option value="Excursions">🏔️ Excursions & Trekking</option>
-                      <option value="Celebrations">🎉 Celebrations & Events</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-slate-300 uppercase tracking-wider">Featured Album</label>
-                    <div className="pt-2">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.isFeatured}
-                          onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                          className="w-4 h-4 rounded text-amber-400"
-                        />
-                        <span className="font-bold text-amber-400">Pin as Featured Album</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="font-bold text-slate-300 uppercase tracking-wider">Description</label>
-                  <textarea
-                    rows={6}
-                    placeholder="Album description, dates, participating students, and event highlights..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:border-amber-400 focus:outline-none leading-relaxed text-xs sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Media Studio */}
-              <div className="lg:col-span-5 space-y-5 bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-800">
-                <div className="border-b border-slate-800 pb-3">
-                  <h3 className="font-black text-sm text-white flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span>Album Media Engine</span>
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Upload cover photo or video documentary link.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, mediaType: "IMAGE" })}
-                    className={`flex items-center justify-center space-x-1.5 py-2 rounded-lg font-bold text-xs transition-all ${
-                      formData.mediaType === "IMAGE"
-                        ? "bg-school-secondary text-white shadow"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Photo Cover</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, mediaType: "VIDEO" })}
-                    className={`flex items-center justify-center space-x-1.5 py-2 rounded-lg font-bold text-xs transition-all ${
-                      formData.mediaType === "VIDEO"
-                        ? "bg-amber-500 text-slate-950 shadow font-black"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    <span>Video Album</span>
-                  </button>
-                </div>
-
-                {formData.mediaType === "IMAGE" && (
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <label className="font-semibold text-slate-300">Upload Image</label>
-                      <label className="cursor-pointer inline-flex items-center space-x-1.5 bg-school-secondary hover:bg-blue-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition-colors">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{uploadingMedia ? "Uploading..." : "Upload Photo"}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleMediaUpload(e, "IMAGE")}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="font-semibold text-slate-400 text-[11px]">Or Image Link:</label>
-                      <input
-                        type="text"
-                        value={formData.coverImage}
-                        onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                        className="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 font-mono text-xs focus:border-amber-400 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
-                      {formData.coverImage ? (
-                        <img
-                          src={formData.coverImage}
-                          alt="Cover Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-slate-500 flex items-center justify-center h-full italic">
-                          No photo selected
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {formData.mediaType === "VIDEO" && (
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <label className="font-semibold text-slate-300">Upload Video File</label>
-                      <label className="cursor-pointer inline-flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl shadow transition-colors">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>{uploadingMedia ? "Uploading..." : "Upload MP4"}</span>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={(e) => handleMediaUpload(e, "VIDEO")}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="font-semibold text-slate-400 text-[11px]">Or YouTube Video Link:</label>
-                      <input
-                        type="text"
-                        value={formData.videoUrl}
-                        onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                        className="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 font-mono text-xs focus:border-amber-400 focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="relative h-48 w-full rounded-xl overflow-hidden border border-slate-800 bg-slate-900 flex items-center justify-center">
-                      {ytId ? (
-                        <iframe
-                          src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&controls=1`}
-                          title="YouTube Preview"
-                          className="w-full h-full"
-                          allowFullScreen
-                        />
-                      ) : formData.videoUrl ? (
-                        <video src={formData.videoUrl} controls className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-slate-500 italic">No video link provided</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </form>
+      {/* TOAST SUCCESS NOTIFICATION */}
+      {savedToast && (
+        <div className="fixed bottom-8 right-8 z-50 bg-emerald-500 text-slate-950 px-6 py-3 rounded-2xl shadow-2xl font-extrabold flex items-center space-x-2 animate-bounce">
+          <CheckCircle2 className="w-5 h-5 stroke-[3]" />
+          <span>Album & Photos Saved Successfully!</span>
+        </div>
       )}
 
-      {/* VIEW 2: ALBUMS LIST */}
+      {/* VIEW 1: ALBUMS / GROUPS LIST */}
       {viewMode === "LIST" && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-            <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search albums..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-950 text-white pl-9 pr-4 py-2 rounded-xl border border-slate-800 text-xs focus:border-amber-400 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              {["ALL", "Campus", "Sports", "Annual Day", "Science & Robotics", "Celebrations"].map((cat) => (
+          {/* Filter & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+              {["ALL", ...CATEGORIES].map((cat) => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                     selectedCategory === cat
-                      ? "bg-school-secondary text-white shadow"
-                      : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                      ? "bg-amber-400 text-slate-950 shadow"
+                      : "bg-slate-800 text-slate-400 hover:text-white"
                   }`}
                 >
                   {cat}
                 </button>
               ))}
             </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search albums..."
+                className="w-full bg-slate-950 pl-9 pr-3 py-1.5 rounded-xl border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              [1, 2, 3].map((i) => (
-                <div key={i} className="h-64 bg-slate-950 animate-pulse rounded-2xl border border-slate-800" />
-              ))
-            ) : filteredAlbums.length === 0 ? (
-              <div className="col-span-3 text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-3">
-                <ImageIcon className="w-8 h-8 text-slate-600 mx-auto" />
-                <h3 className="font-bold text-sm text-white">No Albums Found</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Click 'Create Album in Full Workspace' to create photo and video galleries.
+          {/* Albums Grid */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-3">
+              <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+              <p className="text-xs">Loading albums and photos...</p>
+            </div>
+          ) : filteredAlbums.length === 0 ? (
+            <div className="bg-slate-900/50 rounded-3xl p-12 border border-slate-800 text-center space-y-4">
+              <ImageIcon className="w-12 h-12 text-slate-600 mx-auto" />
+              <div>
+                <h3 className="text-lg font-bold text-white">No Photo Groups Found</h3>
+                <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                  Create your first photo album (e.g. Annual Day, Sports Meet, Robotics Fest) and upload high-resolution campus photos.
                 </p>
               </div>
-            ) : (
-              filteredAlbums.map((alb) => (
+              <button
+                type="button"
+                onClick={openCreateEditor}
+                className="px-5 py-2.5 bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow cursor-pointer inline-flex items-center space-x-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create Group & Upload Photos</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAlbums.map((alb) => (
                 <div
                   key={alb.id}
-                  className="bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-xl flex flex-col justify-between group hover:border-slate-700 transition-all"
+                  className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-xl hover:border-amber-400/60 transition-all flex flex-col justify-between group"
                 >
-                  <div className="relative h-48 bg-slate-900">
+                  {/* Album Cover */}
+                  <div className="relative h-48 bg-slate-950 overflow-hidden">
                     <img
                       src={alb.coverImage}
                       alt={alb.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <span className="absolute top-2.5 left-2.5 bg-school-secondary text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">
-                      {alb.category}
-                    </span>
-                    {alb.isFeatured && (
-                      <span className="absolute top-2.5 right-2.5 bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow">
-                        Featured
-                      </span>
-                    )}
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
 
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-bold text-sm text-white line-clamp-2">{alb.title}</h3>
-                      <p className="text-xs text-slate-400 line-clamp-2 mt-1">{alb.description}</p>
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 flex items-center space-x-1.5">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-900/90 text-amber-400 border border-slate-700 uppercase tracking-wider backdrop-blur-sm">
+                        {alb.category}
+                      </span>
+                      {alb.isFeatured && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950 flex items-center space-x-1">
+                          <Star className="w-3 h-3 fill-current" />
+                          <span>Featured</span>
+                        </span>
+                      )}
                     </div>
 
-                    <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {alb.items?.length || 0} Media items
-                      </span>
+                    {/* Photo Count Badge */}
+                    <div className="absolute bottom-3 right-3 bg-slate-950/90 text-white px-2.5 py-1 rounded-xl text-[11px] font-bold border border-slate-800 flex items-center space-x-1 backdrop-blur-sm">
+                      <Layers className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{alb.items?.length || 0} Photos</span>
+                    </div>
+                  </div>
 
-                      <div className="flex items-center space-x-1.5">
-                        <button
-                          onClick={() => openEditEditor(alb)}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold transition-colors border border-slate-800"
-                        >
-                          <Edit3 className="w-3 h-3 text-school-secondary" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirmId(alb.id)}
-                          className="p-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900 text-rose-400 hover:text-white transition-colors border border-rose-900/40"
-                          title="Delete Album"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                  {/* Album Body */}
+                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-bold text-base text-white line-clamp-1">{alb.title}</h3>
+                      {alb.description && (
+                        <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                          {alb.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => openEditEditor(alb)}
+                        className="px-3 py-1.5 bg-amber-400/20 hover:bg-amber-400 text-amber-400 hover:text-slate-950 text-xs font-bold rounded-xl transition-all flex items-center space-x-1 cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Upload / Edit Photos</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmId(alb.id)}
+                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-xl hover:bg-rose-500/10 cursor-pointer transition-colors"
+                        title="Delete Album"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Delete Modal */}
+      {/* VIEW 2: GROUP / ALBUM EDITOR & MULTI-IMAGE UPLOADER */}
+      {viewMode === "EDITOR" && (
+        <form onSubmit={handleSaveAlbum} className="space-y-8">
+          {/* STEP 1: GROUP INFO */}
+          <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6">
+            <div className="flex items-center space-x-2 text-amber-400 border-b border-slate-800 pb-3">
+              <FolderPlus className="w-5 h-5" />
+              <h2 className="text-base font-extrabold text-white">
+                Step 1: Group / Album Information
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Cover Image Column */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-300">Album Cover Photo</label>
+                <div className="relative h-44 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 group/cover">
+                  <img
+                    src={formData.coverImage}
+                    alt="Album Cover"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => coverFileInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-amber-400 text-slate-950 text-xs font-bold rounded-xl flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title, Category & Description */}
+              <div className="md:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300">
+                      Group / Album Title <span className="text-amber-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g. Annual Sports Meet 2025"
+                      className="w-full bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-300">Category</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Short Description</label>
+                  <textarea
+                    rows={2}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description of the event, celebrations or campus activities..."
+                    className="w-full bg-slate-950 px-3.5 py-2 rounded-xl border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-400 resize-none"
+                  />
+                </div>
+
+                <label className="inline-flex items-center space-x-2 text-xs text-slate-300 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                    className="w-4 h-4 rounded text-amber-500 focus:ring-0 bg-slate-950 border-slate-800"
+                  />
+                  <span>Feature this album on homepage highlights</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 2: UPLOAD MULTIPLE IMAGES INTO THIS GROUP */}
+          <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center space-x-2 text-amber-400">
+                  <Layers className="w-5 h-5" />
+                  <h2 className="text-base font-extrabold text-white">
+                    Step 2: Upload Images to "{formData.title || "This Group"}" ({formData.items.length} Photos)
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Select and upload multiple photos at once. Add captions and arrange display order.
+                </p>
+              </div>
+
+              {/* Multi-upload buttons */}
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => batchFileInputRef.current?.click()}
+                  disabled={uploadingBatch}
+                  className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center space-x-1.5 transition-all cursor-pointer"
+                >
+                  {uploadingBatch ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>
+                        Uploading ({uploadProgress?.current}/{uploadProgress?.total})...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      <span>+ Batch Upload Photos</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick URL Adder */}
+            <div className="flex items-center space-x-2 bg-slate-950 p-2 rounded-2xl border border-slate-800">
+              <LinkIcon className="w-4 h-4 text-slate-500 ml-2" />
+              <input
+                type="text"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Or paste direct image URL (https://images.unsplash.com/...)"
+                className="flex-1 bg-transparent px-2 py-1 text-xs text-white placeholder-slate-600 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddUrlImage}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Add URL Photo
+              </button>
+            </div>
+
+            {/* Photos List Grid */}
+            {formData.items.length === 0 ? (
+              <div className="border-2 border-dashed border-slate-800 rounded-3xl p-12 text-center space-y-3">
+                <ImageIcon className="w-10 h-10 text-slate-600 mx-auto" />
+                <p className="text-xs text-slate-400">
+                  No photos in this group yet. Click <strong>+ Batch Upload Photos</strong> above to add multiple images.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {formData.items.map((photo, pIdx) => {
+                  const isCover = formData.coverImage === photo.url;
+                  return (
+                    <div
+                      key={photo.id || pIdx}
+                      className="bg-slate-950 rounded-2xl border border-slate-800 p-2.5 space-y-2 relative group/item hover:border-amber-400/60 transition-all"
+                    >
+                      {/* Photo Thumbnail */}
+                      <div className="relative h-28 rounded-xl overflow-hidden bg-slate-900">
+                        <img
+                          src={photo.url}
+                          alt={photo.title || `Photo ${pIdx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+
+                        {isCover && (
+                          <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black uppercase tracking-wider shadow">
+                            ★ Cover
+                          </span>
+                        )}
+
+                        {/* Hover Overlay Controls */}
+                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMovePhoto(pIdx, "left")}
+                            disabled={pIdx === 0}
+                            className="p-1 text-white hover:text-amber-400 disabled:opacity-20"
+                            title="Move Left"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSetAsCover(photo.url)}
+                            className="p-1 text-white hover:text-amber-400"
+                            title="Set as Album Cover"
+                          >
+                            <Star className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMovePhoto(pIdx, "right")}
+                            disabled={pIdx === formData.items.length - 1}
+                            className="p-1 text-white hover:text-amber-400 disabled:opacity-20"
+                            title="Move Right"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePhoto(pIdx)}
+                            className="p-1 text-rose-400 hover:text-rose-300"
+                            title="Remove Photo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Photo Caption / Title */}
+                      <input
+                        type="text"
+                        value={photo.title || ""}
+                        onChange={(e) => handleUpdatePhoto(pIdx, { title: e.target.value })}
+                        placeholder={`Photo #${pIdx + 1} Caption...`}
+                        className="w-full bg-transparent text-[11px] text-slate-300 focus:outline-none border-b border-dashed border-transparent hover:border-slate-700 truncate"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* BOTTOM SUBMIT BAR */}
+          <div className="flex items-center justify-between bg-slate-900 p-4 rounded-3xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setViewMode("LIST")}
+              className="px-5 py-2.5 bg-slate-800 text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-700 cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={submitting || uploadingBatch}
+              className="px-6 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xl flex items-center space-x-2 cursor-pointer transition-all disabled:opacity-50"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Saving Album & Photos...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 stroke-[2.5]" />
+                  <span>Save Album & All Photos</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-slate-900 rounded-3xl max-w-md w-full border border-slate-800 shadow-2xl p-6 space-y-4 text-slate-200 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center space-x-3 text-rose-400">
-              <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-              <h3 className="text-base font-bold text-white">Delete Gallery Album?</h3>
+              <AlertTriangle className="w-6 h-6" />
+              <h3 className="text-base font-bold text-white">Delete Photo Album?</h3>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Are you sure you want to permanently delete this media album and its uploaded photos from the database?
+              Are you sure you want to permanently delete this album and all its associated photos from the database? This action cannot be undone.
             </p>
-            <div className="flex items-center justify-end space-x-3 pt-2">
+            <div className="flex justify-end space-x-2 pt-2">
               <button
+                type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                disabled={deleting}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
+                className="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleDeleteAlbum(deleteConfirmId)}
                 disabled={deleting}
-                className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl flex items-center space-x-1"
               >
-                {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                <span>{deleting ? "Deleting..." : "Yes, Delete Album"}</span>
+                {deleting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Delete Album</span>
               </button>
             </div>
           </div>

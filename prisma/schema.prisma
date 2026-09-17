@@ -317,3 +317,30 @@ model MandatoryDisclosure {
   createdAt               DateTime @default(now())
 }
 
+model FormDefinition {
+  id               String   @id @default(uuid())
+  slug             String   @unique // admissions-apply, careers-apply, contact-inquiry, tc-request, etc.
+  title            String
+  badge            String?  @default("Online Form")
+  description      String?
+  category         String   @default("ADMISSION") // ADMISSION, CAREERS, CONTACT, GENERAL, CUSTOM
+  stepsJson        String   @default("[]") // JSON array of step metadata: [{ id, stepNumber, title, subtitle, icon }]
+  fieldsJson       String   @default("[]") // JSON array of fields
+  settingsJson     String   @default("{}") // JSON object: { submitButtonText, successTitle, successMessage, emailNotifications, redirectUrl, isMultiStep }
+  isActive         Boolean  @default(true)
+  submissionsCount Int      @default(0)
+  updatedBy        String?  @default("Admin")
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+}
+
+model FormSubmission {
+  id           String   @id @default(uuid())
+  formSlug     String
+  formTitle    String
+  submissionNo String   @unique
+  dataJson     String   // Full JSON of submitted key-values
+  status       String   @default("SUBMITTED") // SUBMITTED, REVIEWED, PROCESSED, ARCHIVED
+  submittedAt  DateTime @default(now())
+}
+

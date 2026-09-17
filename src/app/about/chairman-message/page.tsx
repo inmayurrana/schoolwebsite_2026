@@ -1,32 +1,29 @@
 export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import DynamicSectionRenderer from "@/components/common/DynamicSectionRenderer";
 import { Quote } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getCachedPageContent } from "@/lib/pageContentCache";
 
 export const metadata = {
   title: "Chairman's Message | Cambridge International School, Mandi",
-  description: "Read the visionary message from Sh. Arvind Thakur, Chairman of Cambridge International School Mandi.",
+  description: "Read the visionary message from Sh. Bhim Singh Jamwal, Chairman of Cambridge International School Mandi.",
 };
 
 export default async function ChairmanMessagePage() {
-  let pageData: any = null;
-  try {
-    pageData = await prisma.pageContent.findUnique({
-      where: { slug: "chairman-message" },
-    });
-  } catch (_) {}
+  const pageData: any = await getCachedPageContent("chairman-message");
 
   const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+  const sections = pageData?.sectionsJson ? JSON.parse(pageData.sectionsJson) : [];
 
   const title = pageData?.heroTitle || "Visionary Leadership & Societal Commitment";
   const badge = pageData?.heroBadge || "Chairman's Desk";
-  const description = pageData?.heroSubtitle || "A personal message from Sh. Arvind Thakur on shaping future leaders with courage, character, and global competence.";
-  const authorName = custom.authorName || "Sh. Arvind Thakur";
-  const authorTitle = custom.authorTitle || "Chairman & Managing Trustee";
-  const authorOrg = custom.authorOrg || "Cambridge Education Foundation";
-  const authorImage = custom.authorImage || pageData?.heroImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80";
-  const quote = custom.quote || '"Education is the most powerful weapon which you can use to change the world."';
+  const description = pageData?.heroSubtitle || "A personal message from Sh. Bhim Singh Jamwal on shaping future leaders with courage, character, and global competence.";
+  const authorName = custom.authorName || custom.chairmanName || "Sh. Bhim Singh Jamwal";
+  const authorTitle = custom.authorTitle || custom.chairmanTitle || "Chairman & Managing Trustee";
+  const authorOrg = custom.authorOrg || custom.chairmanOrg || "Cambridge Education Foundation";
+  const authorImage = custom.authorImage || custom.chairmanImage || pageData?.heroImage || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80";
+  const quote = custom.quote || custom.chairmanQuote || '"Education is the most powerful weapon which you can use to change the world."';
   const quoteAuthor = custom.quoteAuthor || "Nelson Mandela";
   const headline = custom.storyHeadline || "Dear Parents, Educators, and Esteemed Students,";
 
@@ -37,8 +34,8 @@ export default async function ChairmanMessagePage() {
     "I invite you to partner with us in this noble mission of sculpting young minds. Together, let us empower our children to soar on global wings while keeping their roots firmly anchored in the timeless values of our culture."
   ];
 
-  const storyParagraphs = custom.mainStory
-    ? custom.mainStory.split(/\n\n+/).filter(Boolean)
+  const storyParagraphs = custom.mainStory || custom.chairmanMessage
+    ? (custom.mainStory || custom.chairmanMessage).split(/\n\n+/).filter(Boolean)
     : defaultParagraphs;
 
   return (
@@ -54,7 +51,7 @@ export default async function ChairmanMessagePage() {
         ]}
       />
 
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16 space-y-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Portrait Column */}
           <div className="lg:col-span-4 space-y-4">
@@ -108,6 +105,11 @@ export default async function ChairmanMessagePage() {
             </div>
           </div>
         </div>
+
+        {/* Dynamic Modular Canvas Sections */}
+        {sections && sections.length > 0 && (
+          <DynamicSectionRenderer sections={sections} customStyles={custom} />
+        )}
       </div>
     </div>
   );

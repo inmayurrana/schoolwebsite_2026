@@ -29,35 +29,6 @@ export default function InstantNavigation() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // 1. Idle Background Warmup of Core Routes
-  useEffect(() => {
-    const idlePrefetch = () => {
-      // Prefetch critical pages sequentially during browser idle
-      let index = 0;
-      const prefetchNext = () => {
-        if (index >= CRITICAL_ROUTES.length) return;
-        const route = CRITICAL_ROUTES[index++];
-        try {
-          router.prefetch(route);
-        } catch (_) {}
-
-        if ("requestIdleCallback" in window) {
-          (window as any).requestIdleCallback(prefetchNext, { timeout: 1500 });
-        } else {
-          setTimeout(prefetchNext, 80);
-        }
-      };
-
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(prefetchNext, { timeout: 2000 });
-      } else {
-        setTimeout(prefetchNext, 200);
-      }
-    };
-
-    idlePrefetch();
-  }, [router]);
-
   // 2. High-Performance Pointer & Hover Preloader
   useEffect(() => {
     const handlePreload = (e: Event) => {

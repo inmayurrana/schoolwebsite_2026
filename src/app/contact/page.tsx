@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import {
   MapPin,
@@ -14,6 +14,8 @@ import {
   ExternalLink,
   Loader2,
   ShieldCheck,
+  Navigation,
+  Compass,
 } from "lucide-react";
 
 export default function ContactPage() {
@@ -29,6 +31,74 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({
+    school_address: "Cambridge International School, Near Victoria Bridge, Gutkar / Mandi Bypass, Mandi, Himachal Pradesh - 175001, India",
+    contact_phone: "+91 1905 223456 / +91 98160 99999",
+    whatsapp_number: "+919816099999",
+    contact_email: "admissions@cismandi.org",
+    latitude: "31.7078",
+    longitude: "76.9311",
+    school_map_zoom: "15",
+    school_map_type: "m",
+    google_map_embed_url: "",
+    google_map_place_url: "",
+  });
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings && Array.isArray(data.settings)) {
+            const map: Record<string, string> = {};
+            data.settings.forEach((s: any) => {
+              map[s.key] = s.value;
+            });
+            setSiteSettings((prev) => ({ ...prev, ...map }));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load settings in contact page:", e);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const lat = siteSettings.latitude || "31.7078";
+  const lng = siteSettings.longitude || "76.9311";
+  const zoom = siteSettings.school_map_zoom || "15";
+  const mapType = siteSettings.school_map_type || "m";
+
+  const googleMapEmbedUrl =
+    siteSettings.google_map_embed_url && siteSettings.google_map_embed_url.trim().length > 0
+      ? (siteSettings.google_map_embed_url.match(/src=["']([^"']+)["']/)
+          ? siteSettings.google_map_embed_url.match(/src=["']([^"']+)["']/)![1]
+          : siteSettings.google_map_embed_url.trim())
+      : siteSettings.map_display_mode === "COORDINATES"
+      ? `https://maps.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}&hl=en&z=${zoom}&t=${mapType}&output=embed`
+      : `https://maps.google.com/maps?q=${encodeURIComponent(
+          siteSettings.google_map_query || "Cambridge International School, Lunapani, Mandi, Himachal Pradesh"
+        )}&hl=en&z=${zoom}&t=${mapType}&output=embed`;
+
+  const directMapUrl =
+    siteSettings.google_map_place_url && siteSettings.google_map_place_url.trim().length > 0
+      ? siteSettings.google_map_place_url
+      : siteSettings.map_display_mode === "COORDINATES"
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lat},${lng}`)}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          siteSettings.google_map_query || "Cambridge International School, Lunapani, Mandi, Himachal Pradesh"
+        )}`;
+
+  const directionsUrl =
+    siteSettings.google_map_place_url && siteSettings.google_map_place_url.trim().length > 0
+      ? siteSettings.google_map_place_url
+      : siteSettings.map_display_mode === "COORDINATES"
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          siteSettings.google_map_query || "Cambridge International School, Lunapani, Mandi, Himachal Pradesh"
+        )}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,8 +151,8 @@ export default function ContactPage() {
                 <MapPin className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-school-primary dark:text-white">Campus Address</h4>
-                  <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-                    Cambridge International School, Near Victoria Bridge, Gutkar / Mandi Bypass, Mandi, Himachal Pradesh - 175001, India
+                  <p className="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                    {siteSettings.school_address}
                   </p>
                 </div>
               </div>
@@ -92,7 +162,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="font-bold text-school-primary dark:text-white">Admissions & Reception</h4>
                   <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-                    +91 1905 223456 / +91 98160 99999
+                    {siteSettings.contact_phone}
                   </p>
                 </div>
               </div>
@@ -102,7 +172,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="font-bold text-school-primary dark:text-white">Official Email</h4>
                   <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-                    info@cismandi.edu.in | admissions@cismandi.edu.in
+                    {siteSettings.contact_email}
                   </p>
                 </div>
               </div>
@@ -112,7 +182,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="font-bold text-school-primary dark:text-white">Visiting & Office Hours</h4>
                   <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-                    Monday to Saturday: 8:00 AM – 4:00 PM (Closed on Sundays & National Holidays)
+                    {siteSettings.footer_hours || "Monday to Saturday: 8:00 AM – 4:30 PM (Closed on Sundays & National Holidays)"}
                   </p>
                 </div>
               </div>
@@ -128,7 +198,7 @@ export default function ContactPage() {
                 </div>
               </div>
               <a
-                href="https://wa.me/919816099999?text=Hello%20Cambridge%20Mandi,%20I%20would%20like%20to%20inquire%20about%20Admissions."
+                href={`https://wa.me/${(siteSettings.whatsapp_number || "919816099999").replace(/[^0-9]/g, "")}?text=Hello%20Cambridge%20Mandi,%20I%20would%20like%20to%20inquire%20about%20Admissions.`}
                 target="_blank"
                 rel="noreferrer"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow transition-colors"
@@ -281,33 +351,60 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* Embedded Google Maps Placeholder / Directions Frame */}
-        <div className="glass-card rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl space-y-4 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-5 h-5 text-school-secondary" />
-              <h3 className="font-bold text-base text-school-primary dark:text-white">
-                Interactive Map & Directions (Mandi, HP)
-              </h3>
+        {/* Embedded Google Maps Live Location & Directions Frame */}
+        <div className="glass-card rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl space-y-4 p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-400/10 text-amber-500 flex items-center justify-center border border-amber-400/30">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-school-primary dark:text-white">
+                  Interactive Campus Location & Driving Directions
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Cambridge International School, Near Victoria Bridge, Gutkar / Mandi Bypass
+                </p>
+              </div>
             </div>
-            <a
-              href="https://maps.google.com/?q=Cambridge+International+School+Mandi+Himachal+Pradesh"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center space-x-1 text-xs font-bold text-school-secondary hover:underline"
-            >
-              <span>Open in Google Maps</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+
+            <div className="flex items-center space-x-2.5 self-start sm:self-auto">
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-md transition-transform hover:scale-105"
+              >
+                <Navigation className="w-3.5 h-3.5 text-slate-950" />
+                <span>Get Driving Directions</span>
+              </a>
+
+              <a
+                href={directMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 text-xs font-bold text-school-secondary hover:text-blue-700 dark:hover:text-amber-400 p-1.5 rounded-lg transition-colors"
+              >
+                <span>Open in Google Maps</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
 
-          <div className="w-full h-80 rounded-2xl overflow-hidden relative bg-slate-900 flex items-center justify-center border border-slate-800">
+          <div className="w-full h-96 rounded-2xl overflow-hidden relative bg-slate-950 flex items-center justify-center border border-slate-300 dark:border-slate-800 shadow-inner">
             <iframe
               title="CIS Mandi Location Map"
-              src="https://maps.google.com/maps?q=Mandi+Himachal+Pradesh+India&t=&z=13&ie=UTF8&iwloc=&output=embed"
-              className="w-full h-full border-0 grayscale hover:grayscale-0 transition-all duration-500"
+              src={googleMapEmbedUrl}
+              className="w-full h-full border-0"
               loading="lazy"
+              allowFullScreen
             />
+
+            {/* Coordinates Floating Badge */}
+            <div className="absolute top-3 left-3 bg-slate-950/90 backdrop-blur border border-sky-900 text-sky-300 px-3 py-1.5 rounded-xl text-xs font-mono flex items-center space-x-2 shadow-lg">
+              <Compass className="w-3.5 h-3.5 text-amber-400" />
+              <span>GPS: {lat}, {lng} (Mandi HP)</span>
+            </div>
           </div>
         </div>
       </div>

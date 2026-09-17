@@ -1,8 +1,9 @@
 export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import DynamicSectionRenderer from "@/components/common/DynamicSectionRenderer";
 import { Target, Compass, Eye, Heart, Shield, Sparkles } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getCachedPageContent } from "@/lib/pageContentCache";
 
 export const metadata = {
   title: "Mission & Vision | Cambridge International School, Mandi",
@@ -10,14 +11,10 @@ export const metadata = {
 };
 
 export default async function MissionVisionPage() {
-  let pageData: any = null;
-  try {
-    pageData = await prisma.pageContent.findUnique({
-      where: { slug: "mission-vision" },
-    });
-  } catch (_) {}
+  const pageData: any = await getCachedPageContent("mission-vision");
 
   const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+  const sections = pageData?.sectionsJson ? JSON.parse(pageData.sectionsJson) : [];
 
   const title = pageData?.heroTitle || "Mission, Vision & Guiding Philosophy";
   const badge = pageData?.heroBadge || "Philosophy & Core Values";
@@ -74,6 +71,11 @@ export default async function MissionVisionPage() {
             </p>
           </div>
         </div>
+
+        {/* Dynamic Modular Canvas Sections */}
+        {sections && sections.length > 0 && (
+          <DynamicSectionRenderer sections={sections} customStyles={custom} />
+        )}
       </div>
     </div>
   );

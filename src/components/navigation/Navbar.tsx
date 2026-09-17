@@ -144,62 +144,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Instant Prefetch Engine: Prefetches all public pages in the background for 0ms navigation lag
-  useEffect(() => {
-    const prefetchRoutes = () => {
-      const publicRoutes = [
-        "/about",
-        "/about/mission-vision",
-        "/about/chairman-message",
-        "/about/principal-message",
-        "/about/faculty",
-        "/academics",
-        "/academics/pre-primary",
-        "/academics/primary",
-        "/academics/middle-school",
-        "/academics/senior-secondary",
-        "/admissions",
-        "/admissions/procedure",
-        "/admissions/fees-structure",
-        "/admissions/scholarships",
-        "/admissions/apply",
-        "/facilities",
-        "/facilities/smart-classrooms",
-        "/facilities/science-labs",
-        "/facilities/robotics-lab",
-        "/facilities/library",
-        "/facilities/sports-complex",
-        "/facilities/hostel",
-        "/facilities/transport",
-        "/student-life",
-        "/achievements",
-        "/results",
-        "/gallery",
-        "/news",
-        "/events",
-        "/downloads",
-        "/mandatory-disclosure",
-        "/cbse-information",
-        "/careers",
-        "/contact"
-      ];
-
-      publicRoutes.forEach((route) => {
-        try {
-          router.prefetch(route);
-        } catch (_) {}
-      });
-    };
-
-    if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(prefetchRoutes, { timeout: 1500 });
-      } else {
-        setTimeout(prefetchRoutes, 300);
-      }
-    }
-  }, [router]);
-
   const { theme, toggleTheme, language, setLanguage, t, themeConfig } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -472,9 +416,9 @@ export default function Navbar() {
                 <img
                   src={logoUrl!}
                   alt="Cambridge International School, Mandi"
-                  style={{ height: `${logoHeight}px` }}
+                  style={{ maxHeight: `${Math.min(logoHeight, 56)}px` }}
                   onError={() => setImgError(true)}
-                  className="w-auto object-contain max-h-16 group-hover:scale-105 transition-transform"
+                  className="w-auto max-w-[190px] sm:max-w-xs object-contain max-h-12 sm:max-h-16 group-hover:scale-105 transition-transform"
                 />
               ) : showImageAndText ? (
                 <>

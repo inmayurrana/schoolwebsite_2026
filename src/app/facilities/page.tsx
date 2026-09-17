@@ -16,13 +16,16 @@ import {
 } from "lucide-react";
 import Campus3DViewer from "@/components/3d/Campus3DViewer";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import { getCachedPageContent } from "@/lib/pageContentCache";
 
 export const metadata = {
   title: "Campus Facilities | Cambridge International School, Mandi",
   description: "Explore the 10-acre world-class campus facilities at Cambridge Mandi including 4K smart classrooms, robotics lab, sports complex, and boarding.",
 };
 
-export default function FacilitiesHubPage() {
+export default async function FacilitiesHubPage() {
+  const pageData: any = await getCachedPageContent("facilities");
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
   const facilities = [
     {
       title: "Smart Classrooms",
@@ -93,7 +96,7 @@ export default function FacilitiesHubPage() {
 
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16 space-y-16">
         {/* Interactive 3D Map Component */}
-        <Campus3DViewer />
+        <Campus3DViewer customStyles={custom} />
 
         {/* Facilities 8-Card Grid */}
         <div className="space-y-8">

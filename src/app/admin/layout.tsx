@@ -27,6 +27,7 @@ import {
   Layers,
   Palette,
   LayoutTemplate,
+  Share2,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -93,7 +94,9 @@ export default function AdminLayout({
     { label: "Page & Content Studio", href: "/admin/pages", icon: Layers, badge: "Editor" },
     { label: "Theme & Visual Effects", href: "/admin/theme", icon: Palette, badge: "Colors" },
     { label: "Header & Footer Studio", href: "/admin/header-footer", icon: LayoutTemplate, badge: "Menu" },
+    { label: "Social Media & Feeds", href: "/admin/social-media", icon: Share2, badge: "FB & YT" },
     { label: "Mandatory Disclosure", href: "/admin/mandatory-disclosure", icon: ShieldCheck, badge: "CBSE" },
+    { label: "Form Builder & Forms", href: "/admin/forms", icon: FileText, badge: "Builder" },
     { label: "Admissions Hub", href: "/admin/admissions", icon: Users, badge: "Live" },
     { label: "Visitor Inquiries", href: "/admin/inquiries", icon: MessageSquare },
     { label: "News & Bulletins", href: "/admin/news", icon: Bell },

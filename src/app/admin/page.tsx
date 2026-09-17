@@ -15,6 +15,8 @@ import {
   AlertCircle,
   Plus,
   Eye,
+  Share2,
+  Tv,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -102,6 +104,22 @@ export default async function AdminDashboardPage() {
 
         {/* Quick Action Toolbar */}
         <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/social-media"
+            className="inline-flex items-center space-x-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-rose-500/30 transition-colors"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Facebook & YouTube</span>
+          </Link>
+
+          <Link
+            href="/admin/forms"
+            className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow-md transition-all hover:scale-105"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Form Builder Studio</span>
+          </Link>
+
           <Link
             href="/admin/header-footer"
             className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-700 transition-colors"
@@ -256,6 +274,63 @@ export default async function AdminDashboardPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Quick Access Management Hubs */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link
+          href="/admin/social-media"
+          className="bg-gradient-to-br from-rose-950/40 via-slate-950 to-slate-900/90 p-6 rounded-3xl border border-rose-500/30 hover:border-rose-500/60 shadow-xl group transition-all"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 mb-4 group-hover:scale-110 transition-transform">
+            <Share2 className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-white group-hover:text-rose-400 transition-colors">
+            Facebook & YouTube Channels
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Configure live video player embeds, Facebook page timeline streams, and social links.
+          </p>
+          <span className="inline-flex items-center space-x-1 text-xs font-bold text-rose-400 mt-4 group-hover:translate-x-1 transition-transform">
+            <span>Open Social Studio →</span>
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/header-footer"
+          className="bg-gradient-to-br from-amber-950/40 via-slate-950 to-slate-900/90 p-6 rounded-3xl border border-amber-500/30 hover:border-amber-500/60 shadow-xl group transition-all"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 mb-4 group-hover:scale-110 transition-transform">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+            Header & Footer Studio
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Edit menu navigation links, CTA buttons, logo height/branding, and contact information.
+          </p>
+          <span className="inline-flex items-center space-x-1 text-xs font-bold text-amber-400 mt-4 group-hover:translate-x-1 transition-transform">
+            <span>Manage Navigation →</span>
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/pages"
+          className="bg-gradient-to-br from-blue-950/40 via-slate-950 to-slate-900/90 p-6 rounded-3xl border border-blue-500/30 hover:border-blue-500/60 shadow-xl group transition-all"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 mb-4 group-hover:scale-110 transition-transform">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-white group-hover:text-blue-400 transition-colors">
+            Page & Content Studio
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Visual Canvas drag-and-drop editor for Home, About, Principal desk, and Admissions pages.
+          </p>
+          <span className="inline-flex items-center space-x-1 text-xs font-bold text-blue-400 mt-4 group-hover:translate-x-1 transition-transform">
+            <span>Launch Canvas Editor →</span>
+          </span>
+        </Link>
       </div>
     </div>
   );

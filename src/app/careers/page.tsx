@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Briefcase, Send, CheckCircle2, Sparkles, MapPin, Clock, ArrowRight, Loader2, User, Mail, Phone, FileText } from "lucide-react";
+import DynamicFormRenderer from "@/components/common/DynamicFormRenderer";
 
 interface Job {
   id: string;
@@ -20,21 +21,6 @@ export default function CareersPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
-
-  const [formData, setFormData] = useState({
-    applicantName: "",
-    email: "",
-    phone: "",
-    qualification: "",
-    experience: "",
-    currentCtc: "",
-    expectedCtc: "",
-    coverLetter: "",
-    resumeUrl: "https://example.com/resume.pdf",
-  });
 
   useEffect(() => {
     async function loadJobs() {
@@ -54,31 +40,6 @@ export default function CareersPage() {
     loadJobs();
   }, []);
 
-  const handleApply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedJob) return;
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/careers/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobId: selectedJob.id,
-          ...formData,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to submit application");
-      setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to submit application");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div>
       <PageHeader
@@ -94,9 +55,10 @@ export default function CareersPage() {
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-12 space-y-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: Job Openings List */}
-          <div className="lg:col-span-6 space-y-4">
-            <h2 className="text-xl font-bold text-school-primary dark:text-white">
-              Current Openings ({jobs.length})
+          <div className="lg:col-span-5 space-y-4">
+            <h2 className="text-xl font-bold text-school-primary dark:text-white flex items-center space-x-2">
+              <Briefcase className="w-5 h-5 text-amber-500" />
+              <span>Current Openings ({jobs.length})</span>
             </h2>
 
             {loading ? (
@@ -106,17 +68,14 @@ export default function CareersPage() {
                 ))}
               </div>
             ) : jobs.length === 0 ? (
-              <div className="p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl text-center text-slate-400 text-sm">
-                No active vacancies currently. You may still email your resume to hr@cismandi.edu.in.
+              <div className="p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl text-center text-slate-400 text-sm border border-slate-200 dark:border-slate-800">
+                No active vacancies currently. You may still submit your application below for general consideration.
               </div>
             ) : (
               jobs.map((job) => (
                 <div
                   key={job.id}
-                  onClick={() => {
-                    setSelectedJob(job);
-                    setSubmitted(false);
-                  }}
+                  onClick={() => setSelectedJob(job)}
                   className={`p-6 rounded-2xl border transition-all cursor-pointer ${
                     selectedJob?.id === job.id
                       ? "bg-white dark:bg-slate-850 border-school-secondary ring-2 ring-school-secondary/30 shadow-lg"
@@ -144,123 +103,37 @@ export default function CareersPage() {
             )}
           </div>
 
-          {/* Right: Job Details & Application Form */}
-          <div className="lg:col-span-6">
-            {selectedJob ? (
-              <div className="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-                <div>
+          {/* Right: Dynamic Career Application Form */}
+          <div className="lg:col-span-7 space-y-6">
+            {selectedJob && (
+              <div className="glass-card rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow space-y-3">
+                <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
-                    {selectedJob.department}
+                    Selected Position: {selectedJob.department}
                   </span>
-                  <h3 className="text-2xl font-bold text-school-primary dark:text-white mt-1">
-                    {selectedJob.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                    {selectedJob.description}
-                  </p>
+                  <span className="text-xs font-bold text-slate-500">
+                    {selectedJob.type || "Full Time"}
+                  </span>
                 </div>
-
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1 text-slate-700 dark:text-slate-300">
-                  <p><strong>Minimum Qualification:</strong> {selectedJob.qualification}</p>
-                  <p><strong>Work Experience:</strong> {selectedJob.experience}</p>
+                <h3 className="text-xl font-bold text-school-primary dark:text-white">
+                  {selectedJob.title}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {selectedJob.description}
+                </p>
+                <div className="flex flex-wrap gap-4 text-xs pt-1 border-t border-slate-100 dark:border-slate-800 text-slate-500">
+                  <span><strong>Qualification:</strong> {selectedJob.qualification}</span>
+                  <span><strong>Experience:</strong> {selectedJob.experience}</span>
                 </div>
-
-                {submitted ? (
-                  <div className="text-center py-8 space-y-3 bg-emerald-50 dark:bg-emerald-950/50 p-6 rounded-2xl border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-                    <h4 className="font-bold text-slate-900 dark:text-white">Application Received!</h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">
-                      Our HR department will review your credentials and contact you for an interview.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleApply} className="space-y-4">
-                    <h4 className="font-bold text-sm text-school-primary dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
-                      Apply for this Position
-                    </h4>
-
-                    {error && (
-                      <div className="p-3 bg-rose-50 text-rose-600 text-xs rounded-xl border border-rose-200">
-                        {error}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Full Name *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Priya Sharma"
-                          value={formData.applicantName}
-                          onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
-                          className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Phone Number *
-                        </label>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="+91 98160..."
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="educator@email.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Educational Qualification & Experience Summary *
-                      </label>
-                      <textarea
-                        rows={2}
-                        required
-                        placeholder="M.Sc. Physics, B.Ed. with 4 years CBSE teaching experience..."
-                        value={formData.qualification}
-                        onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white p-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full inline-flex items-center justify-center space-x-2 bg-school-secondary hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-all"
-                    >
-                      {submitting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Send className="w-3.5 h-3.5" />
-                          <span>Submit Job Application</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
               </div>
-            ) : null}
+            )}
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-school-primary dark:text-white">
+                Submit Online Faculty Application
+              </h3>
+              <DynamicFormRenderer formSlug="careers-apply" />
+            </div>
           </div>
         </div>
       </div>

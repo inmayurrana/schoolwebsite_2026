@@ -51,7 +51,7 @@ import Link from "next/link";
 import VisualCanvasEditor, { PageData } from "@/components/admin/VisualCanvasEditor";
 import { getPageDefault } from "@/lib/pageRegistry";
 
-export interface SitePageMeta {
+interface SitePageMeta {
   slug: string;
   path: string;
   name: string;
@@ -59,7 +59,7 @@ export interface SitePageMeta {
   description: string;
 }
 
-export const ALL_SITE_PAGES: SitePageMeta[] = [
+const ALL_SITE_PAGES: SitePageMeta[] = [
   // Core
   { slug: "home", path: "/", name: "🏠 Home Page", category: "Core", description: "Main landing page with hero video, statistics & highlights" },
   // About Us
@@ -139,45 +139,74 @@ export default function AdminPageEditor() {
     fetchVisibility();
   }, []);
 
-  // 2. Load selected page data in visual editor
+  // Immediate synchronous page switch handler to ensure instant UI update
+  const handleSelectPage = (slug: string) => {
+    setSelectedSlug(slug);
+    const meta = ALL_SITE_PAGES.find((p) => p.slug === slug);
+    const defaultPage = getPageDefault(slug, meta?.name, meta?.description);
+    setCurrentPage({
+      ...defaultPage,
+      isPublished: visibilityMap[slug] !== false,
+    });
+  };
+
+  // 2. Load selected page data in visual editor from API / DB
   useEffect(() => {
+    let isCurrent = true;
     async function loadPageDetails() {
       try {
-        setLoading(true);
         setSavedSuccess(false);
-        const res = await fetch(`/api/pages/${selectedSlug}`);
+        const res = await fetch(`/api/pages/${selectedSlug}`, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (data.page) {
+          if (data.page && isCurrent) {
+            const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+            const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
             setCurrentPage({
+              ...defaultPage,
               ...data.page,
-              sections: Array.isArray(data.page.sections) ? data.page.sections : [],
-              customStyles: data.page.customStyles || {},
+              sections:
+                Array.isArray(data.page.sections) && data.page.sections.length > 0
+                  ? data.page.sections
+                  : (defaultPage.sections || []),
+              customStyles: {
+                ...defaultPage.customStyles,
+                ...(data.page.customStyles || {}),
+              },
             });
             return;
           }
         }
 
         // Fallback to exact rich page structure from registry
-        const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
-        const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
-        setCurrentPage({
-          ...defaultPage,
-          isPublished: visibilityMap[selectedSlug] !== false,
-        });
+        if (isCurrent) {
+          const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+          const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
+          setCurrentPage({
+            ...defaultPage,
+            isPublished: visibilityMap[selectedSlug] !== false,
+          });
+        }
       } catch (err) {
         console.error("Failed to load page:", err);
-        const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
-        const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
-        setCurrentPage({
-          ...defaultPage,
-          isPublished: visibilityMap[selectedSlug] !== false,
-        });
+        if (isCurrent) {
+          const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+          const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
+          setCurrentPage({
+            ...defaultPage,
+            isPublished: visibilityMap[selectedSlug] !== false,
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isCurrent) {
+          setLoading(false);
+        }
       }
     }
     loadPageDetails();
+    return () => {
+      isCurrent = false;
+    };
   }, [selectedSlug]);
 
   // 3. Quick Checkbox Toggle Handler
@@ -620,7 +649,7 @@ export default function AdminPageEditor() {
 
                       <button
                         onClick={() => {
-                          setSelectedSlug(page.slug);
+                          handleSelectPage(page.slug);
                           setActiveTab("editor");
                         }}
                         className="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center space-x-1 cursor-pointer"
@@ -651,7 +680,7 @@ export default function AdminPageEditor() {
               </span>
               <select
                 value={selectedSlug}
-                onChange={(e) => setSelectedSlug(e.target.value)}
+                onChange={(e) => handleSelectPage(e.target.value)}
                 className="bg-slate-900 border border-slate-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
               >
                 {categories.filter((c) => c !== "ALL").map((cat) => (
@@ -687,13 +716,14 @@ export default function AdminPageEditor() {
             </div>
           </div>
 
-          {loading || !currentPage ? (
+          {!currentPage ? (
             <div className="py-24 text-center space-y-3 bg-slate-950 rounded-3xl border border-slate-800">
               <Loader2 className="w-9 h-9 animate-spin text-amber-400 mx-auto" />
               <p className="text-xs text-slate-400 font-semibold">Loading interactive canvas workspace...</p>
             </div>
           ) : (
             <VisualCanvasEditor
+              key={currentPage.slug || selectedSlug}
               page={currentPage}
               onChange={(updated) => setCurrentPage(updated)}
               onSave={handleSavePage}

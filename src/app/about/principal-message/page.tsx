@@ -1,32 +1,29 @@
 export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
+import DynamicSectionRenderer from "@/components/common/DynamicSectionRenderer";
 import { Quote } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { getCachedPageContent } from "@/lib/pageContentCache";
 
 export const metadata = {
   title: "Principal's Message | Cambridge International School, Mandi",
-  description: "Welcome address and academic roadmap from Dr. Sunita Sharma, Principal of Cambridge International School Mandi.",
+  description: "Welcome address and academic roadmap from Mrs. Priyanka Jamwal, Principal of Cambridge International School Mandi.",
 };
 
 export default async function PrincipalMessagePage() {
-  let pageData: any = null;
-  try {
-    pageData = await prisma.pageContent.findUnique({
-      where: { slug: "principal-message" },
-    });
-  } catch (_) {}
+  const pageData: any = await getCachedPageContent("principal-message");
 
   const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+  const sections = pageData?.sectionsJson ? JSON.parse(pageData.sectionsJson) : [];
 
   const title = pageData?.heroTitle || "Fostering Curiosity, Character & Excellence";
   const badge = pageData?.heroBadge || "Principal's Desk";
   const description = pageData?.heroSubtitle || "Welcome to an educational sanctuary where every child's innate potential is recognized, nurtured, and elevated.";
-  const authorName = custom.authorName || "Dr. Sunita Sharma";
-  const authorTitle = custom.authorTitle || "Principal & Academic Director";
-  const authorOrg = custom.authorOrg || "Cambridge International School Mandi";
-  const authorImage = custom.authorImage || pageData?.heroImage || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80";
-  const quote = custom.quote || '"The mind is not a vessel to be filled, but a fire to be kindled."';
+  const authorName = custom.authorName || custom.principalName || "Mrs. Priyanka Jamwal";
+  const authorTitle = custom.authorTitle || custom.principalTitle || "Principal & Academic Director";
+  const authorOrg = custom.authorOrg || custom.principalOrg || "Cambridge International School Mandi";
+  const authorImage = custom.authorImage || custom.principalImage || pageData?.heroImage || "/uploads/Mrs_-Priyanka-Jamwal_cb184dc05893.webp";
+  const quote = custom.quote || custom.principalQuote || '"The mind is not a vessel to be filled, but a fire to be kindled."';
   const quoteAuthor = custom.quoteAuthor || "Plutarch";
   const headline = custom.storyHeadline || "Welcome to Cambridge International School Mandi";
 
@@ -36,8 +33,8 @@ export default async function PrincipalMessagePage() {
     "I invite all parents and guardians to walk alongside us in this exhilarating educational odyssey."
   ];
 
-  const storyParagraphs = custom.mainStory
-    ? custom.mainStory.split(/\n\n+/).filter(Boolean)
+  const storyParagraphs = custom.mainStory || custom.principalMessage
+    ? (custom.mainStory || custom.principalMessage).split(/\n\n+/).filter(Boolean)
     : defaultParagraphs;
 
   return (
@@ -53,7 +50,7 @@ export default async function PrincipalMessagePage() {
         ]}
       />
 
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16 space-y-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Portrait Column */}
           <div className="lg:col-span-4 space-y-4">
@@ -107,6 +104,11 @@ export default async function PrincipalMessagePage() {
             </div>
           </div>
         </div>
+
+        {/* Dynamic Modular Canvas Sections */}
+        {sections && sections.length > 0 && (
+          <DynamicSectionRenderer sections={sections} customStyles={custom} />
+        )}
       </div>
     </div>
   );

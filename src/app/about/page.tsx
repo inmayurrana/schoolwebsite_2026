@@ -1,4 +1,4 @@
-﻿export const revalidate = 60;
+export const revalidate = 60;
 import React from "react";
 import Link from "next/link";
 import {
@@ -12,19 +12,41 @@ import {
   ArrowRight,
 } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
+import DynamicSectionRenderer from "@/components/common/DynamicSectionRenderer";
+import { getCachedPageContent } from "@/lib/pageContentCache";
 
 export const metadata = {
   title: "About Us | Cambridge International School, Mandi",
   description: "Learn about Cambridge International School Mandi, our heritage, Himalayan campus, and commitment to holistic global education.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const pageData: any = await getCachedPageContent("about");
+
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+  const sections = pageData?.sectionsJson ? JSON.parse(pageData.sectionsJson) : [];
+
+  const badge = pageData?.heroBadge || "About Cambridge Mandi";
+  const title = pageData?.heroTitle || "Nurturing Global Innovators with Himalayan Roots";
+  const description = pageData?.heroSubtitle || "Founded with the vision to provide benchmark international schooling in Himachal Pradesh, Cambridge International School Mandi has grown into the region's most sought-after center for academic and co-curricular excellence.";
+  const headline = custom.storyHeadline || "An Inspiring Himalayan Learning Sanctuary";
+  const campusPhoto = custom.authorImage || pageData?.heroImage || "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&auto=format&fit=crop&q=80";
+
+  const defaultParagraphs = [
+    "Situated in the historic and scenic town of Mandi (known as the 'Varanasi of the Hills'), Cambridge International School Mandi spans a verdant 10-acre campus surrounded by pine-clad mountains and the tranquil Beas river valley.",
+    "Our pedagogical philosophy is built on the premise that every student is endowed with unique potential. By synthesizing the rigor of the Central Board of Secondary Education (CBSE Affiliation No. 630198) with progressive Cambridge inquiry methodologies, we foster critical thinking, STEM innovation, artistic expression, and moral character."
+  ];
+
+  const storyParagraphs = custom.mainStory
+    ? custom.mainStory.split(/\n\n+/).filter(Boolean)
+    : defaultParagraphs;
+
   return (
     <div>
       <PageHeader
-        badge="About Cambridge Mandi"
-        title="Nurturing Global Innovators with Himalayan Roots"
-        description="Founded with the vision to provide benchmark international schooling in Himachal Pradesh, Cambridge International School Mandi has grown into the region's most sought-after center for academic and co-curricular excellence."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "About Us" }]}
       />
 
@@ -37,23 +59,30 @@ export default function AboutPage() {
               Our Heritage & Philosophy
             </span>
             <h2 className="text-3xl font-extrabold text-school-primary dark:text-white">
-              An Inspiring Himalayan Learning Sanctuary
+              {headline}
             </h2>
-            <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-              Situated in the historic and scenic town of Mandi (known as the 'Varanasi of the Hills'), <strong>Cambridge International School Mandi</strong> spans a verdant 10-acre campus surrounded by pine-clad mountains and the tranquil Beas river valley.
-            </p>
-            <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-              Our pedagogical philosophy is built on the premise that every student is endowed with unique potential. By synthesizing the rigor of the <strong>Central Board of Secondary Education (CBSE Affiliation No. 630198)</strong> with progressive Cambridge inquiry methodologies, we foster critical thinking, STEM innovation, artistic expression, and moral character.
-            </p>
+            {storyParagraphs.map((para: string, idx: number) => (
+              <p key={idx} className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+                {para}
+              </p>
+            ))}
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <span className="text-2xl font-black text-school-secondary">2014</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Year of Inception</p>
+                <span className="text-2xl font-black text-school-secondary">
+                  {custom.aboutStat1Number || custom.stats?.[0]?.number || "2014"}
+                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {custom.aboutStat1Label || custom.stats?.[0]?.label || "Year of Inception"}
+                </p>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <span className="text-2xl font-black text-amber-500">10 Acres</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Lush Campus</p>
+                <span className="text-2xl font-black text-amber-500">
+                  {custom.aboutStat2Number || custom.stats?.[1]?.number || "10 Acres"}
+                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {custom.aboutStat2Label || custom.stats?.[1]?.label || "Lush Campus"}
+                </p>
               </div>
             </div>
           </div>
@@ -61,7 +90,7 @@ export default function AboutPage() {
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
               <img
-                src="https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?w=800&auto=format&fit=crop&q=80"
+                src={campusPhoto}
                 alt="CIS Mandi Campus"
                 className="w-full h-[400px] object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -127,6 +156,11 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
+
+        {/* Dynamic Modular Canvas Sections */}
+        {sections && sections.length > 0 && (
+          <DynamicSectionRenderer sections={sections} customStyles={custom} />
+        )}
 
         {/* Quick Links to Sub-pages */}
         <div className="pt-8 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4">

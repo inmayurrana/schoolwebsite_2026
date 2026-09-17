@@ -38,7 +38,7 @@ interface DocItem {
 function isImageFile(url: string, fileType?: string): boolean {
   if (!url) return false;
   const clean = url.split("?")[0].toLowerCase();
-  return (
+  return Boolean(
     clean.endsWith(".jpg") ||
     clean.endsWith(".jpeg") ||
     clean.endsWith(".png") ||
@@ -52,7 +52,7 @@ function isImageFile(url: string, fileType?: string): boolean {
 function isPdfFile(url: string, fileType?: string): boolean {
   if (!url) return false;
   const clean = url.split("?")[0].toLowerCase();
-  return clean.endsWith(".pdf") || (fileType && fileType.toLowerCase().includes("pdf"));
+  return Boolean(clean.endsWith(".pdf") || (fileType && fileType.toLowerCase().includes("pdf")));
 }
 
 export default function AdminDocumentsPage() {

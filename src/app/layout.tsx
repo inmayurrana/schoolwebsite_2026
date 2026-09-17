@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -22,6 +22,13 @@ const inter = Inter({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0A2540",
+};
+
 export const metadata: Metadata = {
   title: "Cambridge International School, Mandi | Best CBSE School in Himachal Pradesh",
   description:
@@ -35,8 +42,6 @@ export const metadata: Metadata = {
     "Top International School Himachal",
   ],
   authors: [{ name: "Cambridge International School Mandi" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  themeColor: "#0A2540",
   openGraph: {
     title: "Cambridge International School, Mandi",
     description: "Empowering Global Minds Amidst Himalayan Serenity • CBSE Affiliated No. 630198",

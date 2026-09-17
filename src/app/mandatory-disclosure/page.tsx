@@ -308,7 +308,7 @@ export default function MandatoryDisclosurePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-800 dark:text-slate-200">
-                {data.academicResults.documents.map((acadDoc, aIdx) => (
+                {(data.academicResults?.documents || []).map((acadDoc, aIdx) => (
                   <tr key={aIdx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-3.5 text-center font-mono font-bold text-slate-500">{aIdx + 1}</td>
                     <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">{acadDoc.title}</td>
@@ -348,7 +348,7 @@ export default function MandatoryDisclosurePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                  {data.academicResults.classXResults.map((r, rIdx) => (
+                  {(data.academicResults?.classXResults || []).map((r, rIdx) => (
                     <tr key={rIdx}>
                       <td className="p-2 font-bold text-school-secondary">{r.year}</td>
                       <td className="p-2 text-center">{r.registered}</td>
@@ -374,7 +374,7 @@ export default function MandatoryDisclosurePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-                  {data.academicResults.classXIIResults.map((r, rIdx) => (
+                  {(data.academicResults?.classXIIResults || []).map((r, rIdx) => (
                     <tr key={rIdx}>
                       <td className="p-2 font-bold text-school-secondary">{r.year}</td>
                       <td className="p-2 text-center">{r.registered}</td>

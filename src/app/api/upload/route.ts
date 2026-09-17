@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     // High-performance image compression using sharp to WebP format
     if (isImage && originalExt !== ".svg" && originalExt !== ".gif") {
       try {
-        const pipeline = sharp(rawBuffer, { failOnError: false }).rotate(); // Auto-rotates using EXIF orientation
+        const pipeline = sharp(rawBuffer, { failOn: "none" }).rotate(); // Auto-rotates using EXIF orientation
 
         // Resize down if wider or taller than 1920px
         pipeline.resize({

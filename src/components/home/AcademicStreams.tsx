@@ -59,8 +59,21 @@ const wings: StreamWing[] = [
   },
 ];
 
-export default function AcademicStreams() {
-  const [activeWing, setActiveWing] = useState<StreamWing>(wings[0]);
+interface AcademicStreamsProps {
+  customStyles?: any;
+}
+
+export default function AcademicStreams({ customStyles }: AcademicStreamsProps) {
+  const customWings = Array.isArray(customStyles?.academic_wings_data) && customStyles.academic_wings_data.length > 0
+    ? customStyles.academic_wings_data
+    : wings;
+
+  const [activeWingId, setActiveWingId] = useState<string>(customWings[0]?.id || "pre-primary");
+  const activeWing = customWings.find((w: StreamWing) => w.id === activeWingId) || customWings[0] || wings[0];
+
+  const badgeText = customStyles?.academic_wings_badge || "Curriculum & Learning Continuum";
+  const titleText = customStyles?.academic_wings_title || "Academic Excellence from Foundation to Senior Secondary";
+  const subtitleText = customStyles?.academic_wings_subtitle || "A seamless educational pathway blending national curriculum benchmarks with international 21st-century inquiry skills.";
 
   return (
     <section className="py-20 lg:py-28 relative overflow-hidden bg-[#f0f7ff]/40 dark:bg-[#051329] w-full">
@@ -73,22 +86,22 @@ export default function AcademicStreams() {
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
           <div className="inline-flex items-center space-x-2 text-school-secondary font-bold text-xs uppercase tracking-wider glass-badge px-4 py-1.5 rounded-full">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Curriculum & Learning Continuum</span>
+            <span>{badgeText}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-school-primary dark:text-white">
-            Academic Excellence from Foundation to Senior Secondary
+            {titleText}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            A seamless educational pathway blending national curriculum benchmarks with international 21st-century inquiry skills.
+            {subtitleText}
           </p>
         </div>
 
         {/* Glass Tab Selector */}
         <div className="flex flex-wrap justify-center gap-2.5 mb-10">
-          {wings.map((wing) => (
+          {customWings.map((wing: StreamWing) => (
             <button
               key={wing.id}
-              onClick={() => setActiveWing(wing)}
+              onClick={() => setActiveWingId(wing.id)}
               className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center space-x-2 cursor-pointer ${
                 activeWing.id === wing.id
                   ? "bg-gradient-to-r from-school-secondary to-blue-600 text-white shadow-lg scale-105 border border-blue-400/40"
@@ -122,7 +135,7 @@ export default function AcademicStreams() {
                 Key Curricular Highlights
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {activeWing.subjects.map((sub, idx) => (
+                {(activeWing.subjects || []).map((sub: string, idx: number) => (
                   <div
                     key={idx}
                     className="glass-card-interactive flex items-center space-x-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 p-3 rounded-xl"
@@ -136,7 +149,7 @@ export default function AcademicStreams() {
 
             <div className="pt-2">
               <Link
-                href={activeWing.link}
+                href={activeWing.link || "/academics"}
                 className="inline-flex items-center space-x-2 bg-gradient-to-r from-school-secondary to-blue-600 hover:from-blue-600 hover:to-school-primary text-white font-bold text-xs px-6 py-3.5 rounded-xl shadow-lg hover:scale-105 transition-all border border-blue-400/30"
               >
                 <span>Explore Full {activeWing.title} Details</span>
@@ -147,7 +160,7 @@ export default function AcademicStreams() {
 
           <div className="lg:col-span-6 relative group overflow-hidden rounded-2xl shadow-xl border border-white/20">
             <OptimizedImage
-              src={activeWing.image}
+              src={activeWing.image || "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800"}
               alt={activeWing.title}
               className="w-full h-80 sm:h-96 group-hover:scale-105 transition-transform duration-500"
             />

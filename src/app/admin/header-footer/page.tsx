@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -34,6 +34,9 @@ import {
   Palette,
   Square,
   Check,
+  Share2,
+  Play,
+  Tv,
 } from "lucide-react";
 
 interface NavChildItem {
@@ -226,7 +229,7 @@ const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
 ];
 
 export default function AdminHeaderFooterStudio() {
-  const [activeTab, setActiveTab] = useState<"header" | "footer" | "preview">("header");
+  const [activeTab, setActiveTab] = useState<"header" | "footer" | "social" | "preview">("header");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingHeaderLogo, setUploadingHeaderLogo] = useState(false);
@@ -268,11 +271,16 @@ export default function AdminHeaderFooterStudio() {
   const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(DEFAULT_FOOTER_COLUMNS);
   const [copyrightText, setCopyrightText] = useState(`© ${new Date().getFullYear()} Cambridge International School, Mandi. All Rights Reserved.`);
   
-  // Social Media Links
+  // Social Media Links & Embeds
   const [facebookUrl, setFacebookUrl] = useState("https://facebook.com/cismandi");
+  const [facebookEmbedUrl, setFacebookEmbedUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("https://instagram.com/cismandi_official");
   const [youtubeUrl, setYoutubeUrl] = useState("https://youtube.com/@cismandi");
+  const [youtubeEmbedUrl, setYoutubeEmbedUrl] = useState("https://www.youtube-nocookie.com/embed/48fO2u80pBs");
   const [whatsappNumber, setWhatsappNumber] = useState("+919816099999");
+  const [twitterUrl, setTwitterUrl] = useState("https://twitter.com/cismandi");
+  const [linkedinUrl, setLinkedinUrl] = useState("https://linkedin.com/school/cismandi");
+  const [showSocialEmbedsHome, setShowSocialEmbedsHome] = useState(true);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -326,9 +334,14 @@ export default function AdminHeaderFooterStudio() {
             if (map.contact_email) setFooterEmail(map.contact_email);
             if (map.footer_hours) setFooterHours(map.footer_hours);
             if (map.facebook_url) setFacebookUrl(map.facebook_url);
+            if (map.facebook_embed_url !== undefined) setFacebookEmbedUrl(map.facebook_embed_url);
             if (map.instagram_url) setInstagramUrl(map.instagram_url);
             if (map.youtube_url) setYoutubeUrl(map.youtube_url);
+            if (map.youtube_embed_url !== undefined) setYoutubeEmbedUrl(map.youtube_embed_url);
             if (map.whatsapp_number) setWhatsappNumber(map.whatsapp_number);
+            if (map.twitter_url) setTwitterUrl(map.twitter_url);
+            if (map.linkedin_url) setLinkedinUrl(map.linkedin_url);
+            if (map.show_social_embeds_home !== undefined) setShowSocialEmbedsHome(map.show_social_embeds_home !== "false");
             if (map.footer_copyright_text) setCopyrightText(map.footer_copyright_text);
 
             if (map.footer_columns_json) {
@@ -424,9 +437,14 @@ export default function AdminHeaderFooterStudio() {
       { key: "contact_email", value: footerEmail, category: "CONTACT" },
       { key: "footer_hours", value: footerHours, category: "FOOTER" },
       { key: "facebook_url", value: facebookUrl, category: "SOCIAL" },
+      { key: "facebook_embed_url", value: facebookEmbedUrl, category: "SOCIAL" },
       { key: "instagram_url", value: instagramUrl, category: "SOCIAL" },
       { key: "youtube_url", value: youtubeUrl, category: "SOCIAL" },
+      { key: "youtube_embed_url", value: youtubeEmbedUrl, category: "SOCIAL" },
       { key: "whatsapp_number", value: whatsappNumber, category: "CONTACT" },
+      { key: "twitter_url", value: twitterUrl, category: "SOCIAL" },
+      { key: "linkedin_url", value: linkedinUrl, category: "SOCIAL" },
+      { key: "show_social_embeds_home", value: showSocialEmbedsHome ? "true" : "false", category: "HOMEPAGE" },
       { key: "footer_copyright_text", value: copyrightText, category: "FOOTER" },
       { key: "footer_columns_json", value: JSON.stringify(footerColumns), category: "FOOTER" },
     ];
@@ -624,6 +642,18 @@ export default function AdminHeaderFooterStudio() {
         >
           <LayoutTemplate className="w-4 h-4" />
           <span>Footer, Separate Logo & Columns</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("social")}
+          className={`px-5 py-3 text-xs font-bold rounded-t-xl transition-all flex items-center space-x-2 border-t border-x ${
+            activeTab === "social"
+              ? "bg-slate-900 border-slate-700 text-rose-400 shadow-md"
+              : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+          }`}
+        >
+          <Share2 className="w-4 h-4 text-rose-400" />
+          <span>Social Media & Video Channels</span>
         </button>
 
         <button
@@ -1447,44 +1477,116 @@ export default function AdminHeaderFooterStudio() {
 
           {/* Social Media Links */}
           <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-6 space-y-4">
-            <h2 className="text-base font-bold text-white flex items-center space-x-2 border-b border-slate-800 pb-3">
-              <Globe className="w-4 h-4 text-amber-400" />
-              <span>4. Social Media URLs</span>
-            </h2>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-base font-bold text-white flex items-center space-x-2">
+                <Globe className="w-4 h-4 text-amber-400" />
+                <span>4. Social Media URLs & Channels</span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setActiveTab("social")}
+                className="text-xs text-rose-400 hover:text-rose-300 font-bold flex items-center space-x-1"
+              >
+                <span>Full Social & Video Hub →</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Facebook Page URL
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Facebook Page URL
+                  </label>
+                  {facebookUrl && (
+                    <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 hover:underline">
+                      Test
+                    </a>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={facebookUrl}
                   onChange={(e) => setFacebookUrl(e.target.value)}
+                  placeholder="https://facebook.com/cismandi"
                   className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  Instagram Handle URL
-                </label>
-                <input
-                  type="text"
-                  value={instagramUrl}
-                  onChange={(e) => setInstagramUrl(e.target.value)}
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
-                  YouTube Channel URL
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-300">
+                    YouTube Channel URL
+                  </label>
+                  {youtubeUrl && (
+                    <a href={youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-red-400 hover:underline">
+                      Test
+                    </a>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://youtube.com/@cismandi"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-300">
+                    Instagram Handle URL
+                  </label>
+                  {instagramUrl && (
+                    <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:underline">
+                      Test
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/cismandi_official"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Twitter / X URL
+                </label>
+                <input
+                  type="text"
+                  value={twitterUrl}
+                  onChange={(e) => setTwitterUrl(e.target.value)}
+                  placeholder="https://twitter.com/cismandi"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  LinkedIn Page URL
+                </label>
+                <input
+                  type="text"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/school/cismandi"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  YouTube Video / Live Embed URL
+                </label>
+                <input
+                  type="text"
+                  value={youtubeEmbedUrl}
+                  onChange={(e) => setYoutubeEmbedUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
                   className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
                 />
               </div>
@@ -1610,7 +1712,203 @@ export default function AdminHeaderFooterStudio() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: INTERACTIVE LIVE PREVIEW */}
+      {/* TAB 3: SOCIAL MEDIA & VIDEO CHANNELS */}
+      {/* ========================================================================= */}
+      {activeTab === "social" && (
+        <div className="space-y-8 animate-in fade-in duration-200">
+          {/* Quick Notice Card */}
+          <div className="bg-gradient-to-r from-rose-950/40 via-slate-900 to-blue-950/40 border border-rose-500/30 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <Share2 className="w-5 h-5 text-rose-400" />
+                <h2 className="text-base font-bold text-white">Social Media Links & Live Video Channels</h2>
+              </div>
+              <p className="text-xs text-slate-300">
+                Configure your official Facebook Page, YouTube Channel, and video broadcasts for the header, footer, and homepage.
+              </p>
+            </div>
+            <Link
+              href="/admin/social-media"
+              className="inline-flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow transition-colors flex-shrink-0"
+            >
+              <span>Dedicated Social Studio</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Facebook & YouTube 2-Column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Facebook Card */}
+            <div className="bg-slate-900/60 rounded-2xl border border-blue-500/30 p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                    f
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Facebook Page & Stream</h3>
+                    <p className="text-[10px] text-slate-400">Official Page URL & Feed</p>
+                  </div>
+                </div>
+                {facebookUrl && (
+                  <a
+                    href={facebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:underline flex items-center space-x-1"
+                  >
+                    <span>Test Link</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    Facebook Page URL
+                  </label>
+                  <input
+                    type="text"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    placeholder="https://facebook.com/cismandi"
+                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                  />
+                  <p className="text-[10px] text-slate-500">Links footer icon and powers Facebook timeline stream.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    Facebook Embed / Plugin URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={facebookEmbedUrl}
+                    onChange={(e) => setFacebookEmbedUrl(e.target.value)}
+                    placeholder="https://www.facebook.com/plugins/page.php?href=..."
+                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                  />
+                  <p className="text-[10px] text-slate-500">Leave blank to auto-embed from Facebook Page URL.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* YouTube Card */}
+            <div className="bg-slate-900/60 rounded-2xl border border-red-500/30 p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center">
+                    <Play className="w-4 h-4 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">YouTube Channel & Video Embed</h3>
+                    <p className="text-[10px] text-slate-400">Subscribe Link & 16:9 Video Player</p>
+                  </div>
+                </div>
+                {youtubeUrl && (
+                  <a
+                    href={youtubeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-red-400 hover:underline flex items-center space-x-1"
+                  >
+                    <span>Test Channel</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    Official YouTube Channel URL
+                  </label>
+                  <input
+                    type="text"
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    placeholder="https://youtube.com/@cismandi"
+                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                  />
+                  <p className="text-[10px] text-slate-500">Links footer button and YouTube subscribe action.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-300 block">
+                    YouTube Featured Video / Stream Embed URL
+                  </label>
+                  <input
+                    type="text"
+                    value={youtubeEmbedUrl}
+                    onChange={(e) => setYoutubeEmbedUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=48fO2u80pBs"
+                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                  />
+                  <p className="text-[10px] text-slate-500">Accepts standard watch URLs, short URLs, or embed URLs.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Other Social Profiles */}
+          <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-6 space-y-4">
+            <h3 className="text-sm font-bold text-white flex items-center space-x-2 border-b border-slate-800 pb-3">
+              <Globe className="w-4 h-4 text-purple-400" />
+              <span>Other Connected Social Profiles</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">Instagram URL</label>
+                <input
+                  type="text"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/cismandi_official"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">WhatsApp Number</label>
+                <input
+                  type="text"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  placeholder="+919816099999"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">Twitter / X URL</label>
+                <input
+                  type="text"
+                  value={twitterUrl}
+                  onChange={(e) => setTwitterUrl(e.target.value)}
+                  placeholder="https://twitter.com/cismandi"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">LinkedIn URL</label>
+                <input
+                  type="text"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/school/cismandi"
+                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 font-mono text-[11px]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: INTERACTIVE LIVE PREVIEW */}
       {/* ========================================================================= */}
       {activeTab === "preview" && (
         <div className="space-y-6 animate-in fade-in duration-200">

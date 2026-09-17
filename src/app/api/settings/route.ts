@@ -32,7 +32,8 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const user = await getSessionUser();
-    if (!user || (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN" && user.role !== "PRINCIPAL")) {
+    const role = (user?.role || "") as string;
+    if (!user || (role !== "SUPER_ADMIN" && role !== "ADMIN" && role !== "PRINCIPAL")) {
       return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 

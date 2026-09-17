@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +14,7 @@ export const revalidate = 60;
 export default async function CBSEInformationPage() {
   const committee = [
     { name: "Sh. Arvind Thakur", role: "President / Chairman", designation: "Educationist & Philanthropist" },
-    { name: "Dr. Sunita Sharma", role: "Member Secretary", designation: "Principal, CIS Mandi" },
+    { name: "Mrs. Priyanka Jamwal", role: "Member Secretary", designation: "Principal, CIS Mandi" },
     { name: "Prof. Rajeshwar Sen", role: "Teacher Representative", designation: "Vice Principal, CIS Mandi" },
     { name: "Dr. Sandeep Kaundal", role: "Parent Representative (Male)", designation: "Neurosurgeon" },
     { name: "Mrs. Meenakshi Sen", role: "Parent Representative (Female)", designation: "HPAS Officer" },
