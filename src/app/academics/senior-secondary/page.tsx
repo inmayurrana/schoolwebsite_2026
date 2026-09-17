@@ -9,8 +9,25 @@ export const metadata = {
   description: "Explore Senior Secondary Streams: Science (Medical/Non-Med), Commerce, and Humanities with integrated competitive coaching at Cambridge Mandi.",
 };
 
-export default function SeniorSecondaryPage() {
-  const streams = [
+import { getCachedPageContent } from "@/lib/pageContentCache";
+
+export default async function SeniorSecondaryPage() {
+  const pageData: any = await getCachedPageContent("senior-secondary");
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+
+  const badge = pageData?.heroBadge || "Senior Wing & CBSE Boards";
+  const title = pageData?.heroTitle || "Senior Secondary (Grades 9 to 12)";
+  const description =
+    pageData?.heroSubtitle ||
+    "Benchmark CBSE Board preparation across 4 specialized streams with integrated JEE/NEET coaching and university placement mentorship.";
+
+  const affiliation = custom.affiliationLabel || "CBSE Senior Secondary Affiliation No. 630198";
+  const headline = custom.wingHeadline || "4 Dedicated Streams Crafted for Global Careers";
+  const p1 =
+    custom.wingParagraph1 ||
+    "Our Senior Secondary wing is led by specialized Master's & Doctorate faculty with proven track records in guiding students to top percentiles in Class 10 & 12 Board examinations and national entrance tests.";
+
+  const defaultStreams = [
     {
       name: "Science: Non-Medical (PCM)",
       icon: Microscope,
@@ -37,12 +54,25 @@ export default function SeniorSecondaryPage() {
     },
   ];
 
+  const iconMap: Record<string, any> = {
+    "Science: Non-Medical (PCM)": Microscope,
+    "Science: Medical (PCB)": Sparkles,
+    "Commerce Stream": Landmark,
+    "Humanities & Liberal Arts": Building,
+  };
+
+  const rawStreams = Array.isArray(custom.seniorStreams) && custom.seniorStreams.length > 0 ? custom.seniorStreams : defaultStreams;
+  const streams = rawStreams.map((s: any, idx: number) => ({
+    ...s,
+    icon: s.icon || iconMap[s.name] || [Microscope, Sparkles, Landmark, Building][idx % 4],
+  }));
+
   return (
     <div>
       <PageHeader
-        badge="Senior Wing & CBSE Boards"
-        title="Senior Secondary (Grades 9 to 12)"
-        description="Benchmark CBSE Board preparation across 4 specialized streams with integrated JEE/NEET coaching and university placement mentorship."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Academics", href: "/academics" },
@@ -53,19 +83,19 @@ export default function SeniorSecondaryPage() {
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-16 space-y-16">
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <span className="text-xs font-bold text-school-secondary uppercase tracking-wider">
-            CBSE Senior Secondary Affiliation No. 630198
+            {affiliation}
           </span>
           <h2 className="text-3xl font-extrabold text-school-primary dark:text-white">
-            4 Dedicated Streams Crafted for Global Careers
+            {headline}
           </h2>
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-            Our Senior Secondary wing is led by specialized Master's & Doctorate faculty with proven track records in guiding students to top percentiles in Class 10 & 12 Board examinations and national entrance tests.
+            {p1}
           </p>
         </div>
 
         {/* 4 Stream Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {streams.map((stream, idx) => {
+          {streams.map((stream: any, idx: number) => {
             const Icon = stream.icon;
             return (
               <div
@@ -90,7 +120,7 @@ export default function SeniorSecondaryPage() {
                       Offered Subject Combinations:
                     </p>
                     <div className="flex flex-wrap gap-1.5">
-                      {stream.subjects.map((sub, i) => (
+                      {stream.subjects.map((sub: string, i: number) => (
                         <span
                           key={i}
                           className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs px-2.5 py-1 rounded-lg font-medium"

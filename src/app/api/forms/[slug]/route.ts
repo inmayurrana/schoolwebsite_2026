@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getFormDefault, FormDefinitionRecord } from "@/lib/formRegistry";
+import { invalidateFormCache } from "@/lib/pageContentCache";
 
 export async function GET(
   req: Request,
@@ -193,6 +194,8 @@ export async function PUT(
       });
     } catch (_) {}
 
+    invalidateFormCache(slug);
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Form PUT error:", error);
@@ -220,6 +223,8 @@ export async function DELETE(
     } catch (e) {
       console.error("Form delete error:", e);
     }
+
+    invalidateFormCache(slug);
 
     return NextResponse.json({ success: true, message: `Deleted form ${slug}` });
   } catch (error: any) {

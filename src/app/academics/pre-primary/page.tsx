@@ -9,8 +9,33 @@ export const metadata = {
   description: "Explore our experiential, joy-filled Pre-Primary and Kindergarten foundation stage at Cambridge Mandi.",
 };
 
-export default function PrePrimaryPage() {
-  const highlights = [
+import { getCachedPageContent } from "@/lib/pageContentCache";
+
+export default async function PrePrimaryPage() {
+  const pageData: any = await getCachedPageContent("pre-primary");
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+
+  const badge = pageData?.heroBadge || "Early Years Foundation";
+  const title = pageData?.heroTitle || "Pre-Primary Wing (Nursery, LKG, UKG)";
+  const description =
+    pageData?.heroSubtitle ||
+    "A vibrant, joyful wonderland where early curiosity is celebrated and foundational love for discovery is born.";
+
+  const ageGroup = custom.wingAgeGroup || "Ages 3 to 5 Years";
+  const headline = custom.wingHeadline || "The Joyful Foundation for Lifelong Learning";
+  const p1 =
+    custom.wingParagraph1 ||
+    "At Cambridge International School Mandi, our Pre-Primary wing provides a secure, loving, and intellectually rich sanctuary where young children transition happily from home to school.";
+  const p2 =
+    custom.wingParagraph2 ||
+    "Our curriculum seamlessly integrates early cognitive milestones, phonics, spatial awareness, musical rhythm, and social emotional intelligence through activity-based learning.";
+  const ctaText = custom.wingCtaText || "Apply for Nursery / KG Admission";
+  const ctaLink = custom.wingCtaLink || "/admissions/apply";
+  const heroImage =
+    pageData?.heroImage ||
+    "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&auto=format&fit=crop&q=80";
+
+  const defaultHighlights = [
     "Montessori & Experiential Play-Way Pedagogy",
     "Jolly Phonics Language & Early Literacy System",
     "Theme-based Sensory & Fine Motor Activity Corners",
@@ -18,13 +43,14 @@ export default function PrePrimaryPage() {
     "Air-Conditioned Colorful Smart Classrooms with Soft Flooring",
     "Nurturing Female Faculty with 1:12 Teacher-to-Child Ratio",
   ];
+  const highlights: string[] = Array.isArray(custom.highlights) && custom.highlights.length > 0 ? custom.highlights : defaultHighlights;
 
   return (
     <div>
       <PageHeader
-        badge="Early Years Foundation"
-        title="Pre-Primary Wing (Nursery, LKG, UKG)"
-        description="A vibrant, joyful wonderland where early curiosity is celebrated and foundational love for discovery is born."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Academics", href: "/academics" },
@@ -36,16 +62,16 @@ export default function PrePrimaryPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
             <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
-              Ages 3 to 5 Years
+              {ageGroup}
             </span>
             <h2 className="text-3xl font-extrabold text-school-primary dark:text-white">
-              The Joyful Foundation for Lifelong Learning
+              {headline}
             </h2>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              At Cambridge International School Mandi, our Pre-Primary wing provides a secure, loving, and intellectually rich sanctuary where young children transition happily from home to school.
+              {p1}
             </p>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              Our curriculum seamlessly integrates early cognitive milestones, phonics, spatial awareness, musical rhythm, and social emotional intelligence through activity-based learning.
+              {p2}
             </p>
 
             <div className="space-y-2.5 pt-2">
@@ -59,10 +85,10 @@ export default function PrePrimaryPage() {
 
             <div className="pt-4">
               <Link
-                href="/admissions/apply"
+                href={ctaLink}
                 className="inline-flex items-center space-x-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-6 py-3 rounded-xl shadow-md transition-all"
               >
-                <span>Apply for Nursery / KG Admission</span>
+                <span>{ctaText}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -71,7 +97,7 @@ export default function PrePrimaryPage() {
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
               <img
-                src="https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&auto=format&fit=crop&q=80"
+                src={heroImage}
                 alt="Pre-primary Kindergarten"
                 className="w-full h-[400px] object-cover group-hover:scale-105 transition-transform duration-700"
               />

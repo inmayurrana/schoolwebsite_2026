@@ -54,6 +54,20 @@ const ICON_MAP: Record<string, any> = {
   Camera,
 };
 
+function getInitialFormData(f: FormDefinitionRecord): Record<string, any> {
+  const initial: Record<string, any> = {};
+  f.fields.forEach((field) => {
+    if (field.defaultValue !== undefined) {
+      initial[field.name] = field.defaultValue;
+    } else if (field.type === "checkbox") {
+      initial[field.name] = false;
+    } else {
+      initial[field.name] = "";
+    }
+  });
+  return initial;
+}
+
 export default function DynamicFormRenderer({
   initialForm,
   formSlug = "admissions-apply",
@@ -66,19 +80,22 @@ export default function DynamicFormRenderer({
   const [submitting, setSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>(() =>
+    initialForm ? getInitialFormData(initialForm) : {}
+  );
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<{ field: string; message: string } | null>(null);
   const [manualUrlFields, setManualUrlFields] = useState<Record<string, boolean>>({});
 
   // Fetch form definition if not provided as initialForm
   useEffect(() => {
+    if (initialForm) {
+      setForm(initialForm);
+      setFormData(getInitialFormData(initialForm));
+      setLoading(false);
+      return;
+    }
     async function loadForm() {
-      if (initialForm) {
-        setForm(initialForm);
-        initFormState(initialForm);
-        return;
-      }
       setLoading(true);
       try {
         const res = await fetch(`/api/forms/${formSlug}`, { cache: "no-store" });
@@ -86,7 +103,7 @@ export default function DynamicFormRenderer({
           const data = await res.json();
           if (data.form) {
             setForm(data.form);
-            initFormState(data.form);
+            setFormData(getInitialFormData(data.form));
           }
         }
       } catch (err) {
@@ -99,17 +116,7 @@ export default function DynamicFormRenderer({
   }, [formSlug, initialForm]);
 
   const initFormState = (f: FormDefinitionRecord) => {
-    const initial: Record<string, any> = {};
-    f.fields.forEach((field) => {
-      if (field.defaultValue !== undefined) {
-        initial[field.name] = field.defaultValue;
-      } else if (field.type === "checkbox") {
-        initial[field.name] = false;
-      } else {
-        initial[field.name] = "";
-      }
-    });
-    setFormData(initial);
+    setFormData(getInitialFormData(f));
   };
 
   if (loading || !form) {
@@ -282,7 +289,7 @@ export default function DynamicFormRenderer({
   // SUCCESS CONFIRMATION RECEIPT VIEW
   if (successData) {
     return (
-      <div className="glass-card rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-8 print:shadow-none print:border-none bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 max-w-4xl mx-auto">
+      <div className="glass-card rounded-3xl p-8 sm:p-12 lg:p-14 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-8 print:shadow-none print:border-none bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 w-full max-w-5xl 2xl:max-w-6xl mx-auto">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto shadow-lg">
             <CheckCircle2 className="w-10 h-10" />
@@ -405,7 +412,7 @@ export default function DynamicFormRenderer({
   }
 
   return (
-    <div className={`glass-card rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 max-w-4xl mx-auto space-y-8 ${className}`}>
+    <div className={`glass-card rounded-3xl p-6 sm:p-10 lg:p-12 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 w-full max-w-5xl 2xl:max-w-6xl mx-auto space-y-8 ${className}`}>
       {/* Multi-Step Wizard Indicator */}
       {isMultiStep && displaySteps.length > 1 && (
         <div className="border-b border-slate-200 dark:border-slate-800 pb-6">

@@ -51,7 +51,37 @@ export default async function AcademicsPage() {
 
   const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
 
-  let dynamicSections = DEFAULT_SECTIONS;
+  let dynamicSections = [
+    {
+      title: custom.wing1Title || DEFAULT_SECTIONS[0].title,
+      grades: custom.wing1Badge || DEFAULT_SECTIONS[0].grades,
+      desc: custom.wing1Desc || DEFAULT_SECTIONS[0].desc,
+      link: custom.wing1Link || DEFAULT_SECTIONS[0].link,
+      color: "from-amber-500 to-orange-600",
+    },
+    {
+      title: custom.wing2Title || DEFAULT_SECTIONS[1].title,
+      grades: custom.wing2Badge || DEFAULT_SECTIONS[1].grades,
+      desc: custom.wing2Desc || DEFAULT_SECTIONS[1].desc,
+      link: custom.wing2Link || DEFAULT_SECTIONS[1].link,
+      color: "from-blue-500 to-indigo-600",
+    },
+    {
+      title: custom.wing3Title || DEFAULT_SECTIONS[2].title,
+      grades: custom.wing3Badge || DEFAULT_SECTIONS[2].grades,
+      desc: custom.wing3Desc || DEFAULT_SECTIONS[2].desc,
+      link: custom.wing3Link || DEFAULT_SECTIONS[2].link,
+      color: "from-emerald-500 to-teal-600",
+    },
+    {
+      title: custom.wing4Title || DEFAULT_SECTIONS[3].title,
+      grades: custom.wing4Badge || DEFAULT_SECTIONS[3].grades,
+      desc: custom.wing4Desc || DEFAULT_SECTIONS[3].desc,
+      link: custom.wing4Link || DEFAULT_SECTIONS[3].link,
+      color: "from-purple-500 to-pink-600",
+    },
+  ];
+
   if (pageData?.sectionsJson) {
     try {
       const parsedBlocks = JSON.parse(pageData.sectionsJson);
@@ -62,17 +92,20 @@ export default async function AcademicsPage() {
           desc: it.description || DEFAULT_SECTIONS[idx]?.desc || "",
           link: it.link || DEFAULT_SECTIONS[idx]?.link || "/academics",
           color: DEFAULT_SECTIONS[idx]?.color || "from-amber-500 to-orange-600",
-          image: it.image || DEFAULT_SECTIONS[idx]?.image || "",
         }));
       }
     } catch (_) {}
   }
 
-  const badge = pageData?.heroBadge || "Academic Framework";
-  const title = pageData?.heroTitle || "Comprehensive Learning Continuum (K-12)";
-  const description = pageData?.heroSubtitle || "Empowering students through CBSE curriculum excellence, Cambridge inquiry methodologies, and state-of-the-art STEM laboratories.";
-  const headline = custom.storyHeadline || "Where Curiosity Transforms into Intellectual Mastery";
-  const mainStory = custom.mainStory || "Our academic roadmap is designed to guide learners seamlessly across four developmental stages, equipping them with the depth, versatility, and analytical prowess needed for global success.";
+  const badge = pageData?.heroBadge || "Academic Curriculum • Cambridge International School";
+  const title = pageData?.heroTitle || "Academic Curriculum";
+  const description = pageData?.heroSubtitle || "Integrated CBSE & Cambridge framework";
+  const affiliation = custom.affiliationLabel || "CBSE Affiliation No. 630198";
+  const headline = custom.storyHeadline || "Welcome to Academic Curriculum";
+  const mainStory = custom.mainStory || "Integrated CBSE & Cambridge framework. Cambridge International School Mandi fosters an engaging, safe, and academically rigorous environment where every learner thrives.";
+  const pedagogyBadge = custom.pedagogyBadge || "Pedagogical Edge";
+  const pedagogyTitle = custom.pedagogyTitle || "Integrated Competitive Exam Coaching & Research Focus";
+  const pedagogySubtitle = custom.pedagogySubtitle || "Tailored preparation seamlessly embedded within the regular school timetable.";
 
   return (
     <div>
@@ -87,7 +120,7 @@ export default async function AcademicsPage() {
         {/* Intro */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <span className="text-xs font-bold text-school-secondary uppercase tracking-wider">
-            CBSE Affiliation No. 630198
+            {affiliation}
           </span>
           <h2 className="text-3xl font-extrabold text-school-primary dark:text-white">
             {headline}
@@ -137,12 +170,12 @@ export default async function AcademicsPage() {
         {/* Stream Differentiators */}
         <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl p-8 sm:p-12 border border-slate-200 dark:border-slate-800 space-y-8">
           <div className="max-w-2xl">
-            <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Pedagogical Edge</span>
+            <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">{pedagogyBadge}</span>
             <h3 className="text-2xl font-bold text-school-primary dark:text-white mt-1">
-              Integrated Competitive Exam Coaching & Research Focus
+              {pedagogyTitle}
             </h3>
             <p className="text-xs text-slate-500 mt-2">
-              Tailored preparation seamlessly embedded within the regular school timetable.
+              {pedagogySubtitle}
             </p>
           </div>
 

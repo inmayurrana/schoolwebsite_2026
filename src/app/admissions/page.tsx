@@ -1,28 +1,58 @@
-﻿export const revalidate = 60;
+export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
-import { Sparkles, CheckCircle2, ArrowRight, Download, Calendar, ShieldCheck, FileText, Phone, HelpCircle } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
+import { getCachedPageContent } from "@/lib/pageContentCache";
+import { DEFAULT_PAGE_REGISTRY } from "@/lib/pageRegistry";
 
 export const metadata = {
   title: "Admissions 2027-2028 | Cambridge International School, Mandi",
   description: "Enroll your child in Cambridge International School Mandi for Session 2027-28. Explore eligibility, procedure, fees, and apply online.",
 };
 
-export default function AdmissionsHubPage() {
-  const steps = [
-    { num: "01", title: "Online Registration", desc: "Fill out the online application form with student details and academic records." },
-    { num: "02", title: "Interaction / Entrance Test", desc: "Short friendly interaction for Early Years or conceptual aptitude assessment for Grades 6-11." },
-    { num: "03", title: "Provisional Offer & Document Verification", desc: "Receive admission confirmation offer and submit required birth/transfer certificates." },
-    { num: "04", title: "Fee Payment & Welcome Kit", desc: "Complete enrollment fee payment and collect school uniform, books, and orientation packet." },
-  ];
+const DEFAULT_STEPS = [
+  { num: "01", title: "Online Registration", desc: "Fill out the online application form with student details and academic records." },
+  { num: "02", title: "Interaction / Entrance Test", desc: "Short friendly interaction for Early Years or conceptual aptitude assessment for Grades 6-11." },
+  { num: "03", title: "Provisional Offer & Document Verification", desc: "Receive admission confirmation offer and submit required birth/transfer certificates." },
+  { num: "04", title: "Fee Payment & Welcome Kit", desc: "Complete enrollment fee payment and collect school uniform, books, and orientation packet." },
+];
+
+export default async function AdmissionsHubPage() {
+  const pageData = await getCachedPageContent("admissions");
+  const defaults = DEFAULT_PAGE_REGISTRY["admissions"];
+
+  let customStyles: any = {};
+  if (pageData?.customStylesJson) {
+    try {
+      customStyles = typeof pageData.customStylesJson === "string" ? JSON.parse(pageData.customStylesJson) : pageData.customStylesJson;
+    } catch (_) {}
+  }
+
+  const badge = pageData?.heroBadge || defaults?.heroBadge || "Session 2027–2028 Open";
+  const title = pageData?.heroTitle || defaults?.heroTitle || "Admissions Hub — Cambridge Mandi";
+  const description = pageData?.heroSubtitle || defaults?.heroSubtitle || "Join an inspiring community dedicated to academic rigor, character building, and international excellence in Himachal Pradesh.";
+
+  const bannerBadge = customStyles.bannerBadge || "Limited Seats per Grade";
+  const bannerTitle = customStyles.bannerTitle || "Admissions Open for Nursery to Grade XI";
+  const bannerDesc = customStyles.bannerDesc || "We maintain a low 1:15 mentor-student ratio to ensure every child receives personalized attention and accelerated learning support.";
+  const bannerBtn1Text = customStyles.bannerBtn1Text || "Fill Online Application";
+  const bannerBtn1Link = customStyles.bannerBtn1Link || "/admissions/apply";
+  const bannerBtn2Text = customStyles.bannerBtn2Text || "Download Prospectus";
+  const bannerBtn2Link = customStyles.bannerBtn2Link || "/sample-documents/CIS_Mandi_Prospectus_2025_2026.pdf";
+
+  const stepsTitle = customStyles.stepsTitle || "4-Step Simple Admission Process";
+  const stepsSubtitle = customStyles.stepsSubtitle || "Transparent, hassle-free, and parent-friendly registration workflow.";
+  const steps = Array.isArray(customStyles.admissionSteps) && customStyles.admissionSteps.length > 0
+    ? customStyles.admissionSteps
+    : DEFAULT_STEPS;
 
   return (
     <div>
       <PageHeader
-        badge="Session 2027–2028 Open"
-        title="Admissions Hub — Cambridge Mandi"
-        description="Join an inspiring community dedicated to academic rigor, character building, and international excellence in Himachal Pradesh."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Admissions" }]}
       />
 
@@ -31,29 +61,30 @@ export default function AdmissionsHubPage() {
         <div className="bg-gradient-to-r from-school-primary via-blue-900 to-school-primary text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl">
             <span className="bg-amber-400 text-slate-950 text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider">
-              Limited Seats per Grade
+              {bannerBadge}
             </span>
             <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-white">
-              Admissions Open for Nursery to Grade XI
+              {bannerTitle}
             </h2>
             <p className="text-slate-200 text-sm leading-relaxed">
-              We maintain a low 1:15 mentor-student ratio to ensure every child receives personalized attention and accelerated learning support.
+              {bannerDesc}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
             <Link
-              href="/admissions/apply"
+              href={bannerBtn1Link}
               className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm px-8 py-3.5 rounded-2xl shadow-xl hover:scale-105 transition-all text-center"
             >
-              Fill Online Application
+              {bannerBtn1Text}
             </Link>
             <a
-              href="/sample-documents/CIS_Mandi_Prospectus_2025_2026.pdf"
+              href={bannerBtn2Link}
               download
-              className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-6 py-3.5 rounded-2xl border border-white/20 text-center"
+              className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-6 py-3.5 rounded-2xl border border-white/20 text-center flex items-center justify-center space-x-1.5"
             >
-              Download Prospectus
+              <Download className="w-4 h-4" />
+              <span>{bannerBtn2Text}</span>
             </a>
           </div>
         </div>
@@ -62,15 +93,15 @@ export default function AdmissionsHubPage() {
         <div className="space-y-8">
           <div className="text-center max-w-2xl mx-auto">
             <h3 className="text-2xl sm:text-3xl font-bold text-school-primary dark:text-white">
-              4-Step Simple Admission Process
+              {stepsTitle}
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Transparent, hassle-free, and parent-friendly registration workflow.
+              {stepsSubtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step, idx) => (
+            {steps.map((step: any, idx: number) => (
               <div
                 key={idx}
                 className="glass-card rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-3 relative overflow-hidden"

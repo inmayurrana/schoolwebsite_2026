@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/ui/PageHeader";
 import FacultyDirectoryClient, { FacultyMember } from "@/components/faculty/FacultyDirectoryClient";
@@ -11,7 +11,27 @@ export const metadata = {
 
 export const revalidate = 60;
 
+import { getCachedPageContent } from "@/lib/pageContentCache";
+
 export default async function FacultyPage() {
+  const pageData: any = await getCachedPageContent("faculty");
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+
+  const badge = pageData?.heroBadge || "Distinguished Educators";
+  const title = pageData?.heroTitle || "Faculty & Academic Mentors";
+  const description =
+    pageData?.heroSubtitle ||
+    "Meet the passionate teachers, subject specialists, and academic leaders fostering curiosity, scientific rigor, and character development at Cambridge Mandi.";
+
+  const stat1Value = custom.stat1Value || "58+";
+  const stat1Label = custom.stat1Label || "Faculty Members";
+  const stat2Value = custom.stat2Value || "100%";
+  const stat2Label = custom.stat2Label || "Post-Graduate Certified";
+  const stat3Value = custom.stat3Value || "14+ Yrs";
+  const stat3Label = custom.stat3Label || "Avg Lead Experience";
+  const stat4Value = custom.stat4Value || "1 : 15";
+  const stat4Label = custom.stat4Label || "Teacher-Student Ratio";
+
   let faculty: FacultyMember[] = [];
 
   try {
@@ -38,9 +58,9 @@ export default async function FacultyPage() {
   return (
     <div>
       <PageHeader
-        badge="Distinguished Educators"
-        title="Faculty & Academic Mentors"
-        description="Meet the passionate teachers, subject specialists, and academic leaders fostering curiosity, scientific rigor, and character development at Cambridge Mandi."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "About Us", href: "/about" },
@@ -53,23 +73,39 @@ export default async function FacultyPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
             <Users className="w-6 h-6 text-amber-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">58+</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Faculty Members</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+              {stat1Value}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {stat1Label}
+            </div>
           </div>
           <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
             <GraduationCap className="w-6 h-6 text-blue-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">100%</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Post-Graduate Certified</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+              {stat2Value}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {stat2Label}
+            </div>
           </div>
           <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
             <Award className="w-6 h-6 text-emerald-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">14+ Yrs</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Lead Experience</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+              {stat3Value}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {stat3Label}
+            </div>
           </div>
           <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
             <Sparkles className="w-6 h-6 text-amber-400 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">1 : 15</div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Teacher-Student Ratio</div>
+            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+              {stat4Value}
+            </div>
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {stat4Label}
+            </div>
           </div>
         </div>
 

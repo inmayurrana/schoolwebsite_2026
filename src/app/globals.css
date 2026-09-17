@@ -423,3 +423,167 @@ div[class*="next-dev-tools"] {
   pointer-events: none;
 }
 
+/* ==========================================================================
+   CANVAS 3D EFFECTS, PERSPECTIVE, ANIMATIONS & DYNAMIC GLOW UTILITIES
+   ========================================================================== */
+
+@keyframes float3DAnimation {
+  0%, 100% {
+    transform: translateY(0px) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotateX(4deg);
+  }
+}
+
+@keyframes pulseGlowAnimation {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.35), 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.7), 0 0 55px rgba(59, 130, 246, 0.45);
+  }
+}
+
+@keyframes flip3DAnimation {
+  0% {
+    transform: perspective(600px) rotateY(0deg);
+  }
+  50% {
+    transform: perspective(600px) rotateY(90deg);
+  }
+  100% {
+    transform: perspective(600px) rotateY(0deg);
+  }
+}
+
+@keyframes slideInLeftAnim {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRightAnim {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomInScaleAnim {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 3D Visual Effects */
+.effect-3d-float {
+  animation: float3DAnimation 4.5s ease-in-out infinite;
+}
+
+.effect-3d-tilt {
+  perspective: 1000px;
+  transform: perspective(1000px) rotateX(5deg) rotateY(-3deg);
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease;
+}
+.effect-3d-tilt:hover {
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(245, 158, 11, 0.3);
+}
+
+.effect-3d-card {
+  transform-style: preserve-3d;
+  perspective: 900px;
+  transition: all 0.35s ease;
+}
+.effect-3d-card:hover {
+  transform: translateY(-8px) rotateX(5deg) scale(1.02);
+  box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.45), 0 0 25px rgba(59, 130, 246, 0.3);
+}
+
+.effect-3d-depth {
+  box-shadow: 0 10px 0 #091a2e, 0 18px 25px rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+}
+.effect-3d-depth:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 0 #091a2e, 0 24px 35px rgba(0, 0, 0, 0.6);
+}
+
+.effect-glass-prism {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Dynamic Animation Utilities */
+.anim-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.anim-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-slide-left {
+  animation: slideInLeftAnim 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-slide-right {
+  animation: slideInRightAnim 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-zoom-in {
+  animation: zoomInScaleAnim 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-bounce-soft {
+  animation: bounce 2s infinite;
+}
+
+.anim-pulse-subtle {
+  animation: pulseGlowAnimation 3.5s ease-in-out infinite;
+}
+
+.anim-flip-3d {
+  animation: flip3DAnimation 6s ease-in-out infinite;
+}
+
+/* Glow Shadows */
+.shadow-glow-amber {
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
+}
+
+.shadow-glow-emerald {
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.45);
+}
+
+.shadow-neon-cyan {
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+}
+
+.shadow-neon-purple {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+}
+
+.shadow-deep-3d {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 102, 255, 0.25);
+}
+
+

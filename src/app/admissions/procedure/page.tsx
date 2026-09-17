@@ -2,42 +2,73 @@ export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
-import { CheckCircle2, FileText, ArrowRight, ShieldCheck, AlertCircle } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
+import { getCachedPageContent } from "@/lib/pageContentCache";
+import { DEFAULT_PAGE_REGISTRY } from "@/lib/pageRegistry";
 
 export const metadata = {
   title: "Admission Procedure & Age Matrix | Cambridge International School, Mandi",
   description: "Detailed step-by-step admission procedure, age eligibility criteria, and required documents for Cambridge Mandi.",
 };
 
-export default function AdmissionProcedurePage() {
-  const ageMatrix = [
-    { grade: "Nursery / Pre-KG", age: "3+ Years as on 31st March 2025" },
-    { grade: "LKG / Lower Kindergarten", age: "4+ Years as on 31st March 2025" },
-    { grade: "UKG / Upper Kindergarten", age: "5+ Years as on 31st March 2025" },
-    { grade: "Grade I", age: "6+ Years as on 31st March 2025" },
-    { grade: "Grade II to V", age: "Corresponding age progression + Previous School TC" },
-    { grade: "Grade VI to VIII", age: "Previous class marksheet + TC + Aptitude test" },
-    { grade: "Grade IX to X", age: "CBSE Registration Eligibility + Class 8/9 Marksheet" },
-    { grade: "Grade XI (Science/Commerce/Arts)", age: "Class X Board Marksheet / Pre-board score" },
-  ];
+const DEFAULT_AGE_MATRIX = [
+  { grade: "Nursery / Pre-KG", age: "3+ Years as on 31st March 2025" },
+  { grade: "LKG / Lower Kindergarten", age: "4+ Years as on 31st March 2025" },
+  { grade: "UKG / Upper Kindergarten", age: "5+ Years as on 31st March 2025" },
+  { grade: "Grade I", age: "6+ Years as on 31st March 2025" },
+  { grade: "Grade II to V", age: "Corresponding age progression + Previous School TC" },
+  { grade: "Grade VI to VIII", age: "Previous class marksheet + TC + Aptitude test" },
+  { grade: "Grade IX to X", age: "CBSE Registration Eligibility + Class 8/9 Marksheet" },
+  { grade: "Grade XI (Science/Commerce/Arts)", age: "Class X Board Marksheet / Pre-board score" },
+];
 
-  const requiredDocs = [
-    "Attested copy of Child's Birth Certificate (issued by Municipal Corp / Gram Panchayat)",
-    "Original Transfer Certificate (TC) from previous school counter-signed by Education Officer",
-    "Previous Class Marksheet / Progress Card",
-    "Recent passport-sized photographs of student (4 copies)",
-    "Recent passport-sized photographs of Father and Mother (2 copies each)",
-    "Aadhaar Card copies of Student and Parents",
-    "Medical Fitness Certificate & Blood Group proof",
-    "Caste / Category certificate (if applicable for scholarship quotas)",
-  ];
+const DEFAULT_REQUIRED_DOCS = [
+  "Attested copy of Child's Birth Certificate (issued by Municipal Corp / Gram Panchayat)",
+  "Original Transfer Certificate (TC) from previous school counter-signed by Education Officer",
+  "Previous Class Marksheet / Progress Card",
+  "Recent passport-sized photographs of student (4 copies)",
+  "Recent passport-sized photographs of Father and Mother (2 copies each)",
+  "Aadhaar Card copies of Student and Parents",
+  "Medical Fitness Certificate & Blood Group proof",
+  "Caste / Category certificate (if applicable for scholarship quotas)",
+];
+
+export default async function AdmissionProcedurePage() {
+  const pageData = await getCachedPageContent("procedure");
+  const defaults = DEFAULT_PAGE_REGISTRY["procedure"];
+
+  let customStyles: any = {};
+  if (pageData?.customStylesJson) {
+    try {
+      customStyles = typeof pageData.customStylesJson === "string" ? JSON.parse(pageData.customStylesJson) : pageData.customStylesJson;
+    } catch (_) {}
+  }
+
+  const badge = pageData?.heroBadge || defaults?.heroBadge || "Eligibility & Guidelines";
+  const title = pageData?.heroTitle || defaults?.heroTitle || "Admission Procedure & Age Matrix";
+  const description = pageData?.heroSubtitle || defaults?.heroSubtitle || "Comprehensive guidelines on age eligibility criteria, admission test schedules, and document checklists.";
+
+  const ageMatrixTitle = customStyles.ageMatrixTitle || defaults?.customStyles?.ageMatrixTitle || "Age Criteria for Session 2025–2026";
+  const ageMatrixBadge = customStyles.ageMatrixBadge || defaults?.customStyles?.ageMatrixBadge || "Eligibility Matrix";
+  const ageMatrix: Array<{ grade: string; age: string }> = Array.isArray(customStyles.ageMatrix) && customStyles.ageMatrix.length > 0
+    ? customStyles.ageMatrix
+    : DEFAULT_AGE_MATRIX;
+
+  const docsTitle = customStyles.docsTitle || defaults?.customStyles?.docsTitle || "Mandatory Documents for Final Admission";
+  const docsBadge = customStyles.docsBadge || defaults?.customStyles?.docsBadge || "Verification Checklist";
+  const requiredDocs: string[] = Array.isArray(customStyles.requiredDocs) && customStyles.requiredDocs.length > 0
+    ? customStyles.requiredDocs
+    : DEFAULT_REQUIRED_DOCS;
+
+  const ctaText = customStyles.ctaText || pageData?.heroCtaText || defaults?.heroCtaText || "Proceed to Online Application Form";
+  const ctaLink = customStyles.ctaLink || pageData?.heroCtaLink || defaults?.heroCtaLink || "/admissions/apply";
 
   return (
     <div>
       <PageHeader
-        badge="Eligibility & Guidelines"
-        title="Admission Procedure & Age Matrix"
-        description="Comprehensive guidelines on age eligibility criteria, admission test schedules, and document checklists."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Admissions", href: "/admissions" },
@@ -50,10 +81,10 @@ export default function AdmissionProcedurePage() {
         <div className="space-y-6">
           <div className="max-w-2xl">
             <span className="text-xs font-bold text-school-secondary uppercase tracking-wider">
-              Eligibility Matrix
+              {ageMatrixBadge}
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-school-primary dark:text-white">
-              Age Criteria for Session 2025–2026
+              {ageMatrixTitle}
             </h2>
           </div>
 
@@ -81,10 +112,10 @@ export default function AdmissionProcedurePage() {
         <div className="space-y-6">
           <div className="max-w-2xl">
             <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">
-              Verification Checklist
+              {docsBadge}
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-school-primary dark:text-white">
-              Mandatory Documents for Final Admission
+              {docsTitle}
             </h2>
           </div>
 
@@ -104,10 +135,10 @@ export default function AdmissionProcedurePage() {
         {/* Action Button */}
         <div className="text-center pt-6">
           <Link
-            href="/admissions/apply"
+            href={ctaLink}
             className="inline-flex items-center space-x-2 bg-gradient-to-r from-school-secondary to-blue-600 text-white font-bold text-sm px-8 py-4 rounded-2xl shadow-xl hover:scale-105 transition-all"
           >
-            <span>Proceed to Online Application Form</span>
+            <span>{ctaText}</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

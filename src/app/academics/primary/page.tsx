@@ -9,8 +9,33 @@ export const metadata = {
   description: "Learn about the Primary School curriculum and experiential learning at Cambridge Mandi.",
 };
 
-export default function PrimaryPage() {
-  const subjects = [
+import { getCachedPageContent } from "@/lib/pageContentCache";
+
+export default async function PrimaryPage() {
+  const pageData: any = await getCachedPageContent("primary");
+  const custom = pageData?.customStylesJson ? JSON.parse(pageData.customStylesJson) : {};
+
+  const badge = pageData?.heroBadge || "Foundational Stage";
+  const title = pageData?.heroTitle || "Primary Wing (Grades 1 to 5)";
+  const description =
+    pageData?.heroSubtitle ||
+    "Fostering academic confidence, conceptual clarity, and boundless creativity during the critical formative years.";
+
+  const ageGroup = custom.wingAgeGroup || "Ages 6 to 10 Years";
+  const headline = custom.wingHeadline || "Building Solid Intellectual & Moral Foundations";
+  const p1 =
+    custom.wingParagraph1 ||
+    "In the Primary Wing of CIS Mandi, education transitions into structured inquiry. Students are encouraged to experiment, ask probing questions, and understand the real-world application of concepts.";
+  const p2 =
+    custom.wingParagraph2 ||
+    "Our 4K interactive smart classrooms, well-stocked junior library, and dedicated outdoor activity periods ensure that every child develops both high cognitive aptitude and physical stamina.";
+  const ctaText = custom.wingCtaText || "Register for Grade 1-5 Admissions";
+  const ctaLink = custom.wingCtaLink || "/admissions/apply";
+  const heroImage =
+    pageData?.heroImage ||
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=80";
+
+  const defaultSubjects = [
     { name: "English Language Arts", desc: "Grammar, creative writing, public speaking, and reading comprehension" },
     { name: "Mathematics & Logic", desc: "Concept-first arithmetic, geometry, mental math, and Vedic tricks" },
     { name: "Environmental Studies (EVS)", desc: "Scientific curiosity, Himalayan flora & fauna, and conservation" },
@@ -18,13 +43,15 @@ export default function PrimaryPage() {
     { name: "Digital Coding & ICT", desc: "Block coding with Scratch, digital safety, and typing fluency" },
     { name: "Visual & Performing Arts", desc: "Sketching, Indian classical music, theater drama, and folk dance" },
   ];
+  const subjects: Array<{ name: string; desc: string }> =
+    Array.isArray(custom.primarySubjects) && custom.primarySubjects.length > 0 ? custom.primarySubjects : defaultSubjects;
 
   return (
     <div>
       <PageHeader
-        badge="Foundational Stage"
-        title="Primary Wing (Grades 1 to 5)"
-        description="Fostering academic confidence, conceptual clarity, and boundless creativity during the critical formative years."
+        badge={badge}
+        title={title}
+        description={description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Academics", href: "/academics" },
@@ -36,24 +63,24 @@ export default function PrimaryPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6 space-y-6">
             <span className="text-xs font-bold text-school-secondary uppercase tracking-wider">
-              Ages 6 to 10 Years
+              {ageGroup}
             </span>
             <h2 className="text-3xl font-extrabold text-school-primary dark:text-white">
-              Building Solid Intellectual & Moral Foundations
+              {headline}
             </h2>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              In the Primary Wing of CIS Mandi, education transitions into structured inquiry. Students are encouraged to experiment, ask probing questions, and understand the real-world application of concepts.
+              {p1}
             </p>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              Our 4K interactive smart classrooms, well-stocked junior library, and dedicated outdoor activity periods ensure that every child develops both high cognitive aptitude and physical stamina.
+              {p2}
             </p>
 
             <div className="pt-2">
               <Link
-                href="/admissions/apply"
+                href={ctaLink}
                 className="inline-flex items-center space-x-2 bg-school-secondary hover:bg-blue-700 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-md transition-all"
               >
-                <span>Register for Grade 1-5 Admissions</span>
+                <span>{ctaText}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -62,7 +89,7 @@ export default function PrimaryPage() {
           <div className="lg:col-span-6">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
               <img
-                src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=80"
+                src={heroImage}
                 alt="Primary Students"
                 className="w-full h-[380px] object-cover group-hover:scale-105 transition-transform duration-700"
               />

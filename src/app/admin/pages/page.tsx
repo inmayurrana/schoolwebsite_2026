@@ -166,7 +166,7 @@ export default function AdminPageEditor() {
               ...defaultPage,
               ...data.page,
               sections:
-                Array.isArray(data.page.sections) && data.page.sections.length > 0
+                Array.isArray(data.page.sections)
                   ? data.page.sections
                   : (defaultPage.sections || []),
               customStyles: {

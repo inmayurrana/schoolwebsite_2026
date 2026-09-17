@@ -2,14 +2,14 @@ import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import DynamicFormRenderer from "@/components/common/DynamicFormRenderer";
 import { getFormDefault } from "@/lib/formRegistry";
-import { prisma } from "@/lib/prisma";
+import { getCachedFormDefinition } from "@/lib/pageContentCache";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const defaultForm = getFormDefault(slug);
+  const form = await getCachedFormDefinition(slug);
   return {
-    title: `${defaultForm.title} | Cambridge International School, Mandi`,
-    description: defaultForm.description,
+    title: `${form.title} | Cambridge International School, Mandi`,
+    description: form.description,
   };
 }
 
@@ -19,38 +19,23 @@ export default async function GenericCustomFormPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const defaultForm = getFormDefault(slug);
-
-  let formTitle = defaultForm.title;
-  let formBadge = defaultForm.badge;
-  let formDesc = defaultForm.description;
-
-  try {
-    const dbForm = await prisma.formDefinition.findUnique({
-      where: { slug },
-    });
-    if (dbForm) {
-      if (dbForm.title) formTitle = dbForm.title;
-      if (dbForm.badge) formBadge = dbForm.badge;
-      if (dbForm.description) formDesc = dbForm.description;
-    }
-  } catch (_) {}
+  const form = await getCachedFormDefinition(slug);
 
   return (
     <div>
       <PageHeader
-        badge={formBadge || "Online Form"}
-        title={formTitle}
-        description={formDesc}
+        badge={form.badge || "Online Form"}
+        title={form.title}
+        description={form.description}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "Forms", href: "/admissions" },
-          { label: formTitle },
+          { label: form.title },
         ]}
       />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <DynamicFormRenderer formSlug={slug} />
+      <div className="w-full max-w-5xl 2xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <DynamicFormRenderer initialForm={form} formSlug={slug} />
       </div>
     </div>
   );
