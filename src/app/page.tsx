@@ -41,6 +41,7 @@ export default async function HomePage() {
   let chairmanData: any = null;
   let homeCustom: any = {};
   let homeSections: any[] = [];
+  let homePageData: any = null;
 
   try {
     const [news, events, achievements, albums, homePage, pPage, cPage, rawSettings] = await Promise.all([
@@ -72,6 +73,7 @@ export default async function HomePage() {
     eventsList = events;
     achievementsList = achievements;
     galleryAlbums = albums;
+    homePageData = homePage;
 
     if (Array.isArray(rawSettings)) {
       rawSettings.forEach((s) => {
@@ -122,7 +124,19 @@ export default async function HomePage() {
   return (
     <div className="space-y-0">
       {/* 1. Hero Section */}
-      <HeroSection />
+      <HeroSection
+        initialData={{
+          heroBadge: homePageData?.heroBadge || undefined,
+          heroTitle: homePageData?.heroTitle || undefined,
+          heroSubtitle: homePageData?.heroSubtitle || undefined,
+          heroImage: homePageData?.heroImage || undefined,
+          heroMediaType: homePageData?.heroMediaType || "VIDEO",
+          heroVideoUrl: homePageData?.heroVideoUrl || "https://youtu.be/slAltokCyL0",
+          heroOverlayOpacity: homePageData?.heroOverlayOpacity ?? 0.35,
+          heroCtaText: homePageData?.heroCtaText || undefined,
+          heroCtaLink: homePageData?.heroCtaLink || undefined,
+        }}
+      />
 
       {/* 2. Statistics Counter */}
       <StatsCounter />

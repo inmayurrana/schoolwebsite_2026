@@ -57,7 +57,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("ADMISSION");
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   const [heroData, setHeroData] = useState<HeroData>(
     initialData || {
@@ -120,37 +120,43 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
     loadDynamicHero();
   }, []);
 
-  // Request sound unmuting and high definition on YouTube iframe message
+  // Guarantee automatic background video playback on mount/load
   useEffect(() => {
     const youtubeId = extractYouTubeId(heroData.heroVideoUrl);
-    if (!youtubeId) return;
+    if (youtubeId) {
+      const sendPlay = () => {
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+            "*"
+          );
+        }
+      };
 
-    const unmuteTimer = setTimeout(() => {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "unMute", args: [] }),
-          "*"
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-          "*"
-        );
+      const timer1 = setTimeout(sendPlay, 500);
+      const timer2 = setTimeout(sendPlay, 1500);
+      const qualityTimer = setTimeout(() => {
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "setPlaybackQuality", args: ["hd1080"] }),
+            "*"
+          );
+        }
+      }, 2500);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(qualityTimer);
+      };
+    } else if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
       }
-    }, 1500);
-
-    const qualityTimer = setTimeout(() => {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setPlaybackQuality", args: ["hd1080"] }),
-          "*"
-        );
-      }
-    }, 2500);
-
-    return () => {
-      clearTimeout(unmuteTimer);
-      clearTimeout(qualityTimer);
-    };
+    }
   }, [heroData.heroVideoUrl]);
 
   const togglePlay = () => {
@@ -224,10 +230,17 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
             <iframe
               ref={iframeRef}
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=0&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
-              loading="lazy"
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
               title="Campus YouTube Hero Video in 1080p HD"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              onLoad={() => {
+                if (iframeRef.current && iframeRef.current.contentWindow) {
+                  iframeRef.current.contentWindow.postMessage(
+                    JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+                    "*"
+                  );
+                }
+              }}
               style={{
                 width: "100vw",
                 height: "56.25vw", // 16:9 aspect ratio
@@ -246,7 +259,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           /* Vimeo Full-HD Autoplay Stream */
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
             <iframe
-              src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=0&quality=1080p`}
+              src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&quality=1080p`}
               title="Campus Vimeo Hero Video in HD"
               allow="autoplay; fullscreen; picture-in-picture"
               style={{
@@ -269,7 +282,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               ref={videoRef}
               autoPlay
               loop
-              muted={isMuted}
+              muted
               playsInline
               preload="auto"
               poster={
