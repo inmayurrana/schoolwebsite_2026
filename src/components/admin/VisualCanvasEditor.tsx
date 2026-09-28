@@ -3093,43 +3093,95 @@ export default function VisualCanvasEditor({
                         setSelectedBlock({ type: "leadership" });
                         setActiveInspectorTab("leadership");
                       }}
-                      className="py-16 sm:py-20 px-6 sm:px-10 bg-[#f0f7ff]/50 dark:bg-[#071933] space-y-12"
+                      className={`py-16 sm:py-20 px-6 sm:px-10 bg-[#f0f7ff]/50 dark:bg-[#071933] space-y-12 transition-all cursor-pointer ${
+                        selectedBlock?.type === "leadership" ? "ring-2 ring-amber-500 ring-offset-2" : ""
+                      }`}
                     >
                       <div className="text-center max-w-3xl mx-auto space-y-3">
                         <div className="inline-flex items-center space-x-2 text-school-secondary font-bold text-xs uppercase tracking-wider glass-badge px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
                           <GraduationCap className="w-3.5 h-3.5" />
-                          <span>GUIDING VISION & LEADERSHIP</span>
+                          <input
+                            type="text"
+                            value={page.customStyles?.leadership_badge || "GUIDING VISION & LEADERSHIP"}
+                            onChange={(e) =>
+                              onChange({
+                                ...page,
+                                customStyles: {
+                                  ...page.customStyles,
+                                  leadership_badge: e.target.value,
+                                },
+                              })
+                            }
+                            className="bg-transparent focus:outline-none uppercase font-bold text-xs tracking-wider"
+                          />
                         </div>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-school-primary dark:text-white font-heading">
-                          Messages from Our Leadership
-                        </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Fostering an ecosystem of intellectual curiosity, character building, and Himalayan resilience.
-                        </p>
+                        <input
+                          type="text"
+                          value={page.customStyles?.leadership_title || "Messages from Our Leadership"}
+                          onChange={(e) =>
+                            onChange({
+                              ...page,
+                              customStyles: {
+                                ...page.customStyles,
+                                leadership_title: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full text-center text-3xl sm:text-4xl font-extrabold text-school-primary dark:text-white font-heading bg-transparent focus:outline-none"
+                        />
+                        <textarea
+                          rows={2}
+                          value={page.customStyles?.leadership_subtitle || "Fostering an ecosystem of intellectual curiosity, character building, and Himalayan resilience."}
+                          onChange={(e) =>
+                            onChange({
+                              ...page,
+                              customStyles: {
+                                ...page.customStyles,
+                                leadership_subtitle: e.target.value,
+                              },
+                            })
+                          }
+                          className="w-full text-center text-sm text-slate-600 dark:text-slate-400 bg-transparent focus:outline-none resize-none"
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
                         {/* Chairman Card */}
                         <div className="glass-panel bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl flex flex-col justify-between border border-slate-200 dark:border-slate-800 space-y-6 relative group/leader">
                           <div className="space-y-5">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-slate-800 relative group/img">
+                            <div className="flex items-center space-x-4 sm:space-x-5">
+                              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-400 shadow-xl flex-shrink-0 bg-slate-800 relative group/img flex items-center justify-center">
                                 <img
                                   src={chairmanImage}
                                   alt="Chairman"
-                                  className="w-full h-full object-cover object-top"
+                                  className="w-full h-full object-cover object-center"
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() => triggerImageUpload("chairman")}
-                                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-amber-400 text-[10px] font-bold cursor-pointer"
-                                >
-                                  Upload
-                                </button>
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      triggerImageUpload("chairman");
+                                    }}
+                                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer"
+                                  >
+                                    Upload
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowUrlModal({ type: "chairman", currentUrl: chairmanImage });
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer"
+                                  >
+                                    URL
+                                  </button>
+                                </div>
                               </div>
                               <div className="flex-1 space-y-0.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 block">
-                                  VISION 2030
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 block font-mono">
+                                  {page.customStyles?.chairmanTag || "VISION 2030"}
                                 </span>
                                 <input
                                   type="text"
@@ -3145,7 +3197,7 @@ export default function VisualCanvasEditor({
                                     })
                                   }
                                   placeholder="Chairman Full Name..."
-                                  className="w-full bg-transparent font-bold text-xl text-school-primary dark:text-white focus:outline-none"
+                                  className="w-full bg-transparent font-bold text-xl sm:text-2xl text-school-primary dark:text-white focus:outline-none"
                                 />
                                 <input
                                   type="text"
@@ -3161,7 +3213,23 @@ export default function VisualCanvasEditor({
                                     })
                                   }
                                   placeholder="Designation..."
-                                  className="w-full bg-transparent text-xs text-slate-500 focus:outline-none"
+                                  className="w-full bg-transparent text-xs sm:text-sm text-slate-500 focus:outline-none"
+                                />
+                                <input
+                                  type="text"
+                                  value={chairmanOrg}
+                                  onChange={(e) =>
+                                    onChange({
+                                      ...page,
+                                      customStyles: {
+                                        ...page.customStyles,
+                                        chairmanOrg: e.target.value,
+                                        authorOrg: e.target.value,
+                                      },
+                                    })
+                                  }
+                                  placeholder="Organization..."
+                                  className="w-full bg-transparent text-xs text-slate-400 focus:outline-none"
                                 />
                               </div>
                             </div>
@@ -3209,24 +3277,39 @@ export default function VisualCanvasEditor({
                         {/* Principal Card */}
                         <div className="glass-panel bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-2xl flex flex-col justify-between border border-slate-200 dark:border-slate-800 space-y-6 relative group/leader">
                           <div className="space-y-5">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-blue-400 shadow-md flex-shrink-0 bg-slate-800 relative group/img">
+                            <div className="flex items-center space-x-4 sm:space-x-5">
+                              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-blue-400 shadow-xl flex-shrink-0 bg-slate-800 relative group/img flex items-center justify-center">
                                 <img
                                   src={principalImage}
                                   alt="Principal"
-                                  className="w-full h-full object-cover object-top"
+                                  className="w-full h-full object-cover object-center"
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() => triggerImageUpload("principal")}
-                                  className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-blue-400 text-[10px] font-bold cursor-pointer"
-                                >
-                                  Upload
-                                </button>
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      triggerImageUpload("principal");
+                                    }}
+                                    className="bg-blue-500 hover:bg-blue-400 text-white text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer"
+                                  >
+                                    Upload
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowUrlModal({ type: "principal", currentUrl: principalImage });
+                                    }}
+                                    className="bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer"
+                                  >
+                                    URL
+                                  </button>
+                                </div>
                               </div>
                               <div className="flex-1 space-y-0.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 block">
-                                  ACADEMIC ETHOS
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 block font-mono">
+                                  {page.customStyles?.principalTag || "ACADEMIC ETHOS"}
                                 </span>
                                 <input
                                   type="text"
@@ -3242,7 +3325,7 @@ export default function VisualCanvasEditor({
                                     })
                                   }
                                   placeholder="Principal Full Name..."
-                                  className="w-full bg-transparent font-bold text-xl text-school-primary dark:text-white focus:outline-none"
+                                  className="w-full bg-transparent font-bold text-xl sm:text-2xl text-school-primary dark:text-white focus:outline-none"
                                 />
                                 <input
                                   type="text"
@@ -3258,7 +3341,23 @@ export default function VisualCanvasEditor({
                                     })
                                   }
                                   placeholder="Designation..."
-                                  className="w-full bg-transparent text-xs text-slate-500 focus:outline-none"
+                                  className="w-full bg-transparent text-xs sm:text-sm text-slate-500 focus:outline-none"
+                                />
+                                <input
+                                  type="text"
+                                  value={principalOrg}
+                                  onChange={(e) =>
+                                    onChange({
+                                      ...page,
+                                      customStyles: {
+                                        ...page.customStyles,
+                                        principalOrg: e.target.value,
+                                        authorOrg: e.target.value,
+                                      },
+                                    })
+                                  }
+                                  placeholder="Organization..."
+                                  className="w-full bg-transparent text-xs text-slate-400 focus:outline-none"
                                 />
                               </div>
                             </div>
@@ -8648,6 +8747,15 @@ export default function VisualCanvasEditor({
                 </button>
                 <button
                   type="button"
+                  onClick={() => setActiveInspectorTab("leadership")}
+                  className={`flex-1 py-1.5 rounded-lg font-bold text-center transition-all ${
+                    activeInspectorTab === "leadership" ? "bg-amber-400 text-slate-950" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Leadership
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveInspectorTab("wings")}
                   className={`flex-1 py-1.5 rounded-lg font-bold text-center transition-all ${
                     activeInspectorTab === "wings" ? "bg-amber-400 text-slate-950" : "text-slate-400 hover:text-white"
@@ -9425,6 +9533,492 @@ export default function VisualCanvasEditor({
                   }
                   className="w-full accent-amber-400"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* TAB: LEADERSHIP MESSAGES (FOR HOME PAGE) */}
+          {activeInspectorTab === "leadership" && isHomePage && (
+            <div className="space-y-4 text-xs">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
+                  🎓 Leadership Messages Studio
+                </span>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Customize the Chairman and Principal profiles, portrait photos, inspirational quotes, distinctions, and full messages.
+                </p>
+              </div>
+
+              {/* Section Header Controls */}
+              <div className="space-y-2 p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <span className="font-bold text-amber-400 block text-[11px]">Section Headers</span>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Badge</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.leadership_badge || "GUIDING VISION & LEADERSHIP"}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          leadership_badge: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Title</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.leadership_title || "Messages from Our Leadership"}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          leadership_title: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs font-bold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Subtitle</label>
+                  <textarea
+                    rows={2}
+                    value={page.customStyles?.leadership_subtitle || "Fostering an ecosystem of intellectual curiosity, character building, and Himalayan resilience."}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          leadership_subtitle: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Chairman Card Settings */}
+              <div className="space-y-3 p-3 bg-slate-950 rounded-xl border border-amber-500/30">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-amber-400 text-xs">🏛️ Chairman Profile</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 font-mono font-bold">Card 1</span>
+                </div>
+
+                <div className="flex items-center space-x-3 p-2 bg-slate-900 rounded-xl border border-slate-800">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-amber-400/40 bg-slate-800 flex-shrink-0 flex items-center justify-center">
+                    <img
+                      src={chairmanImage}
+                      alt="Chairman"
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Portrait Photo (Centered)</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageUpload("chairman")}
+                        className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg font-bold text-[10px] transition-colors"
+                      >
+                        Upload Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowUrlModal({ type: "chairman", currentUrl: chairmanImage })}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[10px] transition-colors"
+                      >
+                        Image URL
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Full Name</label>
+                  <input
+                    type="text"
+                    value={chairmanName}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          chairmanName: e.target.value,
+                          authorName: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs font-bold"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Designation / Title</label>
+                    <input
+                      type="text"
+                      value={chairmanTitle}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            chairmanTitle: e.target.value,
+                            authorTitle: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Card Tag</label>
+                    <input
+                      type="text"
+                      value={page.customStyles?.chairmanTag || "VISION 2030"}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            chairmanTag: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-amber-400 font-mono text-xs font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Organization / Trust</label>
+                  <input
+                    type="text"
+                    value={chairmanOrg}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          chairmanOrg: e.target.value,
+                          authorOrg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Inspirational Quote</label>
+                  <textarea
+                    rows={2}
+                    value={chairmanQuote}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          chairmanQuote: e.target.value,
+                          quote: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-amber-200 text-xs italic resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Homepage Message Excerpt</label>
+                  <textarea
+                    rows={4}
+                    value={chairmanMessageText}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          chairmanMessage: e.target.value,
+                          mainStory: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-slate-200 text-xs resize-y"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Distinction Badge 1</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Cambridge Trustee"
+                      value={page.customStyles?.chairmanBadge1 || ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            chairmanBadge1: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Distinction Badge 2</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 25+ Yrs Education"
+                      value={page.customStyles?.chairmanBadge2 || ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            chairmanBadge2: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Full Message Link</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.chairmanLink || "/about/chairman-message"}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          chairmanLink: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-blue-400 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Principal Card Settings */}
+              <div className="space-y-3 p-3 bg-slate-950 rounded-xl border border-blue-500/30">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-blue-400 text-xs">👩‍🏫 Principal Profile</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-blue-400/20 text-blue-300 font-mono font-bold">Card 2</span>
+                </div>
+
+                <div className="flex items-center space-x-3 p-2 bg-slate-900 rounded-xl border border-slate-800">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden border border-blue-400/40 bg-slate-800 flex-shrink-0 flex items-center justify-center">
+                    <img
+                      src={principalImage}
+                      alt="Principal"
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Portrait Photo (Centered)</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => triggerImageUpload("principal")}
+                        className="px-2.5 py-1 bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-bold text-[10px] transition-colors"
+                      >
+                        Upload Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowUrlModal({ type: "principal", currentUrl: principalImage })}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[10px] transition-colors"
+                      >
+                        Image URL
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Full Name</label>
+                  <input
+                    type="text"
+                    value={principalName}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          principalName: e.target.value,
+                          authorName: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs font-bold"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Designation / Title</label>
+                    <input
+                      type="text"
+                      value={principalTitle}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            principalTitle: e.target.value,
+                            authorTitle: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Card Tag</label>
+                    <input
+                      type="text"
+                      value={page.customStyles?.principalTag || "ACADEMIC ETHOS"}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            principalTag: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-blue-400 font-mono text-xs font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Organization / School</label>
+                  <input
+                    type="text"
+                    value={principalOrg}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          principalOrg: e.target.value,
+                          authorOrg: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-white text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Inspirational Quote</label>
+                  <textarea
+                    rows={2}
+                    value={principalQuote}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          principalQuote: e.target.value,
+                          quote: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-blue-200 text-xs italic resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Homepage Message Excerpt</label>
+                  <textarea
+                    rows={4}
+                    value={principalMessageText}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          principalMessage: e.target.value,
+                          mainStory: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800 text-slate-200 text-xs resize-y"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Distinction Badge 1</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. CBSE Academician"
+                      value={page.customStyles?.principalBadge1 || ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            principalBadge1: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-400">Distinction Badge 2</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Harvard Ed. Alumni"
+                      value={page.customStyles?.principalBadge2 || ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            principalBadge2: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-400">Full Message Link</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.principalLink || "/about/principal-message"}
+                    onChange={(e) =>
+                      onChange({
+                        ...page,
+                        customStyles: {
+                          ...page.customStyles,
+                          principalLink: e.target.value,
+                        },
+                      })
+                    }
+                    className="w-full bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-blue-400 text-xs"
+                  />
+                </div>
               </div>
             </div>
           )}

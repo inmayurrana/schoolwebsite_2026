@@ -682,5 +682,147 @@ div[class*="next-dev-tools"] {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* School Logo Shining & Border Light Animations */
+@keyframes logoShineSweep {
+  0% {
+    transform: translateX(-160%) rotate(25deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  45% {
+    transform: translateX(180%) rotate(25deg);
+    opacity: 1;
+  }
+  46%, 100% {
+    transform: translateX(180%) rotate(25deg);
+    opacity: 0;
+  }
+}
 
+@keyframes logoStarGleam {
+  0%, 100% {
+    transform: scale(0.7) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3) rotate(90deg);
+    opacity: 1;
+  }
+}
+
+@keyframes logoHoloPulse {
+  0%, 100% {
+    opacity: 0.15;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    opacity: 0.45;
+    filter: hue-rotate(90deg);
+  }
+}
+
+@keyframes logoLaserSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 6. Iridescent Prism / Holographic Foil Rainbow */
+@keyframes logoRainbowPrism {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg) saturate(1.4);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(180deg) saturate(1.8);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(360deg) saturate(1.4);
+  }
+}
+
+/* 7. Cyber Plasma Arc / Electric Lightning Pulse */
+@keyframes logoCyberArc {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(0.98);
+    box-shadow: 0 0 4px rgba(0, 242, 254, 0.3);
+  }
+  12% {
+    opacity: 0.95;
+    transform: scale(1.01);
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.9), 0 0 30px rgba(168, 85, 247, 0.7);
+  }
+  15% {
+    opacity: 0.3;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(0, 242, 254, 0.4);
+  }
+  18% {
+    opacity: 0.85;
+    transform: scale(1.01);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.8), 0 0 25px rgba(255, 255, 255, 0.9);
+  }
+  24%, 80% {
+    opacity: 0.15;
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(0, 242, 254, 0.3);
+  }
+  85% {
+    opacity: 0.9;
+    box-shadow: 0 0 18px rgba(168, 85, 247, 0.9), 0 0 35px rgba(0, 242, 254, 0.8);
+  }
+}
+
+/* 8. Meteor Comet Streak */
+@keyframes logoCometStreak {
+  0% {
+    transform: translateX(-180%) translateY(-30%) rotate(35deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    transform: translateX(200%) translateY(30%) rotate(35deg);
+    opacity: 1;
+  }
+  36%, 100% {
+    transform: translateX(200%) translateY(30%) rotate(35deg);
+    opacity: 0;
+  }
+}
+
+/* 9. Diamond Sparkle Glint */
+@keyframes logoDiamondGlint {
+  0%, 100% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  30%, 70% {
+    transform: scale(1.4) rotate(90deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 12px rgba(245, 158, 11, 0.8));
+  }
+}
+
+/* 10. Molten Aurora Flow */
+@keyframes logoAuroraFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 

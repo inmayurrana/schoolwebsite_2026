@@ -287,6 +287,39 @@ export default function Navbar() {
   const logoMode = siteSettings.header_logo_mode || themeConfig?.logoMode || "IMAGE_ONLY";
   const logoHeight = parseInt(siteSettings.header_logo_height) || themeConfig?.logoHeight || 48;
 
+  // School Logo Border Light & Celestial Shining Settings
+  const logoBorderLightEnabled = siteSettings.header_logo_border_light_enabled === "true";
+  const logoBorderColor = siteSettings.header_logo_border_color || "#F59E0B";
+  const logoBorderWidth = parseFloat(siteSettings.header_logo_border_width) || 2;
+  const logoLightStyle = siteSettings.header_logo_light_style || "glow";
+  const logoGlowIntensity = siteSettings.header_logo_glow_intensity || "vibrant";
+  const logoBgContainer = siteSettings.header_logo_bg_container || "TRANSPARENT";
+  const logoBorderRadius = siteSettings.header_logo_border_radius || "rounded-xl";
+  const logoShineEnabled = siteSettings.header_logo_shine_enabled === "true";
+  const logoShineStyle = siteSettings.header_logo_shine_style || "sweep";
+  const logoShineSpeed = siteSettings.header_logo_shine_speed || "normal";
+
+  // Compute Shadow Bloom for School Logo
+  let logoShadow = "none";
+  if (logoBorderLightEnabled && logoLightStyle !== "laser-border" && logoLightStyle !== "orbit-beam") {
+    const op1 = logoGlowIntensity === "soft" ? "66" : logoGlowIntensity === "medium" ? "99" : "dd";
+    const op2 = logoGlowIntensity === "soft" ? "33" : logoGlowIntensity === "medium" ? "66" : "aa";
+    if (logoLightStyle === "neon") {
+      logoShadow = `0 0 10px ${logoBorderColor}${op1}, inset 0 0 6px ${logoBorderColor}${op2}`;
+    } else if (logoLightStyle === "dual") {
+      logoShadow = `0 0 0 1.5px #ffffff, 0 0 14px ${logoBorderColor}${op1}, inset 0 0 4px ${logoBorderColor}${op2}`;
+    } else if (logoLightStyle === "plasma-halo") {
+      logoShadow = `0 0 4px #ffffff, 0 0 16px ${logoBorderColor}, 0 0 32px ${logoBorderColor}aa, inset 0 0 8px ${logoBorderColor}77`;
+    } else if (logoLightStyle === "crystal-glass") {
+      logoShadow = `inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.7), 0 4px 16px 0 ${logoBorderColor}55`;
+    } else if (logoLightStyle === "subtle") {
+      logoShadow = `0 0 6px ${logoBorderColor}${op2}`;
+    } else {
+      // default radiant glow
+      logoShadow = `0 0 12px ${logoBorderColor}${op1}, 0 0 24px ${logoBorderColor}${op2}, inset 0 0 4px ${logoBorderColor}${op2}`;
+    }
+  }
+
   // Reset imgError when logoUrl changes
   useEffect(() => {
     setImgError(false);
@@ -413,22 +446,391 @@ export default function Navbar() {
               aria-label="Cambridge International School Mandi Homepage"
             >
               {showImageOnly ? (
-                <img
-                  src={logoUrl!}
-                  alt="Cambridge International School, Mandi"
-                  style={{ maxHeight: `${Math.min(logoHeight, 56)}px` }}
-                  onError={() => setImgError(true)}
-                  className="w-auto max-w-[190px] sm:max-w-xs object-contain max-h-12 sm:max-h-16 group-hover:scale-105 transition-transform"
-                />
-              ) : showImageAndText ? (
-                <>
+                <div
+                  className={`relative inline-flex items-center justify-center overflow-hidden transition-all duration-300 ${
+                    logoBgContainer === "WHITE_CONTAINER"
+                      ? "bg-white/95 px-3 py-1.5 shadow-sm"
+                      : logoBgContainer === "GLASS_CONTAINER"
+                      ? "bg-white/10 dark:bg-white/5 backdrop-blur-md px-3 py-1.5"
+                      : logoBgContainer === "NAVY_CONTAINER"
+                      ? "bg-[#0A2540] px-3 py-1.5"
+                      : "bg-transparent p-0.5"
+                  } ${logoBorderRadius}`}
+                  style={{
+                    border:
+                      logoBorderLightEnabled && logoLightStyle !== "laser-border"
+                        ? `${logoBorderWidth}px solid ${logoBorderColor}`
+                        : "none",
+                    boxShadow: logoBorderLightEnabled ? logoShadow : "none",
+                  }}
+                >
+                  {/* Laser / Orbit Border FX */}
+                  {logoBorderLightEnabled && logoLightStyle === "laser-border" && (
+                    <div className="absolute -inset-[2.5px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                      <div
+                        className="absolute -inset-[100%] w-[300%] h-[300%]"
+                        style={{
+                          background: `conic-gradient(from 0deg, transparent 0deg, ${logoBorderColor} 60deg, #ffffff 120deg, ${logoBorderColor} 180deg, transparent 240deg)`,
+                          animation: "logoLaserSpin 3.5s linear infinite",
+                        }}
+                      />
+                    </div>
+                  )}
+                  {logoBorderLightEnabled && logoLightStyle === "orbit-beam" && (
+                    <div className="absolute -inset-[2px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                      <div
+                        className="absolute -inset-[100%] w-[300%] h-[300%]"
+                        style={{
+                          background: `conic-gradient(from 0deg, transparent 0deg, transparent 280deg, ${logoBorderColor} 330deg, #ffffff 360deg)`,
+                          animation: "logoLaserSpin 2.0s linear infinite",
+                        }}
+                      />
+                    </div>
+                  )}
+
                   <img
                     src={logoUrl!}
-                    alt="Cambridge Logo"
-                    style={{ height: `${logoHeight}px` }}
+                    alt="Cambridge International School, Mandi"
+                    style={{ maxHeight: `${Math.min(logoHeight, 64)}px` }}
                     onError={() => setImgError(true)}
-                    className="w-auto object-contain max-h-14 group-hover:scale-105 transition-transform"
+                    className="w-auto max-w-[210px] sm:max-w-xs object-contain group-hover:scale-105 transition-transform relative z-10"
                   />
+
+                  {/* Shining Effects Layer */}
+                  {logoShineEnabled && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-20">
+                      {logoShineStyle === "sweep" && (
+                        <div
+                          className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none transform -skew-x-25"
+                          style={{
+                            animation: `logoShineSweep ${
+                              logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 6 : 4
+                            }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                          }}
+                        />
+                      )}
+                      {logoShineStyle === "gold" && (
+                        <div
+                          className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-amber-300/85 to-transparent pointer-events-none transform -skew-x-25"
+                          style={{
+                            animation: `logoShineSweep ${
+                              logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 6 : 4
+                            }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                          }}
+                        />
+                      )}
+                      {logoShineStyle === "rainbow" && (
+                        <div
+                          className="absolute inset-0 mix-blend-color-dodge opacity-60 pointer-events-none"
+                          style={{
+                            background:
+                              "linear-gradient(115deg, transparent 15%, rgba(255,0,128,0.45) 25%, rgba(0,242,254,0.55) 45%, rgba(255,230,0,0.65) 55%, rgba(168,85,247,0.55) 70%, transparent 85%)",
+                            backgroundSize: "200% 200%",
+                            animation: `logoRainbowPrism ${
+                              logoShineSpeed === "fast" ? 3 : logoShineSpeed === "gentle" ? 7 : 4.5
+                            }s ease-in-out infinite`,
+                          }}
+                        />
+                      )}
+                      {logoShineStyle === "cyber-arc" && (
+                        <div
+                          className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                          style={{
+                            border: `1.5px solid #00F2FE`,
+                            animation: `logoCyberArc ${
+                              logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 5 : 3.5
+                            }s ease-in-out infinite`,
+                          }}
+                        >
+                          <div className="absolute top-0 left-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#00F2FE]" />
+                          <div className="absolute bottom-0 right-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#A855F7]" />
+                        </div>
+                      )}
+                      {logoShineStyle === "star" && (
+                        <>
+                          <div
+                            className="absolute top-1 right-2 pointer-events-none z-30"
+                            style={{ animation: `logoStarGleam 2.2s ease-in-out infinite alternate` }}
+                          >
+                            <div className="relative flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#ffffff]" />
+                              <div className="absolute w-5 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                              <div className="absolute h-5 w-[1.5px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                              <div className="absolute w-3 h-[1px] bg-amber-300 transform rotate-45" />
+                              <div className="absolute w-3 h-[1px] bg-amber-300 transform -rotate-45" />
+                            </div>
+                          </div>
+                          <div
+                            className="absolute bottom-1 left-3 pointer-events-none z-30"
+                            style={{ animation: `logoStarGleam 2.8s ease-in-out 0.8s infinite alternate` }}
+                          >
+                            <div className="relative flex items-center justify-center">
+                              <div className="w-1 h-1 rounded-full bg-white shadow-[0_0_6px_#ffffff]" />
+                              <div className="absolute w-4 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                              <div className="absolute h-4 w-[1px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      {logoShineStyle === "meteor" && (
+                        <div
+                          className="absolute -top-6 -left-12 w-28 h-40 pointer-events-none overflow-hidden z-30"
+                          style={{
+                            animation: `logoCometStreak ${
+                              logoShineSpeed === "fast" ? 2 : logoShineSpeed === "gentle" ? 5 : 3.2
+                            }s cubic-bezier(0.25, 1, 0.5, 1) infinite`,
+                          }}
+                        >
+                          <div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_14px_#ffffff,0_0_24px_#F59E0B]" />
+                          <div className="h-0.5 w-24 bg-gradient-to-r from-white via-amber-300 to-transparent -translate-y-1.5" />
+                        </div>
+                      )}
+                      {logoShineStyle === "diamond" && (
+                        <>
+                          <div
+                            className="absolute top-1/2 left-1/3 -translate-y-1/2 w-4 h-4 flex items-center justify-center pointer-events-none z-30"
+                            style={{
+                              animation: `logoDiamondGlint ${
+                                logoShineSpeed === "fast" ? 2.2 : logoShineSpeed === "gentle" ? 4.5 : 3.0
+                              }s ease-in-out infinite`,
+                            }}
+                          >
+                            <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#ffffff]" />
+                            <div className="absolute w-5 h-0.5 bg-gradient-to-r from-transparent via-white to-transparent" />
+                            <div className="absolute h-5 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent" />
+                          </div>
+                          <div
+                            className="absolute top-1/3 right-1/4 w-3.5 h-3.5 flex items-center justify-center pointer-events-none z-30"
+                            style={{
+                              animation: `logoDiamondGlint ${
+                                logoShineSpeed === "fast" ? 2.6 : logoShineSpeed === "gentle" ? 5.0 : 3.6
+                              }s ease-in-out 1.2s infinite`,
+                            }}
+                          >
+                            <div className="w-1 h-1 bg-amber-200 rounded-full shadow-[0_0_8px_#F59E0B]" />
+                            <div className="absolute w-4 h-0.5 bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
+                            <div className="absolute h-4 w-0.5 bg-gradient-to-b from-transparent via-amber-200 to-transparent" />
+                          </div>
+                        </>
+                      )}
+                      {logoShineStyle === "aurora" && (
+                        <div
+                          className="absolute inset-0 pointer-events-none mix-blend-screen opacity-50"
+                          style={{
+                            background:
+                              "linear-gradient(120deg, rgba(16,185,129,0.35), rgba(0,242,254,0.45), rgba(168,85,247,0.35), rgba(245,158,11,0.35))",
+                            backgroundSize: "250% 250%",
+                            animation: `logoAuroraFlow ${
+                              logoShineSpeed === "fast" ? 3 : logoShineSpeed === "gentle" ? 8 : 5
+                            }s ease-in-out infinite`,
+                          }}
+                        />
+                      )}
+                      {logoShineStyle === "pulse" && (
+                        <div
+                          className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-amber-300/30 to-purple-400/20 mix-blend-overlay pointer-events-none"
+                          style={{
+                            animation: `logoHoloPulse ${
+                              logoShineSpeed === "fast" ? 2.2 : logoShineSpeed === "gentle" ? 5 : 3.5
+                            }s ease-in-out infinite alternate`,
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : showImageAndText ? (
+                <>
+                  <div
+                    className={`relative inline-flex items-center justify-center overflow-hidden transition-all duration-300 ${
+                      logoBgContainer === "WHITE_CONTAINER"
+                        ? "bg-white/95 px-2 py-1 shadow-sm"
+                        : logoBgContainer === "GLASS_CONTAINER"
+                        ? "bg-white/10 dark:bg-white/5 backdrop-blur-md px-2 py-1"
+                        : logoBgContainer === "NAVY_CONTAINER"
+                        ? "bg-[#0A2540] px-2 py-1"
+                        : "bg-transparent p-0.5"
+                    } ${logoBorderRadius}`}
+                    style={{
+                      border:
+                        logoBorderLightEnabled && logoLightStyle !== "laser-border" && logoLightStyle !== "orbit-beam"
+                          ? `${logoBorderWidth}px solid ${logoBorderColor}`
+                          : "none",
+                      boxShadow: logoBorderLightEnabled ? logoShadow : "none",
+                    }}
+                  >
+                    {logoBorderLightEnabled && logoLightStyle === "laser-border" && (
+                      <div className="absolute -inset-[2.5px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                        <div
+                          className="absolute -inset-[100%] w-[300%] h-[300%]"
+                          style={{
+                            background: `conic-gradient(from 0deg, transparent 0deg, ${logoBorderColor} 60deg, #ffffff 120deg, ${logoBorderColor} 180deg, transparent 240deg)`,
+                            animation: "logoLaserSpin 3.5s linear infinite",
+                          }}
+                        />
+                      </div>
+                    )}
+                    {logoBorderLightEnabled && logoLightStyle === "orbit-beam" && (
+                      <div className="absolute -inset-[2px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                        <div
+                          className="absolute -inset-[100%] w-[300%] h-[300%]"
+                          style={{
+                            background: `conic-gradient(from 0deg, transparent 0deg, transparent 280deg, ${logoBorderColor} 330deg, #ffffff 360deg)`,
+                            animation: "logoLaserSpin 2.0s linear infinite",
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <img
+                      src={logoUrl!}
+                      alt="Cambridge Logo"
+                      style={{ height: `${logoHeight}px` }}
+                      onError={() => setImgError(true)}
+                      className="w-auto object-contain max-h-16 group-hover:scale-105 transition-transform relative z-10"
+                    />
+
+                    {logoShineEnabled && (
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-20">
+                        {logoShineStyle === "sweep" && (
+                          <div
+                            className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none transform -skew-x-25"
+                            style={{
+                              animation: `logoShineSweep ${
+                                logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 6 : 4
+                              }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                            }}
+                          />
+                        )}
+                        {logoShineStyle === "gold" && (
+                          <div
+                            className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-amber-300/85 to-transparent pointer-events-none transform -skew-x-25"
+                            style={{
+                              animation: `logoShineSweep ${
+                                logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 6 : 4
+                              }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                            }}
+                          />
+                        )}
+                        {logoShineStyle === "rainbow" && (
+                          <div
+                            className="absolute inset-0 mix-blend-color-dodge opacity-60 pointer-events-none"
+                            style={{
+                              background:
+                                "linear-gradient(115deg, transparent 15%, rgba(255,0,128,0.45) 25%, rgba(0,242,254,0.55) 45%, rgba(255,230,0,0.65) 55%, rgba(168,85,247,0.55) 70%, transparent 85%)",
+                              backgroundSize: "200% 200%",
+                              animation: `logoRainbowPrism ${
+                                logoShineSpeed === "fast" ? 3 : logoShineSpeed === "gentle" ? 7 : 4.5
+                              }s ease-in-out infinite`,
+                            }}
+                          />
+                        )}
+                        {logoShineStyle === "cyber-arc" && (
+                          <div
+                            className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                            style={{
+                              border: `1.5px solid #00F2FE`,
+                              animation: `logoCyberArc ${
+                                logoShineSpeed === "fast" ? 2.5 : logoShineSpeed === "gentle" ? 5 : 3.5
+                              }s ease-in-out infinite`,
+                            }}
+                          >
+                            <div className="absolute top-0 left-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#00F2FE]" />
+                            <div className="absolute bottom-0 right-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#A855F7]" />
+                          </div>
+                        )}
+                        {logoShineStyle === "star" && (
+                          <>
+                            <div
+                              className="absolute top-1 right-2 pointer-events-none z-30"
+                              style={{ animation: `logoStarGleam 2.2s ease-in-out infinite alternate` }}
+                            >
+                              <div className="relative flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#ffffff]" />
+                                <div className="absolute w-5 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                                <div className="absolute h-5 w-[1.5px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                              </div>
+                            </div>
+                            <div
+                              className="absolute bottom-1 left-2 pointer-events-none z-30"
+                              style={{ animation: `logoStarGleam 2.8s ease-in-out 0.8s infinite alternate` }}
+                            >
+                              <div className="relative flex items-center justify-center">
+                                <div className="w-1 h-1 rounded-full bg-white shadow-[0_0_6px_#ffffff]" />
+                                <div className="absolute w-4 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                                <div className="absolute h-4 w-[1px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {logoShineStyle === "meteor" && (
+                          <div
+                            className="absolute -top-6 -left-12 w-28 h-40 pointer-events-none overflow-hidden z-30"
+                            style={{
+                              animation: `logoCometStreak ${
+                                logoShineSpeed === "fast" ? 2 : logoShineSpeed === "gentle" ? 5 : 3.2
+                              }s cubic-bezier(0.25, 1, 0.5, 1) infinite`,
+                            }}
+                          >
+                            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_14px_#ffffff,0_0_24px_#F59E0B]" />
+                            <div className="h-0.5 w-24 bg-gradient-to-r from-white via-amber-300 to-transparent -translate-y-1.5" />
+                          </div>
+                        )}
+                        {logoShineStyle === "diamond" && (
+                          <>
+                            <div
+                              className="absolute top-1/2 left-1/3 -translate-y-1/2 w-4 h-4 flex items-center justify-center pointer-events-none z-30"
+                              style={{
+                                animation: `logoDiamondGlint ${
+                                  logoShineSpeed === "fast" ? 2.2 : logoShineSpeed === "gentle" ? 4.5 : 3.0
+                                }s ease-in-out infinite`,
+                              }}
+                            >
+                              <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#ffffff]" />
+                              <div className="absolute w-5 h-0.5 bg-gradient-to-r from-transparent via-white to-transparent" />
+                              <div className="absolute h-5 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent" />
+                            </div>
+                            <div
+                              className="absolute top-1/3 right-1/4 w-3.5 h-3.5 flex items-center justify-center pointer-events-none z-30"
+                              style={{
+                                animation: `logoDiamondGlint ${
+                                  logoShineSpeed === "fast" ? 2.6 : logoShineSpeed === "gentle" ? 5.0 : 3.6
+                                }s ease-in-out 1.2s infinite`,
+                              }}
+                            >
+                              <div className="w-1 h-1 bg-amber-200 rounded-full shadow-[0_0_8px_#F59E0B]" />
+                              <div className="absolute w-4 h-0.5 bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
+                              <div className="absolute h-4 w-0.5 bg-gradient-to-b from-transparent via-amber-200 to-transparent" />
+                            </div>
+                          </>
+                        )}
+                        {logoShineStyle === "aurora" && (
+                          <div
+                            className="absolute inset-0 pointer-events-none mix-blend-screen opacity-50"
+                            style={{
+                              background:
+                                "linear-gradient(120deg, rgba(16,185,129,0.35), rgba(0,242,254,0.45), rgba(168,85,247,0.35), rgba(245,158,11,0.35))",
+                              backgroundSize: "250% 250%",
+                              animation: `logoAuroraFlow ${
+                                logoShineSpeed === "fast" ? 3 : logoShineSpeed === "gentle" ? 8 : 5
+                              }s ease-in-out infinite`,
+                            }}
+                          />
+                        )}
+                        {logoShineStyle === "pulse" && (
+                          <div
+                            className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-amber-300/30 to-purple-400/20 mix-blend-overlay pointer-events-none"
+                            style={{
+                              animation: `logoHoloPulse ${
+                                logoShineSpeed === "fast" ? 2.2 : logoShineSpeed === "gentle" ? 5 : 3.5
+                              }s ease-in-out infinite alternate`,
+                            }}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex flex-col">
                     <span className="font-heading font-extrabold text-lg sm:text-xl text-school-primary dark:text-white leading-tight tracking-tight whitespace-nowrap">
                       {siteSettings.header_brand_title || "CAMBRIDGE"}
@@ -443,8 +845,24 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-school-primary to-school-secondary flex items-center justify-center text-amber-400 shadow-lg group-hover:scale-105 transition-transform border border-amber-400/40 flex-shrink-0">
-                    <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <div
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-school-primary to-school-secondary flex items-center justify-center text-amber-400 shadow-lg group-hover:scale-105 transition-transform border border-amber-400/40 flex-shrink-0 relative overflow-hidden`}
+                    style={{
+                      boxShadow: logoBorderLightEnabled ? logoShadow : undefined,
+                    }}
+                  >
+                    <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 relative z-10" />
+
+                    {logoShineEnabled && (
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-20">
+                        <div
+                          className="absolute top-0 bottom-0 w-[60%] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none transform -skew-x-25"
+                          style={{
+                            animation: `logoShineSweep 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-heading font-extrabold text-base sm:text-lg text-school-primary dark:text-white leading-tight tracking-tight whitespace-nowrap">

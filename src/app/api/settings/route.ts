@@ -72,6 +72,7 @@ export async function POST(req: Request) {
                   "favicon_glow_intensity",
                   "favicon_bg_color",
                   "favicon_shape",
+                  "favicon_icon_scale",
                 ],
               },
             },
@@ -87,6 +88,7 @@ export async function POST(req: Request) {
             glowIntensity: (favMap["favicon_glow_intensity"] as any) || "vibrant",
             bgColor: favMap["favicon_bg_color"] || "#0A2540",
             shape: (favMap["favicon_shape"] as any) || "rounded",
+            iconScale: favMap["favicon_icon_scale"] ? parseFloat(favMap["favicon_icon_scale"]) : 0.72,
           });
         } catch (favErr) {
           console.error("Failed to auto-write favicon to public:", favErr);

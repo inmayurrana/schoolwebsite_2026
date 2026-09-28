@@ -17,11 +17,20 @@ export interface LeaderProfile {
 }
 
 interface LeadershipMessagesProps {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
   chairman?: Partial<LeaderProfile> | null;
   principal?: Partial<LeaderProfile> | null;
 }
 
-export default function LeadershipMessages({ chairman, principal }: LeadershipMessagesProps) {
+export default function LeadershipMessages({
+  badge,
+  title,
+  subtitle,
+  chairman,
+  principal,
+}: LeadershipMessagesProps) {
   const chairmanData: LeaderProfile = {
     name: chairman?.name || "Sh. Bhim Singh Jamwal",
     title: chairman?.title || "Chairman & Managing Trustee",
@@ -70,13 +79,13 @@ export default function LeadershipMessages({ chairman, principal }: LeadershipMe
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
           <div className="inline-flex items-center space-x-2 text-school-secondary font-bold text-xs uppercase tracking-wider glass-badge px-4 py-1.5 rounded-full">
             <GraduationCap className="w-3.5 h-3.5 text-school-secondary" />
-            <span>Guiding Vision & Leadership</span>
+            <span>{badge || "Guiding Vision & Leadership"}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-school-primary dark:text-white">
-            Messages from Our Leadership
+            {title || "Messages from Our Leadership"}
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Fostering an ecosystem of intellectual curiosity, character building, and Himalayan resilience.
+            {subtitle || "Fostering an ecosystem of intellectual curiosity, character building, and Himalayan resilience."}
           </p>
         </div>
 
@@ -88,22 +97,22 @@ export default function LeadershipMessages({ chairman, principal }: LeadershipMe
 
             <div className="space-y-6">
               {/* Leader Profile Header */}
-              <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-md flex-shrink-0 bg-slate-800">
+              <div className="flex items-center space-x-4 sm:space-x-5">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-400 shadow-xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
                   <img
                     src={chairmanData.image}
                     alt={`Chairman ${chairmanData.name}`}
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-center"
                   />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-school-primary dark:text-white">
+                <div className="space-y-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-school-primary dark:text-white">
                     {chairmanData.name}
                   </h3>
-                  <p className="text-xs font-semibold text-school-secondary uppercase tracking-wider">
+                  <p className="text-xs sm:text-sm font-semibold text-school-secondary uppercase tracking-wider">
                     {chairmanData.title}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{chairmanData.org}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{chairmanData.org}</p>
                 </div>
               </div>
 
@@ -155,22 +164,22 @@ export default function LeadershipMessages({ chairman, principal }: LeadershipMe
 
             <div className="space-y-6">
               {/* Leader Profile Header */}
-              <div className="flex items-center space-x-4">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-school-secondary shadow-md flex-shrink-0 bg-slate-800">
+              <div className="flex items-center space-x-4 sm:space-x-5">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-school-secondary shadow-xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
                   <img
                     src={principalData.image}
                     alt={`Principal ${principalData.name}`}
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-cover object-center"
                   />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-school-primary dark:text-white">
+                <div className="space-y-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-school-primary dark:text-white">
                     {principalData.name}
                   </h3>
-                  <p className="text-xs font-semibold text-school-secondary uppercase tracking-wider">
+                  <p className="text-xs sm:text-sm font-semibold text-school-secondary uppercase tracking-wider">
                     {principalData.title}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{principalData.org}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{principalData.org}</p>
                 </div>
               </div>
 

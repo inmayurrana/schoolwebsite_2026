@@ -206,20 +206,28 @@ export default function Footer() {
             <Link href="/" className="inline-flex items-center space-x-3 group cursor-pointer" aria-label="Cambridge Mandi Homepage">
               {footerLogoUrl ? (
                 <div
-                  className={
+                  className={`relative overflow-hidden inline-flex items-center group-hover:scale-105 transition-transform ${
                     footerLogoContainer === "WHITE_CONTAINER"
-                      ? "bg-white px-3.5 py-1.5 rounded-xl shadow-md inline-flex items-center group-hover:scale-105 transition-transform"
+                      ? "bg-white px-3.5 py-1.5 rounded-xl shadow-md"
                       : footerLogoContainer === "GLASS_CONTAINER"
-                      ? "bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20 inline-flex items-center group-hover:scale-105 transition-transform"
-                      : "inline-flex items-center group-hover:scale-105 transition-transform"
-                  }
+                      ? "bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20"
+                      : "inline-flex items-center"
+                  }`}
                 >
                   <img
                     src={footerLogoUrl}
                     alt="Cambridge International School, Mandi"
                     style={{ height: `${footerLogoHeight}px` }}
-                    className="w-auto object-contain max-h-20"
+                    className="w-auto object-contain max-h-20 relative z-10"
                   />
+                  {siteSettings.header_logo_shine_enabled === "true" && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-20">
+                      <div
+                        className="absolute top-0 bottom-0 w-[50%] bg-gradient-to-r from-transparent via-white/70 to-transparent pointer-events-none transform -skew-x-25"
+                        style={{ animation: "logoShineSweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite" }}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-school-secondary flex items-center justify-center text-amber-400 shadow-xl border border-amber-400/30 group-hover:scale-105 transition-transform">

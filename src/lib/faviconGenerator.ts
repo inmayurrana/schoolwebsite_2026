@@ -12,6 +12,7 @@ export interface FaviconOptions {
   bgColor?: string;
   shape?: "rounded" | "circle" | "square";
   size?: number;
+  iconScale?: number; // 0.35 to 1.0 (e.g. 0.75 = 75% of tab plate)
 }
 
 export async function generateFaviconBuffer(options: FaviconOptions): Promise<Buffer> {
@@ -147,7 +148,14 @@ export async function generateFaviconBuffer(options: FaviconOptions): Promise<Bu
 
   // If source icon exists, composite it inside
   if (fs.existsSync(resolvedFilePath)) {
-    const iconSize = Math.floor(size * 0.72);
+    let scale = options.iconScale !== undefined ? options.iconScale : 0.72;
+    // Normalize if passed as percentage (e.g. 72 instead of 0.72)
+    if (scale > 1.0) {
+      scale = scale / 100;
+    }
+    scale = Math.max(0.3, Math.min(1.0, scale));
+
+    const iconSize = Math.max(8, Math.floor(size * scale));
     const innerLogoBuffer = await sharp(resolvedFilePath)
       .resize(iconSize, iconSize, {
         fit: "contain",

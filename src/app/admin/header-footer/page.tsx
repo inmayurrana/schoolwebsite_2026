@@ -40,6 +40,9 @@ import {
   Sun,
   Moon,
   Zap,
+  Maximize2,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 
 interface NavChildItem {
@@ -259,12 +262,30 @@ export default function AdminHeaderFooterStudio() {
   const [faviconLightEffect, setFaviconLightEffect] = useState(true);
   const [faviconBorderColor, setFaviconBorderColor] = useState("#F59E0B"); // default imperial amber/gold
   const [faviconBorderWidth, setFaviconBorderWidth] = useState(2.5);
+  const [faviconIconScale, setFaviconIconScale] = useState(72); // 40% to 100% inner icon size
   const [faviconLightStyle, setFaviconLightStyle] = useState<"glow" | "neon" | "dual" | "subtle">("glow");
   const [faviconGlowIntensity, setFaviconGlowIntensity] = useState<"soft" | "medium" | "vibrant">("vibrant");
   const [faviconBgColor, setFaviconBgColor] = useState("#0A2540"); // Cambridge Navy
   const [faviconShape, setFaviconShape] = useState<"rounded" | "circle" | "square">("rounded");
   const [savingFaviconInstant, setSavingFaviconInstant] = useState(false);
   const [faviconSavedSuccess, setFaviconSavedSuccess] = useState(false);
+
+  // School Logo Border Light & Celestial Shining Suite State
+  const [headerLogoBorderLightEnabled, setHeaderLogoBorderLightEnabled] = useState(false);
+  const [headerLogoBorderColor, setHeaderLogoBorderColor] = useState("#F59E0B");
+  const [headerLogoBorderWidth, setHeaderLogoBorderWidth] = useState(2);
+  const [headerLogoBorderRadius, setHeaderLogoBorderRadius] = useState("rounded-xl");
+  const [headerLogoLightStyle, setHeaderLogoLightStyle] = useState<
+    "glow" | "neon" | "dual" | "laser-border" | "orbit-beam" | "plasma-halo" | "crystal-glass" | "subtle"
+  >("glow");
+  const [headerLogoGlowIntensity, setHeaderLogoGlowIntensity] = useState<"soft" | "medium" | "vibrant">("vibrant");
+  const [headerLogoBgContainer, setHeaderLogoBgContainer] = useState<"WHITE_CONTAINER" | "GLASS_CONTAINER" | "NAVY_CONTAINER" | "TRANSPARENT">("TRANSPARENT");
+  const [headerLogoShineEnabled, setHeaderLogoShineEnabled] = useState(true);
+  const [headerLogoShineStyle, setHeaderLogoShineStyle] = useState<
+    "sweep" | "gold" | "rainbow" | "cyber-arc" | "star" | "meteor" | "diamond" | "aurora" | "pulse"
+  >("sweep");
+  const [headerLogoShineSpeed, setHeaderLogoShineSpeed] = useState<"fast" | "normal" | "gentle">("normal");
+  const [logoPreviewBg, setLogoPreviewBg] = useState<"light" | "dark">("dark");
 
   const [navLinks, setNavLinks] = useState<NavItem[]>(DEFAULT_NAV_LINKS);
   const [headerButtons, setHeaderButtons] = useState<HeaderButton[]>(DEFAULT_HEADER_BUTTONS);
@@ -325,10 +346,23 @@ export default function AdminHeaderFooterStudio() {
             if (map.favicon_light_effect_enabled !== undefined) setFaviconLightEffect(map.favicon_light_effect_enabled === "true");
             if (map.favicon_border_color) setFaviconBorderColor(map.favicon_border_color);
             if (map.favicon_border_width) setFaviconBorderWidth(parseFloat(map.favicon_border_width) || 2.5);
+            if (map.favicon_icon_scale) setFaviconIconScale(parseInt(map.favicon_icon_scale) || 72);
             if (map.favicon_light_style) setFaviconLightStyle(map.favicon_light_style as any);
             if (map.favicon_glow_intensity) setFaviconGlowIntensity(map.favicon_glow_intensity as any);
             if (map.favicon_bg_color) setFaviconBgColor(map.favicon_bg_color);
             if (map.favicon_shape) setFaviconShape(map.favicon_shape as any);
+
+            // School Logo Border Light & Shining settings
+            if (map.header_logo_border_light_enabled !== undefined) setHeaderLogoBorderLightEnabled(map.header_logo_border_light_enabled === "true");
+            if (map.header_logo_border_color) setHeaderLogoBorderColor(map.header_logo_border_color);
+            if (map.header_logo_border_width) setHeaderLogoBorderWidth(parseFloat(map.header_logo_border_width) || 2);
+            if (map.header_logo_border_radius) setHeaderLogoBorderRadius(map.header_logo_border_radius);
+            if (map.header_logo_light_style) setHeaderLogoLightStyle(map.header_logo_light_style as any);
+            if (map.header_logo_glow_intensity) setHeaderLogoGlowIntensity(map.header_logo_glow_intensity as any);
+            if (map.header_logo_bg_container) setHeaderLogoBgContainer(map.header_logo_bg_container as any);
+            if (map.header_logo_shine_enabled !== undefined) setHeaderLogoShineEnabled(map.header_logo_shine_enabled === "true");
+            if (map.header_logo_shine_style) setHeaderLogoShineStyle(map.header_logo_shine_style as any);
+            if (map.header_logo_shine_speed) setHeaderLogoShineSpeed(map.header_logo_shine_speed as any);
 
             // Separate Footer Logo settings
             if (map.footer_logo_url) setFooterLogoUrl(map.footer_logo_url);
@@ -458,6 +492,7 @@ export default function AdminHeaderFooterStudio() {
         { key: "favicon_light_effect_enabled", value: faviconLightEffect ? "true" : "false", category: "HEADER" },
         { key: "favicon_border_color", value: faviconBorderColor, category: "HEADER" },
         { key: "favicon_border_width", value: faviconBorderWidth.toString(), category: "HEADER" },
+        { key: "favicon_icon_scale", value: faviconIconScale.toString(), category: "HEADER" },
         { key: "favicon_light_style", value: faviconLightStyle, category: "HEADER" },
         { key: "favicon_glow_intensity", value: faviconGlowIntensity, category: "HEADER" },
         { key: "favicon_bg_color", value: faviconBgColor, category: "HEADER" },
@@ -496,10 +531,21 @@ export default function AdminHeaderFooterStudio() {
       { key: "header_logo_url", value: headerLogoUrl, category: "HEADER" },
       { key: "header_logo_mode", value: headerLogoMode, category: "HEADER" },
       { key: "header_logo_height", value: headerLogoHeight.toString(), category: "HEADER" },
+      { key: "header_logo_border_light_enabled", value: headerLogoBorderLightEnabled ? "true" : "false", category: "HEADER" },
+      { key: "header_logo_border_color", value: headerLogoBorderColor, category: "HEADER" },
+      { key: "header_logo_border_width", value: headerLogoBorderWidth.toString(), category: "HEADER" },
+      { key: "header_logo_border_radius", value: headerLogoBorderRadius, category: "HEADER" },
+      { key: "header_logo_light_style", value: headerLogoLightStyle, category: "HEADER" },
+      { key: "header_logo_glow_intensity", value: headerLogoGlowIntensity, category: "HEADER" },
+      { key: "header_logo_bg_container", value: headerLogoBgContainer, category: "HEADER" },
+      { key: "header_logo_shine_enabled", value: headerLogoShineEnabled ? "true" : "false", category: "HEADER" },
+      { key: "header_logo_shine_style", value: headerLogoShineStyle, category: "HEADER" },
+      { key: "header_logo_shine_speed", value: headerLogoShineSpeed, category: "HEADER" },
       { key: "site_favicon_url", value: siteFaviconUrl, category: "HEADER" },
       { key: "favicon_light_effect_enabled", value: faviconLightEffect ? "true" : "false", category: "HEADER" },
       { key: "favicon_border_color", value: faviconBorderColor, category: "HEADER" },
       { key: "favicon_border_width", value: faviconBorderWidth.toString(), category: "HEADER" },
+      { key: "favicon_icon_scale", value: faviconIconScale.toString(), category: "HEADER" },
       { key: "favicon_light_style", value: faviconLightStyle, category: "HEADER" },
       { key: "favicon_glow_intensity", value: faviconGlowIntensity, category: "HEADER" },
       { key: "favicon_bg_color", value: faviconBgColor, category: "HEADER" },
@@ -883,32 +929,565 @@ export default function AdminHeaderFooterStudio() {
                   />
                 </div>
 
-                <div className="flex items-center space-x-4 pt-1">
-                  <div className="flex-1">
-                    <label className="text-[10px] text-slate-400 block mb-1">
-                      Header Logo Display Height ({headerLogoHeight}px)
+                {/* Logo Height & Sizing Steppers */}
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                      <span>School Logo Size (Height)</span>
                     </label>
+
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setHeaderLogoHeight((prev) => Math.max(28, prev - 4))}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer"
+                        title="Decrease Logo Size"
+                      >
+                        − 4px
+                      </button>
+                      <span className="text-xs font-mono font-bold text-amber-300 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/30">
+                        {headerLogoHeight}px
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setHeaderLogoHeight((prev) => Math.min(100, prev + 4))}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer"
+                        title="Increase Logo Size"
+                      >
+                        + 4px
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <span className="text-[10px] text-slate-400">30px</span>
                     <input
                       type="range"
                       min="30"
                       max="100"
                       value={headerLogoHeight}
                       onChange={(e) => setHeaderLogoHeight(parseInt(e.target.value) || 50)}
-                      className="w-full accent-amber-400"
+                      className="flex-1 accent-amber-400 h-2 bg-slate-800 rounded-lg cursor-pointer"
                     />
+                    <span className="text-[10px] text-slate-400">100px</span>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] text-slate-400 block mb-1">Logo Mode</label>
-                    <select
-                      value={headerLogoMode}
-                      onChange={(e: any) => setHeaderLogoMode(e.target.value)}
-                      className="bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700"
+                  {/* Logo Size Presets */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] text-slate-400 font-medium">Quick Sizes:</span>
+                    {[
+                      { label: "Compact", val: 38 },
+                      { label: "Standard", val: 48 },
+                      { label: "Large", val: 58 },
+                      { label: "Prominent", val: 70 },
+                      { label: "Hero", val: 84 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setHeaderLogoHeight(preset.val)}
+                        className={`px-2 py-0.5 text-[10px] font-bold rounded-md border transition-all cursor-pointer ${
+                          headerLogoHeight === preset.val
+                            ? "bg-amber-400 text-slate-950 border-amber-400 font-black"
+                            : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750"
+                        }`}
+                      >
+                        {preset.label} ({preset.val}px)
+                      </button>
+                    ))}
+
+                    <div className="ml-auto">
+                      <select
+                        value={headerLogoMode}
+                        onChange={(e: any) => setHeaderLogoMode(e.target.value)}
+                        className="bg-slate-900 text-white text-xs px-2.5 py-1 rounded-lg border border-slate-700 font-bold cursor-pointer"
+                      >
+                        <option value="IMAGE_ONLY">Image Only</option>
+                        <option value="IMAGE_AND_TEXT">Image + School Text</option>
+                        <option value="TEXT_AND_ICON">Graduation Icon + Text</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SCHOOL LOGO BORDER LIGHT & CELESTIAL SHINING SUITE */}
+                <div className="mt-4 p-4 bg-slate-950/90 rounded-2xl border border-slate-800 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="p-2 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/30">
+                        <Sparkles className="w-4 h-4 fill-current" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">School Logo: Border Light & Shining Effects</h3>
+                        <p className="text-[11px] text-slate-400">
+                          Add a radiant luminous border and continuous animated specular shine sweep across the school logo.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <label className="cursor-pointer inline-flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-bold">
+                        <input
+                          type="checkbox"
+                          checked={headerLogoBorderLightEnabled}
+                          onChange={(e) => setHeaderLogoBorderLightEnabled(e.target.checked)}
+                          className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                        />
+                        <span className={headerLogoBorderLightEnabled ? "text-amber-400" : "text-slate-400"}>
+                          Border Light: {headerLogoBorderLightEnabled ? "ON" : "OFF"}
+                        </span>
+                      </label>
+
+                      <label className="cursor-pointer inline-flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-bold">
+                        <input
+                          type="checkbox"
+                          checked={headerLogoShineEnabled}
+                          onChange={(e) => setHeaderLogoShineEnabled(e.target.checked)}
+                          className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                        />
+                        <span className={headerLogoShineEnabled ? "text-amber-400" : "text-slate-400"}>
+                          Shine Effect: {headerLogoShineEnabled ? "ON" : "OFF"}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Real-time School Logo Interactive Preview */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+                      <span className="flex items-center space-x-1.5">
+                        <Eye className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Interactive Real-Time Logo Preview</span>
+                      </span>
+                      <div className="flex items-center space-x-1 bg-slate-900 p-0.5 rounded-lg border border-slate-700 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => setLogoPreviewBg("light")}
+                          className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                            logoPreviewBg === "light" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Light Header
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLogoPreviewBg("dark")}
+                          className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                            logoPreviewBg === "dark" ? "bg-slate-800 text-amber-400 shadow-sm" : "text-slate-400 hover:text-white"
+                          }`}
+                        >
+                          Dark Header
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`p-6 rounded-2xl border transition-colors flex items-center justify-center min-h-[110px] relative overflow-hidden ${
+                        logoPreviewBg === "light"
+                          ? "bg-gradient-to-r from-slate-100 via-white to-slate-100 border-slate-300"
+                          : "bg-gradient-to-r from-[#030816] via-[#051329] to-[#030816] border-slate-800"
+                      }`}
                     >
-                      <option value="IMAGE_ONLY">Image Only</option>
-                      <option value="IMAGE_AND_TEXT">Image + School Text</option>
-                      <option value="TEXT_AND_ICON">Graduation Icon + Text</option>
-                    </select>
+                      {/* Logo Container Preview */}
+                      <div
+                        className={`relative inline-flex items-center justify-center overflow-hidden transition-all duration-300 ${
+                          headerLogoBgContainer === "WHITE_CONTAINER"
+                            ? "bg-white px-3 py-1.5 shadow-md"
+                            : headerLogoBgContainer === "GLASS_CONTAINER"
+                            ? logoPreviewBg === "light" ? "bg-white/40 backdrop-blur-md px-3 py-1.5 border border-white/60 shadow-sm" : "bg-white/10 backdrop-blur-md px-3 py-1.5 border border-white/20"
+                            : headerLogoBgContainer === "NAVY_CONTAINER"
+                            ? "bg-[#0A2540] px-3 py-1.5 shadow-md"
+                            : "bg-transparent p-0.5"
+                        } ${headerLogoBorderRadius}`}
+                        style={{
+                          border:
+                            headerLogoBorderLightEnabled &&
+                            headerLogoLightStyle !== "laser-border" &&
+                            headerLogoLightStyle !== "orbit-beam"
+                              ? `${headerLogoBorderWidth}px solid ${headerLogoBorderColor}`
+                              : "none",
+                          boxShadow: headerLogoBorderLightEnabled
+                            ? headerLogoLightStyle === "neon"
+                              ? `0 0 10px ${headerLogoBorderColor}, inset 0 0 6px ${headerLogoBorderColor}`
+                              : headerLogoLightStyle === "dual"
+                              ? `0 0 0 1.5px #ffffff, 0 0 14px ${headerLogoBorderColor}, inset 0 0 4px ${headerLogoBorderColor}`
+                              : headerLogoLightStyle === "plasma-halo"
+                              ? `0 0 4px #ffffff, 0 0 16px ${headerLogoBorderColor}, 0 0 32px ${headerLogoBorderColor}aa, inset 0 0 8px ${headerLogoBorderColor}77`
+                              : headerLogoLightStyle === "crystal-glass"
+                              ? `inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.7), 0 4px 16px 0 ${headerLogoBorderColor}55`
+                              : headerLogoLightStyle === "subtle"
+                              ? `0 0 6px ${headerLogoBorderColor}`
+                              : `0 0 12px ${headerLogoBorderColor}, 0 0 24px ${headerLogoBorderColor}88, inset 0 0 4px ${headerLogoBorderColor}77`
+                            : "none",
+                        }}
+                      >
+                        {/* Laser / Orbit Border FX */}
+                        {headerLogoBorderLightEnabled && headerLogoLightStyle === "laser-border" && (
+                          <div className="absolute -inset-[2.5px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                            <div
+                              className="absolute -inset-[100%] w-[300%] h-[300%]"
+                              style={{
+                                background: `conic-gradient(from 0deg, transparent 0deg, ${headerLogoBorderColor} 60deg, #ffffff 120deg, ${headerLogoBorderColor} 180deg, transparent 240deg)`,
+                                animation: "logoLaserSpin 3.5s linear infinite",
+                              }}
+                            />
+                          </div>
+                        )}
+                        {headerLogoBorderLightEnabled && headerLogoLightStyle === "orbit-beam" && (
+                          <div className="absolute -inset-[2px] rounded-[inherit] overflow-hidden pointer-events-none -z-10">
+                            <div
+                              className="absolute -inset-[100%] w-[300%] h-[300%]"
+                              style={{
+                                background: `conic-gradient(from 0deg, transparent 0deg, transparent 280deg, ${headerLogoBorderColor} 330deg, #ffffff 360deg)`,
+                                animation: "logoLaserSpin 2.0s linear infinite",
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {headerLogoUrl ? (
+                          <img
+                            src={headerLogoUrl}
+                            alt="School Logo"
+                            style={{ height: `${headerLogoHeight}px` }}
+                            className="w-auto object-contain max-h-24 relative z-10"
+                          />
+                        ) : (
+                          <div className="flex items-center space-x-2 text-amber-400 p-2">
+                            <GraduationCap className="w-8 h-8" />
+                            <span className="font-heading font-black text-lg">CAMBRIDGE</span>
+                          </div>
+                        )}
+
+                        {/* Animated Shining Effect Layer */}
+                        {headerLogoShineEnabled && (
+                          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[inherit] z-20">
+                            {headerLogoShineStyle === "sweep" && (
+                              <div
+                                className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none transform -skew-x-25"
+                                style={{
+                                  animation: `logoShineSweep ${
+                                    headerLogoShineSpeed === "fast" ? 2.5 : headerLogoShineSpeed === "gentle" ? 6 : 4
+                                  }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                                }}
+                              />
+                            )}
+                            {headerLogoShineStyle === "gold" && (
+                              <div
+                                className="absolute top-0 bottom-0 w-[55%] bg-gradient-to-r from-transparent via-amber-300/85 to-transparent pointer-events-none transform -skew-x-25"
+                                style={{
+                                  animation: `logoShineSweep ${
+                                    headerLogoShineSpeed === "fast" ? 2.5 : headerLogoShineSpeed === "gentle" ? 6 : 4
+                                  }s cubic-bezier(0.4, 0, 0.2, 1) infinite`,
+                                }}
+                              />
+                            )}
+                            {headerLogoShineStyle === "rainbow" && (
+                              <div
+                                className="absolute inset-0 mix-blend-color-dodge opacity-60 pointer-events-none"
+                                style={{
+                                  background:
+                                    "linear-gradient(115deg, transparent 15%, rgba(255,0,128,0.45) 25%, rgba(0,242,254,0.55) 45%, rgba(255,230,0,0.65) 55%, rgba(168,85,247,0.55) 70%, transparent 85%)",
+                                  backgroundSize: "200% 200%",
+                                  animation: `logoRainbowPrism ${
+                                    headerLogoShineSpeed === "fast" ? 3 : headerLogoShineSpeed === "gentle" ? 7 : 4.5
+                                  }s ease-in-out infinite`,
+                                }}
+                              />
+                            )}
+                            {headerLogoShineStyle === "cyber-arc" && (
+                              <div
+                                className="absolute inset-0 rounded-[inherit] pointer-events-none"
+                                style={{
+                                  border: `1.5px solid #00F2FE`,
+                                  animation: `logoCyberArc ${
+                                    headerLogoShineSpeed === "fast" ? 2.5 : headerLogoShineSpeed === "gentle" ? 5 : 3.5
+                                  }s ease-in-out infinite`,
+                                }}
+                              >
+                                <div className="absolute top-0 left-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#00F2FE]" />
+                                <div className="absolute bottom-0 right-1/4 w-3.5 h-[2px] bg-white shadow-[0_0_10px_#A855F7]" />
+                              </div>
+                            )}
+                            {headerLogoShineStyle === "star" && (
+                              <>
+                                <div
+                                  className="absolute top-1 right-2 pointer-events-none z-30"
+                                  style={{ animation: `logoStarGleam 2.2s ease-in-out infinite alternate` }}
+                                >
+                                  <div className="relative flex items-center justify-center">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#ffffff]" />
+                                    <div className="absolute w-5 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                                    <div className="absolute h-5 w-[1.5px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                                    <div className="absolute w-3 h-[1px] bg-amber-300 transform rotate-45" />
+                                    <div className="absolute w-3 h-[1px] bg-amber-300 transform -rotate-45" />
+                                  </div>
+                                </div>
+                                <div
+                                  className="absolute bottom-1 left-3 pointer-events-none z-30"
+                                  style={{ animation: `logoStarGleam 2.8s ease-in-out 0.8s infinite alternate` }}
+                                >
+                                  <div className="relative flex items-center justify-center">
+                                    <div className="w-1 h-1 rounded-full bg-white shadow-[0_0_6px_#ffffff]" />
+                                    <div className="absolute w-4 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent" />
+                                    <div className="absolute h-4 w-[1px] bg-gradient-to-b from-transparent via-white to-transparent" />
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            {headerLogoShineStyle === "meteor" && (
+                              <div
+                                className="absolute -top-6 -left-12 w-28 h-40 pointer-events-none overflow-hidden z-30"
+                                style={{
+                                  animation: `logoCometStreak ${
+                                    headerLogoShineSpeed === "fast" ? 2 : headerLogoShineSpeed === "gentle" ? 5 : 3.2
+                                  }s cubic-bezier(0.25, 1, 0.5, 1) infinite`,
+                                }}
+                              >
+                                <div className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_14px_#ffffff,0_0_24px_#F59E0B]" />
+                                <div className="h-0.5 w-24 bg-gradient-to-r from-white via-amber-300 to-transparent -translate-y-1.5" />
+                              </div>
+                            )}
+                            {headerLogoShineStyle === "diamond" && (
+                              <>
+                                <div
+                                  className="absolute top-1/2 left-1/3 -translate-y-1/2 w-4 h-4 flex items-center justify-center pointer-events-none z-30"
+                                  style={{
+                                    animation: `logoDiamondGlint ${
+                                      headerLogoShineSpeed === "fast" ? 2.2 : headerLogoShineSpeed === "gentle" ? 4.5 : 3.0
+                                    }s ease-in-out infinite`,
+                                  }}
+                                >
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#ffffff]" />
+                                  <div className="absolute w-5 h-0.5 bg-gradient-to-r from-transparent via-white to-transparent" />
+                                  <div className="absolute h-5 w-0.5 bg-gradient-to-b from-transparent via-white to-transparent" />
+                                </div>
+                                <div
+                                  className="absolute top-1/3 right-1/4 w-3.5 h-3.5 flex items-center justify-center pointer-events-none z-30"
+                                  style={{
+                                    animation: `logoDiamondGlint ${
+                                      headerLogoShineSpeed === "fast" ? 2.6 : headerLogoShineSpeed === "gentle" ? 5.0 : 3.6
+                                    }s ease-in-out 1.2s infinite`,
+                                  }}
+                                >
+                                  <div className="w-1 h-1 bg-amber-200 rounded-full shadow-[0_0_8px_#F59E0B]" />
+                                  <div className="absolute w-4 h-0.5 bg-gradient-to-r from-transparent via-amber-200 to-transparent" />
+                                  <div className="absolute h-4 w-0.5 bg-gradient-to-b from-transparent via-amber-200 to-transparent" />
+                                </div>
+                              </>
+                            )}
+                            {headerLogoShineStyle === "aurora" && (
+                              <div
+                                className="absolute inset-0 pointer-events-none mix-blend-screen opacity-50"
+                                style={{
+                                  background:
+                                    "linear-gradient(120deg, rgba(16,185,129,0.35), rgba(0,242,254,0.45), rgba(168,85,247,0.35), rgba(245,158,11,0.35))",
+                                  backgroundSize: "250% 250%",
+                                  animation: `logoAuroraFlow ${
+                                    headerLogoShineSpeed === "fast" ? 3 : headerLogoShineSpeed === "gentle" ? 8 : 5
+                                  }s ease-in-out infinite`,
+                                }}
+                              />
+                            )}
+                            {headerLogoShineStyle === "pulse" && (
+                              <div
+                                className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 via-amber-300/30 to-purple-400/20 mix-blend-overlay pointer-events-none"
+                                style={{
+                                  animation: `logoHoloPulse ${
+                                    headerLogoShineSpeed === "fast" ? 2.2 : headerLogoShineSpeed === "gentle" ? 5 : 3.5
+                                  }s ease-in-out infinite alternate`,
+                                }}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Controls Grid: Border Light Colors & Shine Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                    {/* Column 1: Border Light Customization */}
+                    <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                          <Palette className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Logo Border Light Palette:</span>
+                        </label>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => setHeaderLogoBorderWidth((prev) => Math.max(1, +(prev - 0.5).toFixed(1)))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded border border-slate-700 text-xs"
+                            title="Decrease border width"
+                          >
+                            −
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-slate-300 px-1">
+                            {headerLogoBorderWidth}px
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setHeaderLogoBorderWidth((prev) => Math.min(6, +(prev + 0.5).toFixed(1)))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded border border-slate-700 text-xs"
+                            title="Increase border width"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { name: "Gold", hex: "#F59E0B" },
+                          { name: "Cyan", hex: "#00F2FE" },
+                          { name: "Blue", hex: "#3B82F6" },
+                          { name: "Emerald", hex: "#10B981" },
+                          { name: "Purple", hex: "#A855F7" },
+                          { name: "Rose", hex: "#F43F5E" },
+                          { name: "White", hex: "#FFFFFF" },
+                          { name: "Orange", hex: "#FF8C00" },
+                        ].map((c) => {
+                          const isSelected = headerLogoBorderColor.toLowerCase() === c.hex.toLowerCase();
+                          return (
+                            <button
+                              key={c.hex}
+                              type="button"
+                              onClick={() => {
+                                setHeaderLogoBorderColor(c.hex);
+                                setHeaderLogoBorderLightEnabled(true);
+                              }}
+                              className={`p-2 rounded-lg border text-center flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-slate-800 border-amber-400 shadow-md scale-[1.04]"
+                                  : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                              }`}
+                            >
+                              <div
+                                style={{ backgroundColor: c.hex, boxShadow: `0 0 6px ${c.hex}` }}
+                                className="w-3.5 h-3.5 rounded-full flex-shrink-0 border border-white/30"
+                              />
+                              <span className={`text-[10px] font-bold ${isSelected ? "text-white" : "text-slate-300"}`}>
+                                {c.name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-1">Border Light Style</label>
+                          <select
+                            value={headerLogoLightStyle}
+                            onChange={(e) => setHeaderLogoLightStyle(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="glow">🌟 Radiant Bloom</option>
+                            <option value="orbit-beam">🚀 Orbiting Photon Beam</option>
+                            <option value="laser-border">🌀 Spinning Laser Border</option>
+                            <option value="plasma-halo">🔥 Plasma Halo (Dual Layer)</option>
+                            <option value="crystal-glass">💎 3D Crystal Beveled Edge</option>
+                            <option value="neon">⚡ Laser Neon Edge</option>
+                            <option value="dual">💫 Dual Ring Aura</option>
+                            <option value="subtle">💡 Clean Accent</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-1">Container Plate</label>
+                          <select
+                            value={headerLogoBgContainer}
+                            onChange={(e) => setHeaderLogoBgContainer(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="TRANSPARENT">🔲 Transparent</option>
+                            <option value="WHITE_CONTAINER">⚪ Crisp White Plate</option>
+                            <option value="GLASS_CONTAINER">🧊 Frosted Glass</option>
+                            <option value="NAVY_CONTAINER">🏛️ Cambridge Navy</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 2: Shining Effects Suite */}
+                    <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                          <Zap className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Logo Celestial Shining Style:</span>
+                        </label>
+                        <span className="text-[10px] text-amber-400 font-bold">
+                          {headerLogoShineEnabled ? "✨ Active" : "Disabled"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {[
+                          { id: "sweep", label: "✨ Liquid Silver", desc: "Gloss Light Sweep" },
+                          { id: "gold", label: "👑 Royal Gold", desc: "Golden Shimmer Glare" },
+                          { id: "rainbow", label: "🌈 Iridescent Prism", desc: "Holographic Spectrum" },
+                          { id: "cyber-arc", label: "⚡ Cyber Arc", desc: "Lightning Pulse" },
+                          { id: "star", label: "⭐ Starlight Cosmos", desc: "Tri-Star Gleam" },
+                          { id: "meteor", label: "☄️ Meteor Streak", desc: "Cosmic Flare" },
+                          { id: "diamond", label: "💎 Diamond Sparkle", desc: "Crystalline Glint" },
+                          { id: "aurora", label: "🌌 Molten Aurora", desc: "Liquid Cosmic Wave" },
+                          { id: "pulse", label: "🔮 Holo Pulse", desc: "Breathing Aura" },
+                        ].map((s) => {
+                          const isSelected = headerLogoShineStyle === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => {
+                                setHeaderLogoShineStyle(s.id as any);
+                                setHeaderLogoShineEnabled(true);
+                              }}
+                              className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-slate-800 border-amber-400 shadow-md scale-[1.02]"
+                                  : "bg-slate-900 border-slate-800 hover:border-slate-700"
+                              }`}
+                            >
+                              <span className={`text-[11px] font-bold block truncate ${isSelected ? "text-amber-300" : "text-slate-200"}`}>
+                                {s.label}
+                              </span>
+                              <span className="text-[9px] text-slate-400 block truncate">{s.desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-1">Shine Speed</label>
+                          <select
+                            value={headerLogoShineSpeed}
+                            onChange={(e) => setHeaderLogoShineSpeed(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="fast">⚡ Fast (2.5s)</option>
+                            <option value="normal">⏱️ Normal (4.0s)</option>
+                            <option value="gentle">🍃 Gentle (6.0s)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-slate-400 block mb-1">Corner Radius</label>
+                          <select
+                            value={headerLogoBorderRadius}
+                            onChange={(e) => setHeaderLogoBorderRadius(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            <option value="rounded-xl">Rounded XL (14px)</option>
+                            <option value="rounded-2xl">Rounded 2XL (20px)</option>
+                            <option value="rounded-full">Pill / Capsule</option>
+                            <option value="rounded-lg">Sleek Rounded (8px)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1025,7 +1604,11 @@ export default function AdminHeaderFooterStudio() {
                           <img
                             src={siteFaviconUrl}
                             alt="Tab Favicon"
-                            className="w-3.5 h-3.5 object-contain"
+                            style={{
+                              width: `${Math.max(8, Math.round(18 * (faviconIconScale / 100)))}px`,
+                              height: `${Math.max(8, Math.round(18 * (faviconIconScale / 100)))}px`,
+                            }}
+                            className="object-contain transition-all duration-200"
                           />
                         ) : (
                           <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -1082,7 +1665,11 @@ export default function AdminHeaderFooterStudio() {
                           <img
                             src={siteFaviconUrl}
                             alt="Tab Favicon"
-                            className="w-3.5 h-3.5 object-contain"
+                            style={{
+                              width: `${Math.max(8, Math.round(18 * (faviconIconScale / 100)))}px`,
+                              height: `${Math.max(8, Math.round(18 * (faviconIconScale / 100)))}px`,
+                            }}
+                            className="object-contain transition-all duration-200"
                           />
                         ) : (
                           <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -1164,7 +1751,11 @@ export default function AdminHeaderFooterStudio() {
                             <img
                               src={siteFaviconUrl}
                               alt="Active Tab Favicon"
-                              className="w-11 h-11 object-contain"
+                              style={{
+                                width: `${Math.max(20, Math.round(68 * (faviconIconScale / 100)))}px`,
+                                height: `${Math.max(20, Math.round(68 * (faviconIconScale / 100)))}px`,
+                              }}
+                              className="object-contain transition-all duration-200"
                             />
                           ) : (
                             <Globe className="w-10 h-10 text-slate-400" />
@@ -1178,6 +1769,50 @@ export default function AdminHeaderFooterStudio() {
                           <span className="text-[10px] text-slate-400 font-medium block">
                             Active Icon & Glowing Border
                           </span>
+                        </div>
+
+                        {/* Interactive Tab Icon Size Stepper & Slider directly on Spotlight Card */}
+                        <div className="w-full pt-3 mt-1 border-t border-slate-800/80 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-300 font-bold flex items-center gap-1.5">
+                              <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+                              <span>Icon Size:</span>
+                            </span>
+                            <span className="font-mono text-amber-300 font-bold bg-amber-400/15 px-2.5 py-0.5 rounded-lg border border-amber-400/30 text-xs">
+                              {faviconIconScale}%
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setFaviconIconScale((prev) => Math.max(35, prev - 5))}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-400 font-black rounded-lg border border-slate-700 text-xs transition-all cursor-pointer flex items-center justify-center gap-1"
+                              title="Decrease Tab Icon Size (-5%)"
+                            >
+                              <ZoomOut className="w-3 h-3" />
+                              <span>− 5%</span>
+                            </button>
+                            <input
+                              type="range"
+                              min="35"
+                              max="100"
+                              step="1"
+                              value={faviconIconScale}
+                              onChange={(e) => setFaviconIconScale(parseInt(e.target.value) || 72)}
+                              className="flex-1 accent-amber-400 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                              title={`Current Tab Icon Size: ${faviconIconScale}%`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setFaviconIconScale((prev) => Math.min(100, prev + 5))}
+                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-400 font-black rounded-lg border border-slate-700 text-xs transition-all cursor-pointer flex items-center justify-center gap-1"
+                              title="Increase Tab Icon Size (+5%)"
+                            >
+                              <span>+ 5%</span>
+                              <ZoomIn className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1257,9 +1892,9 @@ export default function AdminHeaderFooterStudio() {
                     </div>
                   </div>
 
-                  {/* Row 2: Contrast Plate, Light Style, Glow Intensity & Border Width */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-800/80">
-                    {/* Plate Background (Crucial for white icons!) */}
+                  {/* Row 2: Contrast Plate, Light Style, Glow Intensity, Shape & Size Controls */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-3 border-t border-slate-800/80">
+                    {/* Plate Background */}
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-300 block">
                         Icon Background Plate
@@ -1345,10 +1980,235 @@ export default function AdminHeaderFooterStudio() {
                           </button>
                         ))}
                       </div>
-                      <span className="text-[10px] text-slate-400 block">
-                        Border width: {faviconBorderWidth}px
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-slate-400">Border width:</span>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => setFaviconBorderWidth((prev) => Math.max(1, +(prev - 0.5).toFixed(1)))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded border border-slate-700 text-[10px] cursor-pointer"
+                            title="Decrease border width"
+                          >
+                            −
+                          </button>
+                          <span className="text-[10px] font-mono font-bold text-white px-1">
+                            {faviconBorderWidth}px
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setFaviconBorderWidth((prev) => Math.min(6, +(prev + 0.5).toFixed(1)))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded border border-slate-700 text-[10px] cursor-pointer"
+                            title="Increase border width"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Column 5: Tab Icon Scale / Size */}
+                    <div className="space-y-1.5 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800 flex flex-col justify-between">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-amber-300 flex items-center space-x-1">
+                          <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Tab Icon Size</span>
+                        </label>
+                        <span className="text-[11px] font-mono font-bold text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded border border-amber-400/40">
+                          {faviconIconScale}%
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.max(35, prev - 5))}
+                          className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs cursor-pointer flex items-center justify-center gap-1 transition-all"
+                          title="Decrease size (-5%)"
+                        >
+                          <ZoomOut className="w-3 h-3" />
+                          <span>− 5%</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.min(100, prev + 5))}
+                          className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs cursor-pointer flex items-center justify-center gap-1 transition-all"
+                          title="Increase size (+5%)"
+                        >
+                          <span>+ 5%</span>
+                          <ZoomIn className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <input
+                        type="range"
+                        min="35"
+                        max="100"
+                        step="1"
+                        value={faviconIconScale}
+                        onChange={(e) => setFaviconIconScale(parseInt(e.target.value) || 72)}
+                        className="w-full accent-amber-400 h-1.5 bg-slate-800 rounded cursor-pointer mt-1"
+                      />
+                      <span className="text-[9px] text-slate-400 block truncate">
+                        Inner logo size proportion
                       </span>
                     </div>
+                  </div>
+
+                  {/* Row 3: Tab Icon Inner Size Scaling Studio (Increase / Decrease) */}
+                  <div className="p-4 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 rounded-2xl border border-amber-400/30 space-y-3 mt-4 shadow-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                      <div className="flex items-center space-x-2">
+                        <div className="p-1.5 bg-amber-400/10 text-amber-400 rounded-lg border border-amber-400/20">
+                          <Maximize2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-white block">
+                            Tab Icon Inner Size Scaling (Increase / Decrease)
+                          </label>
+                          <p className="text-[10px] text-slate-400">
+                            Adjust how large the school emblem appears inside the browser tab plate
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.max(35, prev - 10))}
+                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg border border-slate-700 text-[11px] transition-colors cursor-pointer"
+                          title="Decrease Tab Icon Size (-10%)"
+                        >
+                          − 10%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.max(35, prev - 5))}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer flex items-center gap-1"
+                          title="Decrease Tab Icon Size (-5%)"
+                        >
+                          <ZoomOut className="w-3 h-3" />
+                          <span>− 5%</span>
+                        </button>
+                        <span className="text-xs font-mono font-black text-amber-300 bg-amber-400/15 px-3 py-1 rounded-lg border border-amber-400/40">
+                          {faviconIconScale}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.min(100, prev + 5))}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer flex items-center gap-1"
+                          title="Increase Tab Icon Size (+5%)"
+                        >
+                          <span>+ 5%</span>
+                          <ZoomIn className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFaviconIconScale((prev) => Math.min(100, prev + 10))}
+                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg border border-slate-700 text-[11px] transition-colors cursor-pointer"
+                          title="Increase Tab Icon Size (+10%)"
+                        >
+                          + 10%
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3 pt-1">
+                      <span className="text-[10px] font-bold text-slate-400">Compact (35%)</span>
+                      <input
+                        type="range"
+                        min="35"
+                        max="100"
+                        step="1"
+                        value={faviconIconScale}
+                        onChange={(e) => setFaviconIconScale(parseInt(e.target.value) || 72)}
+                        className="flex-1 accent-amber-400 h-2.5 bg-slate-800 rounded-lg cursor-pointer"
+                      />
+                      <span className="text-[10px] font-bold text-slate-400">Full Bleed (100%)</span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-medium">Quick Scale Presets:</span>
+                        {[
+                          { label: "Mini", val: 50 },
+                          { label: "Compact", val: 62 },
+                          { label: "Standard", val: 72 },
+                          { label: "Large", val: 85 },
+                          { label: "Maximum", val: 98 },
+                        ].map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => setFaviconIconScale(preset.val)}
+                            className={`px-3 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                              faviconIconScale === preset.val
+                                ? "bg-amber-400 text-slate-950 border-amber-400 font-black shadow-sm scale-105"
+                                : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750 hover:text-white"
+                            }`}
+                          >
+                            {preset.label} ({preset.val}%)
+                          </button>
+                        ))}
+                      </div>
+
+                      <span className="text-[10px] text-amber-400/80 font-medium">
+                        💡 Tip: Higher % expands the emblem to fill the tab; lower % leaves space for glowing border.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!faviconLightEffect && (
+                <div className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 bg-amber-400/10 text-amber-400 rounded-lg border border-amber-400/20">
+                        <Maximize2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-white block">
+                          Tab Icon Sizing (Increase / Decrease)
+                        </label>
+                        <p className="text-[10px] text-slate-400">
+                          Adjust emblem scale inside the browser tab
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setFaviconIconScale((prev) => Math.max(35, prev - 5))}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer flex items-center gap-1"
+                        title="Decrease Tab Icon Size"
+                      >
+                        <ZoomOut className="w-3 h-3" />
+                        <span>− 5%</span>
+                      </button>
+                      <span className="text-xs font-mono font-black text-amber-300 bg-amber-400/15 px-3 py-1 rounded-lg border border-amber-400/40">
+                        {faviconIconScale}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFaviconIconScale((prev) => Math.min(100, prev + 5))}
+                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold rounded-lg border border-slate-700 text-xs transition-colors cursor-pointer flex items-center gap-1"
+                        title="Increase Tab Icon Size"
+                      >
+                        <span>+ 5%</span>
+                        <ZoomIn className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-[10px] font-bold text-slate-400">Compact (35%)</span>
+                    <input
+                      type="range"
+                      min="35"
+                      max="100"
+                      step="1"
+                      value={faviconIconScale}
+                      onChange={(e) => setFaviconIconScale(parseInt(e.target.value) || 72)}
+                      className="flex-1 accent-amber-400 h-2 bg-slate-800 rounded-lg cursor-pointer"
+                    />
+                    <span className="text-[10px] font-bold text-slate-400">Full Bleed (100%)</span>
                   </div>
                 </div>
               )}

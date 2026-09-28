@@ -142,7 +142,13 @@ export default async function HomePage() {
       <StatsCounter />
 
       {/* 3. Leadership Messages */}
-      <LeadershipMessages chairman={chairmanData} principal={principalData} />
+      <LeadershipMessages
+        badge={homeCustom.leadership_badge}
+        title={homeCustom.leadership_title}
+        subtitle={homeCustom.leadership_subtitle}
+        chairman={chairmanData}
+        principal={principalData}
+      />
 
       {/* 4. Academic Continuum */}
       <AcademicStreams customStyles={homeCustom} />

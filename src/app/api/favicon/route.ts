@@ -21,6 +21,7 @@ export async function GET(req: Request) {
             "favicon_glow_intensity",
             "favicon_bg_color",
             "favicon_shape",
+            "favicon_icon_scale",
           ],
         },
       },
@@ -30,6 +31,13 @@ export async function GET(req: Request) {
     settings.forEach((s) => {
       settingsMap[s.key] = s.value;
     });
+
+    const scaleParam = searchParams.get("scale");
+    const iconScale = scaleParam
+      ? parseFloat(scaleParam)
+      : settingsMap["favicon_icon_scale"]
+      ? parseFloat(settingsMap["favicon_icon_scale"])
+      : 0.72;
 
     const iconUrl = settingsMap["site_favicon_url"] || "/uploads/LOGO_c_72ead6e76f87.webp";
     const lightEffectEnabled = settingsMap["favicon_light_effect_enabled"] !== "false";
@@ -50,6 +58,7 @@ export async function GET(req: Request) {
       bgColor,
       shape,
       size,
+      iconScale,
     });
 
     return new NextResponse(new Uint8Array(buffer), {
