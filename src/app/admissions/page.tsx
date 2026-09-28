@@ -38,8 +38,8 @@ export default async function AdmissionsHubPage() {
   const bannerDesc = customStyles.bannerDesc || "We maintain a low 1:15 mentor-student ratio to ensure every child receives personalized attention and accelerated learning support.";
   const bannerBtn1Text = customStyles.bannerBtn1Text || "Fill Online Application";
   const bannerBtn1Link = customStyles.bannerBtn1Link || "/admissions/apply";
-  const bannerBtn2Text = customStyles.bannerBtn2Text || "Download Prospectus";
-  const bannerBtn2Link = customStyles.bannerBtn2Link || "/sample-documents/CIS_Mandi_Prospectus_2025_2026.pdf";
+  const bannerBtn2Text = customStyles.bannerBtn2Text;
+  const bannerBtn2Link = customStyles.bannerBtn2Link;
 
   const stepsTitle = customStyles.stepsTitle || "4-Step Simple Admission Process";
   const stepsSubtitle = customStyles.stepsSubtitle || "Transparent, hassle-free, and parent-friendly registration workflow.";
@@ -78,14 +78,16 @@ export default async function AdmissionsHubPage() {
             >
               {bannerBtn1Text}
             </Link>
-            <a
-              href={bannerBtn2Link}
-              download
-              className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-6 py-3.5 rounded-2xl border border-white/20 text-center flex items-center justify-center space-x-1.5"
-            >
-              <Download className="w-4 h-4" />
-              <span>{bannerBtn2Text}</span>
-            </a>
+            {bannerBtn2Text && bannerBtn2Text !== "Download Prospectus" && (
+              <a
+                href={bannerBtn2Link || "#"}
+                download
+                className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-6 py-3.5 rounded-2xl border border-white/20 text-center flex items-center justify-center space-x-1.5"
+              >
+                <Download className="w-4 h-4" />
+                <span>{bannerBtn2Text}</span>
+              </a>
+            )}
           </div>
         </div>
 

@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
 import { prisma } from "@/lib/prisma";
+import { getCachedPageContent } from "@/lib/pageContentCache";
+import { DEFAULT_CBSE_TABLE_SECTIONS, DynamicTableSection } from "@/lib/pageRegistry";
 import { ShieldCheck, BookOpen, Users, Calendar, CheckCircle2, ArrowRight, GraduationCap } from "lucide-react";
 
 export const metadata = {
@@ -12,15 +14,13 @@ export const metadata = {
 export const revalidate = 60;
 
 export default async function CBSEInformationPage() {
-  const committee = [
-    { name: "Sh. Arvind Thakur", role: "President / Chairman", designation: "Educationist & Philanthropist" },
-    { name: "Mrs. Priyanka Jamwal", role: "Member Secretary", designation: "Principal, CIS Mandi" },
-    { name: "Prof. Rajeshwar Sen", role: "Teacher Representative", designation: "Vice Principal, CIS Mandi" },
-    { name: "Dr. Sandeep Kaundal", role: "Parent Representative (Male)", designation: "Neurosurgeon" },
-    { name: "Mrs. Meenakshi Sen", role: "Parent Representative (Female)", designation: "HPAS Officer" },
-    { name: "Principal, KV Mandi", role: "CBSE Nominee 1", designation: "Kendriya Vidyalaya Mandi" },
-    { name: "Principal, JNV Mandi", role: "CBSE Nominee 2", designation: "Jawahar Navodaya Vidyalaya" },
-  ];
+  const pageData: any = await getCachedPageContent("cbse-information");
+  const customStyles = pageData?.customStyles || {};
+
+  const tableSections: DynamicTableSection[] =
+    Array.isArray(customStyles.tableSections) && customStyles.tableSections.length > 0
+      ? customStyles.tableSections
+      : DEFAULT_CBSE_TABLE_SECTIONS;
 
   let faculty: any[] = [];
   try {
@@ -34,9 +34,9 @@ export default async function CBSEInformationPage() {
   return (
     <div>
       <PageHeader
-        badge="Accreditation & Governance"
-        title="CBSE Affiliation, Committee & Faculty Directory"
-        description="Comprehensive affiliation status, governing body details, and teaching faculty list as per CBSE Delhi guidelines."
+        badge={pageData?.heroBadge || "Accreditation & Governance"}
+        title={pageData?.heroTitle || "CBSE Affiliation, Committee & Faculty Directory"}
+        description={pageData?.heroSubtitle || "Comprehensive affiliation status, governing body details, and teaching faculty list as per CBSE Delhi guidelines."}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "CBSE Information" },
@@ -50,43 +50,82 @@ export default async function CBSEInformationPage() {
             <ShieldCheck className="w-8 h-8 text-amber-500" />
             <div>
               <h2 className="text-xl font-bold text-school-primary dark:text-white">
-                CBSE Affiliation Certificate & Status
+                {customStyles.storyHeadline || "CBSE Affiliation Certificate & Status"}
               </h2>
-              <p className="text-xs text-slate-500">Affiliation No. 630198 | School Code: 43190</p>
+              <p className="text-xs text-slate-500">
+                Affiliation No. {customStyles.affiliationNo || "630198"} | School Code: {customStyles.schoolCode || "43190"}
+              </p>
             </div>
           </div>
-          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-            Cambridge International School Mandi is permanently recognized by the Directorate of Higher Education, Himachal Pradesh, and provisionally affiliated to the Central Board of Secondary Education (CBSE), New Delhi for Senior Secondary (Science, Commerce, and Humanities) streams up to 31st March 2028.
+          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line">
+            {customStyles.mainStory ||
+              "Cambridge International School Mandi is permanently recognized by the Directorate of Higher Education, Himachal Pradesh, and provisionally affiliated to the Central Board of Secondary Education (CBSE), New Delhi for Senior Secondary (Science, Commerce, and Humanities) streams up to 31st March 2028."}
           </p>
         </div>
 
-        {/* SMC Committee Table */}
-        <div className="space-y-6">
-          <h3 className="text-2xl font-bold text-school-primary dark:text-white flex items-center space-x-2">
-            <Users className="w-6 h-6 text-amber-500" />
-            <span>School Managing Committee (SMC)</span>
-          </h3>
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
-            <table className="w-full text-left border-collapse text-xs sm:text-sm bg-white dark:bg-slate-900">
-              <thead className="bg-school-primary text-white">
-                <tr>
-                  <th className="p-4 font-bold">Member Name</th>
-                  <th className="p-4 font-bold">Committee Role</th>
-                  <th className="p-4 font-bold">Designation / Occupation</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {committee.map((m, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <td className="p-4 font-bold text-school-primary dark:text-amber-300">{m.name}</td>
-                    <td className="p-4 text-school-secondary font-semibold">{m.role}</td>
-                    <td className="p-4 text-slate-600 dark:text-slate-300">{m.designation}</td>
+        {/* Dynamic Table Sections (e.g. SMC, PTA, POSH, etc.) */}
+        {tableSections.map((sec, sIdx) => (
+          <div key={sec.id || sIdx} className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-2xl font-bold text-school-primary dark:text-white flex items-center space-x-2">
+                  <Users className="w-6 h-6 text-amber-500" />
+                  <span>{sec.title}</span>
+                </h3>
+                {sec.subtitle && (
+                  <p className="text-xs text-slate-500 mt-1">{sec.subtitle}</p>
+                )}
+              </div>
+              {sec.badge && (
+                <span className="self-start sm:self-auto px-3 py-1 bg-amber-400/10 border border-amber-400/30 text-amber-600 dark:text-amber-400 text-xs font-bold rounded-full">
+                  {sec.badge}
+                </span>
+              )}
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm bg-white dark:bg-slate-900">
+                <thead className="bg-school-primary text-white">
+                  <tr>
+                    {sec.columns.map((col, colIdx) => (
+                      <th key={colIdx} className="p-4 font-bold">
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {sec.rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={sec.columns.length} className="p-6 text-center text-slate-400">
+                        No records currently available.
+                      </td>
+                    </tr>
+                  ) : (
+                    sec.rows.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        {row.map((cell, cIdx) => (
+                          <td
+                            key={cIdx}
+                            className={`p-4 ${
+                              cIdx === 0
+                                ? "font-bold text-school-primary dark:text-amber-300"
+                                : cIdx === 1
+                                ? "text-school-secondary font-semibold"
+                                : "text-slate-600 dark:text-slate-300"
+                            }`}
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ))}
 
         {/* Faculty & Teaching Staff Section */}
         <div className="space-y-6">

@@ -93,6 +93,47 @@ export interface StatMetric {
   icon?: string;
 }
 
+export interface FeeCardItem {
+  label: string;
+  value: string;
+  isHighlight?: boolean;
+}
+
+export interface FeeCard {
+  id?: string;
+  title: string;
+  description: string;
+  items: FeeCardItem[];
+}
+
+export interface DynamicTableSection {
+  id: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  columns: string[];
+  rows: string[][];
+}
+
+export const DEFAULT_CBSE_TABLE_SECTIONS: DynamicTableSection[] = [
+  {
+    id: "table_smc",
+    title: "School Managing Committee (SMC)",
+    subtitle: "Constituted as per CBSE bye-laws ensuring democratic governance and educational standards.",
+    badge: "Governing Body",
+    columns: ["Member Name", "Committee Role", "Designation / Occupation"],
+    rows: [
+      ["Sh. Arvind Thakur", "President / Chairman", "Educationist & Philanthropist"],
+      ["Mrs. Priyanka Jamwal", "Member Secretary", "Principal, CIS Mandi"],
+      ["Prof. Rajeshwar Sen", "Teacher Representative", "Vice Principal, CIS Mandi"],
+      ["Dr. Sandeep Kaundal", "Parent Representative (Male)", "Neurosurgeon"],
+      ["Mrs. Meenakshi Sen", "Parent Representative (Female)", "HPAS Officer"],
+      ["Principal, KV Mandi", "CBSE Nominee 1", "Kendriya Vidyalaya Mandi"],
+      ["Principal, JNV Mandi", "CBSE Nominee 2", "Jawahar Navodaya Vidyalaya"],
+    ],
+  },
+];
+
 export interface CustomStyles {
   accentColor?: string;
   bgColor?: string;
@@ -130,6 +171,8 @@ export interface CustomStyles {
   missionText?: string;
   documents?: DocumentAttachment[];
   stats?: StatMetric[];
+  feeCards?: FeeCard[];
+  tableSections?: DynamicTableSection[];
   [key: string]: any;
 }
 
@@ -838,8 +881,6 @@ export const DEFAULT_PAGE_REGISTRY: Record<string, PageRecord> = {
       bannerDesc: "We maintain a low 1:15 mentor-student ratio to ensure every child receives personalized attention and accelerated learning support.",
       bannerBtn1Text: "Fill Online Application",
       bannerBtn1Link: "/admissions/apply",
-      bannerBtn2Text: "Download Prospectus",
-      bannerBtn2Link: "/sample-documents/CIS_Mandi_Prospectus_2025_2026.pdf",
       stepsTitle: "4-Step Simple Admission Process",
       stepsSubtitle: "Transparent, hassle-free, and parent-friendly registration workflow.",
       admissionSteps: [
@@ -921,6 +962,26 @@ export const DEFAULT_PAGE_REGISTRY: Record<string, PageRecord> = {
     customStyles: {
       feesTableBadge: "Approved by Management & PTA",
       feesTableTitle: "Tuition & Composite Fee Breakdown",
+      feesTableColumns: [
+        "Academic Wing / Grades",
+        "One-Time Admission Fee",
+        "Annual Composite Fee",
+        "Quarterly Tuition Installment",
+        "Lab & STEM Fee / Year",
+      ],
+      feesTableRows: [
+        ["Nursery", "₹13,000", "₹10,800", "₹8,163", "₹0"],
+        ["KG 1", "₹13,000", "₹10,800", "₹7,038", "₹0"],
+        ["KG 2", "₹13,000", "₹10,800", "₹7,110", "₹0"],
+        ["Grades 1", "₹13,000", "₹10,800", "₹7,140", "₹2,000"],
+        ["Grades 2", "₹13,000", "₹10,800", "₹7,170", "₹2,000"],
+        ["Grades 3", "₹13,000", "₹10,800", "₹7,260", "₹2,000"],
+        ["Grades 4", "₹13,000", "₹10,800", "₹7,350", "₹2,000"],
+        ["Grades 5", "₹13,000", "₹10,800", "₹7,440", "₹2,000"],
+        ["Grades 6 to 8", "₹15,000", "₹12,000", "₹8,500", "₹3,000"],
+        ["Grades 9 & 10", "₹18,000", "₹14,000", "₹9,800", "₹4,000"],
+        ["Grades 11 & 12", "₹20,000", "₹16,000", "₹11,500", "₹5,000"],
+      ],
       feeTiers: [
         {
           wing: "Pre-Primary (Nursery, LKG, UKG)",
@@ -970,6 +1031,27 @@ export const DEFAULT_PAGE_REGISTRY: Record<string, PageRecord> = {
       hostelFees: [
         { item: "Annual Boarding & Hostel Fee", fee: "₹1,25,000 / year", isHighlight: true },
         { item: "Payable in 2 equal installments (April & October)", fee: "₹62,500 / term", isHighlight: false },
+      ],
+      feeCards: [
+        {
+          id: "card_transport",
+          title: "Optional School Transport (GPS Monitored)",
+          description: "Transport charges are slab-based depending on distance from campus (covering Mandi City, Gutkar, Sundernagar, Pandoh, and adjoining valleys):",
+          items: [
+            { label: "0 – 5 km (Mandi Town & Vicinity)", value: "₹1,800 / month" },
+            { label: "5 – 12 km (Gutkar / Nerchowk sector)", value: "₹2,400 / month" },
+            { label: "12 – 22 km (Sundernagar / Outskirts)", value: "₹3,100 / month" },
+          ],
+        },
+        {
+          id: "card_hostel",
+          title: "Residential Hostel & Boarding (Optional)",
+          description: "Includes air-conditioned/heated room accommodation, 4 nutritious hygienic meals daily, 24x7 resident warden care, laundry, evening tutoring, and medical cover:",
+          items: [
+            { label: "Annual Boarding & Hostel Fee", value: "₹1,25,000 / year", isHighlight: true },
+            { label: "Payable in 2 equal installments (April & October)", value: "₹62,500 / term", isHighlight: false },
+          ],
+        },
       ],
       ctaText: "Proceed to Online Application",
       ctaLink: "/admissions/apply",
@@ -2285,6 +2367,7 @@ export const DEFAULT_PAGE_REGISTRY: Record<string, PageRecord> = {
     customStyles: {
       storyHeadline: "Transparent Governance & Academic Stewardship",
       mainStory: "CIS Mandi operates under the governance of the Cambridge Education Trust with full compliance to CBSE norms.",
+      tableSections: DEFAULT_CBSE_TABLE_SECTIONS,
       stats: [
         { number: "15:1", label: "Student Teacher Ratio" },
         { number: "100%", label: "Qualified PGT/TGT/PRT" },

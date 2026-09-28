@@ -94,7 +94,7 @@ import {
 import Link from "next/link";
 import Campus3DViewer from "@/components/3d/Campus3DViewer";
 import DynamicFormRenderer from "@/components/common/DynamicFormRenderer";
-import { SectionBlock, SectionItem, CustomStyles, DocumentAttachment, StatMetric } from "@/lib/pageRegistry";
+import { SectionBlock, SectionItem, CustomStyles, DocumentAttachment, StatMetric, DynamicTableSection, DEFAULT_CBSE_TABLE_SECTIONS } from "@/lib/pageRegistry";
 
 export interface PageData {
   id?: string;
@@ -407,12 +407,56 @@ const DEFAULT_PROCEDURE_DOCS = [
   "Caste / Category certificate (if applicable for scholarship quotas)",
 ];
 
+const DEFAULT_FEES_COLUMNS: string[] = [
+  "Academic Wing / Grades",
+  "One-Time Admission Fee",
+  "Annual Composite Fee",
+  "Quarterly Tuition Installment",
+  "Lab & STEM Fee / Year",
+];
+
+const DEFAULT_FEES_ROWS: string[][] = [
+  ["Nursery", "₹13,000", "₹10,800", "₹8,163", "₹0"],
+  ["KG 1", "₹13,000", "₹10,800", "₹7,038", "₹0"],
+  ["KG 2", "₹13,000", "₹10,800", "₹7,110", "₹0"],
+  ["Grades 1", "₹13,000", "₹10,800", "₹7,140", "₹2,000"],
+  ["Grades 2", "₹13,000", "₹10,800", "₹7,170", "₹2,000"],
+  ["Grades 3", "₹13,000", "₹10,800", "₹7,260", "₹2,000"],
+  ["Grades 4", "₹13,000", "₹10,800", "₹7,350", "₹2,000"],
+  ["Grades 5", "₹13,000", "₹10,800", "₹7,440", "₹2,000"],
+  ["Grades 6 to 8", "₹15,000", "₹12,000", "₹8,500", "₹3,000"],
+  ["Grades 9 & 10", "₹18,000", "₹14,000", "₹9,800", "₹4,000"],
+  ["Grades 11 & 12", "₹20,000", "₹16,000", "₹11,500", "₹5,000"],
+];
+
 const DEFAULT_FEE_TIERS = [
   { wing: "Pre-Primary (Nursery, LKG, UKG)", admissionFee: 15000, annualCompositeFee: 42000, quarterlyTuition: 10500, activityAndLabFee: 4000 },
   { wing: "Primary Wing (Grades 1 to 5)", admissionFee: 18000, annualCompositeFee: 48000, quarterlyTuition: 12000, activityAndLabFee: 5500 },
   { wing: "Middle School (Grades 6 to 8)", admissionFee: 20000, annualCompositeFee: 54000, quarterlyTuition: 13500, activityAndLabFee: 7000 },
   { wing: "Secondary Wing (Grades 9 & 10)", admissionFee: 22000, annualCompositeFee: 62000, quarterlyTuition: 15500, activityAndLabFee: 8500 },
   { wing: "Senior Secondary (Grades 11 & 12)", admissionFee: 25000, annualCompositeFee: 72000, quarterlyTuition: 18000, activityAndLabFee: 10000 },
+];
+
+const DEFAULT_FEE_CARDS = [
+  {
+    id: "card_transport",
+    title: "Optional School Transport (GPS Monitored)",
+    description: "Transport charges are slab-based depending on distance from campus (covering Mandi City, Gutkar, Sundernagar, Pandoh, and adjoining valleys):",
+    items: [
+      { label: "0 – 5 km (Mandi Town & Vicinity)", value: "₹2,500 / month" },
+      { label: "5 – 12 km (Gutkar / Nerchowk sector)", value: "₹2,400 / month" },
+      { label: "12 – 22 km (Sundernagar / Outskirts)", value: "₹3,100 / month" },
+    ],
+  },
+  {
+    id: "card_hostel",
+    title: "Residential Hostel & Boarding (Optional)",
+    description: "Includes air-conditioned/heated room accommodation, 4 nutritious hygienic meals daily, 24x7 resident warden care, laundry, evening tutoring, and medical cover:",
+    items: [
+      { label: "Annual Boarding & Hostel Fee", value: "₹1,25,000 / year", isHighlight: true },
+      { label: "Payable in 2 equal installments (April & October)", value: "₹62,500 / term", isHighlight: false },
+    ],
+  },
 ];
 
 const DEFAULT_TRANSPORT_SLABS = [
@@ -800,41 +844,106 @@ export default function VisualCanvasEditor({
     });
   };
 
-  // Fees Structure state & helpers
-  const feeTiers = Array.isArray(page.customStyles?.feeTiers) && page.customStyles.feeTiers.length > 0
-    ? page.customStyles.feeTiers
-    : DEFAULT_FEE_TIERS;
+  // Fees Structure dynamic table state & helpers
+  const feesColumns: string[] = Array.isArray(page.customStyles?.feesTableColumns) && page.customStyles.feesTableColumns.length > 0
+    ? page.customStyles.feesTableColumns
+    : DEFAULT_FEES_COLUMNS;
 
-  const updateFeeTier = (idx: number, updated: any) => {
-    const list = [...feeTiers];
-    list[idx] = { ...list[idx], ...updated };
+  const feesRows: string[][] = Array.isArray(page.customStyles?.feesTableRows) && page.customStyles.feesTableRows.length > 0
+    ? page.customStyles.feesTableRows
+    : (Array.isArray(page.customStyles?.feeTiers) && page.customStyles.feeTiers.length > 0
+        ? page.customStyles.feeTiers.map((t: any) => [
+            t.wing || "",
+            `₹${(Number(t.admissionFee) || 0).toLocaleString("en-IN")}`,
+            `₹${(Number(t.annualCompositeFee) || 0).toLocaleString("en-IN")}`,
+            `₹${(Number(t.quarterlyTuition) || 0).toLocaleString("en-IN")}`,
+            `₹${(Number(t.activityAndLabFee) || 0).toLocaleString("en-IN")}`,
+          ])
+        : DEFAULT_FEES_ROWS);
+
+  const updateColumnHeader = (colIdx: number, val: string) => {
+    const newCols = [...feesColumns];
+    newCols[colIdx] = val;
     onChange({
       ...page,
       customStyles: {
         ...page.customStyles,
-        feeTiers: list,
+        feesTableColumns: newCols,
+        feesTableRows: feesRows,
       },
     });
   };
 
-  const addFeeTier = () => {
-    const list = [...feeTiers, { wing: "New Academic Wing", admissionFee: 20000, annualCompositeFee: 50000, quarterlyTuition: 12500, activityAndLabFee: 6000 }];
+  const addColumn = () => {
+    const newCols = [...feesColumns, `New Fee Column`];
+    const newRows = feesRows.map((row) => [...row, "₹0"]);
     onChange({
       ...page,
       customStyles: {
         ...page.customStyles,
-        feeTiers: list,
+        feesTableColumns: newCols,
+        feesTableRows: newRows,
       },
     });
   };
 
-  const deleteFeeTier = (idx: number) => {
-    const list = feeTiers.filter((_, i) => i !== idx);
+  const deleteColumn = (colIdx: number) => {
+    if (feesColumns.length <= 1) return;
+    const newCols = feesColumns.filter((_, i) => i !== colIdx);
+    const newRows = feesRows.map((row) => row.filter((_, i) => i !== colIdx));
     onChange({
       ...page,
       customStyles: {
         ...page.customStyles,
-        feeTiers: list,
+        feesTableColumns: newCols,
+        feesTableRows: newRows,
+      },
+    });
+  };
+
+  const updateCell = (rowIdx: number, colIdx: number, val: string) => {
+    const newRows = feesRows.map((r, rI) => {
+      if (rI !== rowIdx) return r;
+      const copy = [...r];
+      while (copy.length < feesColumns.length) copy.push("");
+      copy[colIdx] = val;
+      return copy;
+    });
+    onChange({
+      ...page,
+      customStyles: {
+        ...page.customStyles,
+        feesTableColumns: feesColumns,
+        feesTableRows: newRows,
+      },
+    });
+  };
+
+  const addRow = () => {
+    const newRow = new Array(feesColumns.length).fill("");
+    newRow[0] = `New Grade / Wing`;
+    for (let c = 1; c < feesColumns.length; c++) {
+      newRow[c] = "₹0";
+    }
+    const newRows = [...feesRows, newRow];
+    onChange({
+      ...page,
+      customStyles: {
+        ...page.customStyles,
+        feesTableColumns: feesColumns,
+        feesTableRows: newRows,
+      },
+    });
+  };
+
+  const deleteRow = (rowIdx: number) => {
+    const newRows = feesRows.filter((_, i) => i !== rowIdx);
+    onChange({
+      ...page,
+      customStyles: {
+        ...page.customStyles,
+        feesTableColumns: feesColumns,
+        feesTableRows: newRows,
       },
     });
   };
@@ -913,6 +1022,186 @@ export default function VisualCanvasEditor({
         hostelFees: list,
       },
     });
+  };
+
+  // Fee Cards state & helpers
+  const feeCards: Array<{
+    id?: string;
+    title: string;
+    description: string;
+    items: Array<{ label: string; value: string; isHighlight?: boolean }>;
+  }> = Array.isArray(page.customStyles?.feeCards)
+    ? page.customStyles.feeCards
+    : [
+        {
+          id: "card_transport",
+          title: page.customStyles?.transportTitle || "Optional School Transport (GPS Monitored)",
+          description: page.customStyles?.transportDesc || "Transport charges are slab-based depending on distance from campus (covering Mandi City, Gutkar, Sundernagar, Pandoh, and adjoining valleys):",
+          items: Array.isArray(page.customStyles?.transportSlabs) && page.customStyles.transportSlabs.length > 0
+            ? page.customStyles.transportSlabs.map((s: any) => ({
+                label: s.slab || s.range || "",
+                value: s.fee || "",
+              }))
+            : DEFAULT_TRANSPORT_SLABS.map((s) => ({ label: s.slab, value: s.fee })),
+        },
+        {
+          id: "card_hostel",
+          title: page.customStyles?.hostelTitle || "Residential Hostel & Boarding (Optional)",
+          description: page.customStyles?.hostelDesc || "Includes air-conditioned/heated room accommodation, 4 nutritious hygienic meals daily, 24x7 resident warden care, laundry, evening tutoring, and medical cover:",
+          items: Array.isArray(page.customStyles?.hostelFees) && page.customStyles.hostelFees.length > 0
+            ? page.customStyles.hostelFees.map((h: any) => ({
+                label: h.item || h.label || "",
+                value: h.fee || "",
+                isHighlight: !!h.isHighlight,
+              }))
+            : DEFAULT_HOSTEL_FEES.map((h) => ({ label: h.item, value: h.fee, isHighlight: h.isHighlight })),
+        },
+      ];
+
+  const updateFeeCards = (cards: typeof feeCards) => {
+    onChange({
+      ...page,
+      customStyles: {
+        ...page.customStyles,
+        feeCards: cards,
+      },
+    });
+  };
+
+  const addFeeCard = () => {
+    const newCard = {
+      id: `card_${Date.now()}`,
+      title: "New Facility / Add-on Card",
+      description: "Service details, payment schedules, or facility guidelines:",
+      items: [
+        { label: "Option 1 / Tier A", value: "₹2,000 / month" },
+        { label: "Option 2 / Tier B", value: "₹3,500 / month" },
+      ],
+    };
+    updateFeeCards([...feeCards, newCard]);
+  };
+
+  const deleteFeeCard = (idx: number) => {
+    const updated = feeCards.filter((_, i) => i !== idx);
+    updateFeeCards(updated);
+  };
+
+  const updateFeeCard = (cardIdx: number, updates: Partial<(typeof feeCards)[0]>) => {
+    const updated = feeCards.map((c, i) => (i === cardIdx ? { ...c, ...updates } : c));
+    updateFeeCards(updated);
+  };
+
+  const addFeeCardItem = (cardIdx: number) => {
+    const card = feeCards[cardIdx];
+    if (!card) return;
+    const newItems = [...(card.items || []), { label: "New Item / Option", value: "₹0" }];
+    updateFeeCard(cardIdx, { items: newItems });
+  };
+
+  const updateFeeCardItem = (cardIdx: number, itemIdx: number, updates: any) => {
+    const card = feeCards[cardIdx];
+    if (!card) return;
+    const newItems = (card.items || []).map((item, i) => (i === itemIdx ? { ...item, ...updates } : item));
+    updateFeeCard(cardIdx, { items: newItems });
+  };
+
+  const deleteFeeCardItem = (cardIdx: number, itemIdx: number) => {
+    const card = feeCards[cardIdx];
+    if (!card) return;
+    const newItems = (card.items || []).filter((_, i) => i !== itemIdx);
+    updateFeeCard(cardIdx, { items: newItems });
+  };
+
+  // CBSE Table Sections state & helpers (SMC, PTA, etc.)
+  const tableSections: DynamicTableSection[] = Array.isArray(page.customStyles?.tableSections)
+    ? page.customStyles.tableSections
+    : DEFAULT_CBSE_TABLE_SECTIONS;
+
+  const updateTableSections = (sections: DynamicTableSection[]) => {
+    onChange({
+      ...page,
+      customStyles: {
+        ...page.customStyles,
+        tableSections: sections,
+      },
+    });
+  };
+
+  const addTableSection = () => {
+    const newSection: DynamicTableSection = {
+      id: `table_sec_${Date.now()}`,
+      title: "New Committee / Statutory Table",
+      subtitle: "Regulatory mandate or description for this committee / body.",
+      badge: "Committee",
+      columns: ["Member Name", "Committee Role", "Designation / Occupation"],
+      rows: [
+        ["Member Name 1", "Representative", "Designation / Role Details"],
+        ["Member Name 2", "Member", "Designation / Role Details"],
+      ],
+    };
+    updateTableSections([...tableSections, newSection]);
+  };
+
+  const deleteTableSection = (sIdx: number) => {
+    const updated = tableSections.filter((_, i) => i !== sIdx);
+    updateTableSections(updated);
+  };
+
+  const updateTableSectionMeta = (sIdx: number, updates: Partial<DynamicTableSection>) => {
+    const updated = tableSections.map((sec, i) => (i === sIdx ? { ...sec, ...updates } : sec));
+    updateTableSections(updated);
+  };
+
+  const addColumnToSection = (sIdx: number) => {
+    const sec = tableSections[sIdx];
+    if (!sec) return;
+    const newColName = `Column ${sec.columns.length + 1}`;
+    const newCols = [...sec.columns, newColName];
+    const newRows = (sec.rows || []).map((row) => [...row, ""]);
+    updateTableSectionMeta(sIdx, { columns: newCols, rows: newRows });
+  };
+
+  const deleteColumnFromSection = (sIdx: number, colIdx: number) => {
+    const sec = tableSections[sIdx];
+    if (!sec || sec.columns.length <= 1) return;
+    const newCols = sec.columns.filter((_, i) => i !== colIdx);
+    const newRows = (sec.rows || []).map((row) => row.filter((_, i) => i !== colIdx));
+    updateTableSectionMeta(sIdx, { columns: newCols, rows: newRows });
+  };
+
+  const updateColumnTitle = (sIdx: number, colIdx: number, val: string) => {
+    const sec = tableSections[sIdx];
+    if (!sec) return;
+    const newCols = sec.columns.map((c, i) => (i === colIdx ? val : c));
+    updateTableSectionMeta(sIdx, { columns: newCols });
+  };
+
+  const addRowToSection = (sIdx: number) => {
+    const sec = tableSections[sIdx];
+    if (!sec) return;
+    const emptyRow = sec.columns.map(() => "");
+    const newRows = [...(sec.rows || []), emptyRow];
+    updateTableSectionMeta(sIdx, { rows: newRows });
+  };
+
+  const deleteRowFromSection = (sIdx: number, rowIdx: number) => {
+    const sec = tableSections[sIdx];
+    if (!sec) return;
+    const newRows = (sec.rows || []).filter((_, i) => i !== rowIdx);
+    updateTableSectionMeta(sIdx, { rows: newRows });
+  };
+
+  const updateCellInSection = (sIdx: number, rowIdx: number, colIdx: number, val: string) => {
+    const sec = tableSections[sIdx];
+    if (!sec) return;
+    const newRows = (sec.rows || []).map((r, rI) => {
+      if (rI !== rowIdx) return r;
+      const newR = [...r];
+      while (newR.length <= colIdx) newR.push("");
+      newR[colIdx] = val;
+      return newR;
+    });
+    updateTableSectionMeta(sIdx, { rows: newRows });
   };
 
   // Admissions Hub state & helpers
@@ -4415,9 +4704,23 @@ export default function VisualCanvasEditor({
                           />
                         </div>
 
-                        <div className="inline-flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                          <Download className="w-4 h-4 text-amber-500" />
-                          <span>Download Official Fee Schedule (PDF)</span>
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <button
+                            type="button"
+                            onClick={addColumn}
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-50 dark:bg-sky-950/80 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 rounded-xl text-xs font-bold border border-sky-200 dark:border-sky-800 shadow-xs transition-all cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add Column</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addRow}
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800 shadow-xs transition-all cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add Row</span>
+                          </button>
                         </div>
                       </div>
 
@@ -4425,62 +4728,60 @@ export default function VisualCanvasEditor({
                         <table className="w-full text-left border-collapse text-xs sm:text-sm">
                           <thead className="bg-school-primary text-white">
                             <tr>
-                              <th className="p-4 font-bold">Academic Wing / Grades</th>
-                              <th className="p-4 font-bold">Admission Fee (₹)</th>
-                              <th className="p-4 font-bold">Annual Fee (₹)</th>
-                              <th className="p-4 font-bold">Quarterly Tuition (₹)</th>
-                              <th className="p-4 font-bold">Lab & STEM Fee (₹)</th>
-                              <th className="p-4 font-bold text-center w-14">Action</th>
+                              {feesColumns.map((col, colIdx) => (
+                                <th key={colIdx} className="p-3 font-bold border-r border-blue-900/40">
+                                  <div className="flex items-center space-x-1.5 group/col">
+                                    <input
+                                      type="text"
+                                      value={col}
+                                      onChange={(e) => updateColumnHeader(colIdx, e.target.value)}
+                                      className="w-full bg-blue-950/40 hover:bg-blue-950/70 focus:bg-blue-950 text-white font-bold text-xs sm:text-sm px-2.5 py-1.5 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors"
+                                      placeholder="Column name..."
+                                    />
+                                    {feesColumns.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => deleteColumn(colIdx)}
+                                        title={`Delete "${col}" column`}
+                                        className="p-1 rounded-md text-red-300 hover:text-red-100 hover:bg-red-500/20 opacity-0 group-hover/col:opacity-100 transition-opacity cursor-pointer shrink-0"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </th>
+                              ))}
+                              <th className="p-3 font-bold text-center w-20">
+                                <span className="text-xs uppercase tracking-wider text-slate-300">Action</span>
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {feeTiers.map((tier: any, idx: number) => (
-                              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                <td className="p-3">
-                                  <input
-                                    type="text"
-                                    value={tier.wing || ""}
-                                    onChange={(e) => updateFeeTier(idx, { wing: e.target.value })}
-                                    className="w-full font-bold text-school-primary dark:text-amber-300 bg-transparent focus:outline-none px-2 py-1"
-                                  />
-                                </td>
-                                <td className="p-3">
-                                  <input
-                                    type="number"
-                                    value={tier.admissionFee || 0}
-                                    onChange={(e) => updateFeeTier(idx, { admissionFee: Number(e.target.value) })}
-                                    className="w-full text-slate-600 dark:text-slate-300 bg-transparent focus:outline-none px-2 py-1"
-                                  />
-                                </td>
-                                <td className="p-3">
-                                  <input
-                                    type="number"
-                                    value={tier.annualCompositeFee || 0}
-                                    onChange={(e) => updateFeeTier(idx, { annualCompositeFee: Number(e.target.value) })}
-                                    className="w-full font-semibold text-slate-900 dark:text-white bg-transparent focus:outline-none px-2 py-1"
-                                  />
-                                </td>
-                                <td className="p-3">
-                                  <input
-                                    type="number"
-                                    value={tier.quarterlyTuition || 0}
-                                    onChange={(e) => updateFeeTier(idx, { quarterlyTuition: Number(e.target.value) })}
-                                    className="w-full font-bold text-emerald-600 dark:text-emerald-400 bg-transparent focus:outline-none px-2 py-1"
-                                  />
-                                </td>
-                                <td className="p-3">
-                                  <input
-                                    type="number"
-                                    value={tier.activityAndLabFee || 0}
-                                    onChange={(e) => updateFeeTier(idx, { activityAndLabFee: Number(e.target.value) })}
-                                    className="w-full text-slate-600 dark:text-slate-300 bg-transparent focus:outline-none px-2 py-1"
-                                  />
-                                </td>
-                                <td className="p-3 text-center">
+                            {feesRows.map((row, rowIdx) => (
+                              <tr key={rowIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                {feesColumns.map((_, colIdx) => (
+                                  <td key={colIdx} className="p-2 border-r border-slate-100 dark:border-slate-800">
+                                    <input
+                                      type="text"
+                                      value={row[colIdx] ?? ""}
+                                      onChange={(e) => updateCell(rowIdx, colIdx, e.target.value)}
+                                      placeholder="Enter text..."
+                                      className={`w-full bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-850 px-2.5 py-1.5 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors ${
+                                        colIdx === 0
+                                          ? "font-bold text-school-primary dark:text-amber-300"
+                                          : colIdx === 3
+                                          ? "font-bold text-emerald-600 dark:text-emerald-400"
+                                          : "text-slate-800 dark:text-slate-200 font-medium"
+                                      }`}
+                                    />
+                                  </td>
+                                ))}
+                                <td className="p-2 text-center w-20">
                                   <button
                                     type="button"
-                                    onClick={() => deleteFeeTier(idx)}
-                                    className="p-1 text-slate-400 hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer"
+                                    onClick={() => deleteRow(rowIdx)}
+                                    title="Delete Row"
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
@@ -4491,120 +4792,147 @@ export default function VisualCanvasEditor({
                         </table>
                       </div>
 
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={addFeeTier}
-                          className="inline-flex items-center space-x-1 px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>+ Add Academic Wing Fee Tier</span>
-                        </button>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          Table: <strong>{feesRows.length}</strong> rows × <strong>{feesColumns.length}</strong> columns. Hover column header to delete a column.
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            type="button"
+                            onClick={addColumn}
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-sky-50 dark:bg-sky-950/80 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 rounded-xl text-xs font-bold border border-sky-200 dark:border-sky-800 shadow-xs cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add Column</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addRow}
+                            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800 shadow-xs cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add Row</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Add-ons 2-column grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-200 dark:border-slate-800">
-                      <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                        <input
-                          type="text"
-                          value={page.customStyles?.transportTitle || "Optional School Transport (GPS Monitored)"}
-                          onChange={(e) =>
-                            onChange({
-                              ...page,
-                              customStyles: { ...page.customStyles, transportTitle: e.target.value },
-                            })
-                          }
-                          className="w-full font-bold text-lg text-school-primary dark:text-white bg-transparent focus:outline-none"
-                        />
-                        <textarea
-                          rows={2}
-                          value={page.customStyles?.transportDesc || "Transport charges are slab-based depending on distance from campus:"}
-                          onChange={(e) =>
-                            onChange({
-                              ...page,
-                              customStyles: { ...page.customStyles, transportDesc: e.target.value },
-                            })
-                          }
-                          className="w-full text-xs text-slate-600 dark:text-slate-400 bg-transparent focus:outline-none resize-none"
-                        />
-                        <div className="space-y-2 pt-2 text-xs">
-                          {transportSlabs.map((s: any, sIdx: number) => (
-                            <div key={sIdx} className="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-slate-800">
-                              <input
-                                type="text"
-                                value={s.slab || s.range || ""}
-                                onChange={(e) => updateTransportSlab(sIdx, { slab: e.target.value, range: e.target.value })}
-                                className="w-2/3 bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none"
-                              />
-                              <input
-                                type="text"
-                                value={s.fee || ""}
-                                onChange={(e) => updateTransportSlab(sIdx, { fee: e.target.value })}
-                                className="w-1/3 text-right font-bold text-slate-900 dark:text-white bg-transparent focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => deleteTransportSlab(sIdx)}
-                                className="text-slate-400 hover:text-red-500 cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
+                    {/* Facility & Optional Add-on Cards */}
+                    <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">
+                            Facility & Optional Add-on Cards
+                          </span>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Custom cards for optional school services (Transport, Hostel, Dining, etc.). Add, remove, or modify cards and items.
+                          </p>
                         </div>
                         <button
                           type="button"
-                          onClick={addTransportSlab}
-                          className="text-[11px] font-bold text-blue-500 hover:text-blue-400 flex items-center space-x-1 cursor-pointer"
+                          onClick={addFeeCard}
+                          className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                         >
-                          <Plus className="w-3 h-3" />
-                          <span>Add Transport Slab</span>
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>+ Add New Card</span>
                         </button>
                       </div>
 
-                      <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-                        <input
-                          type="text"
-                          value={page.customStyles?.hostelTitle || "Residential Hostel & Boarding (Optional)"}
-                          onChange={(e) =>
-                            onChange({
-                              ...page,
-                              customStyles: { ...page.customStyles, hostelTitle: e.target.value },
-                            })
-                          }
-                          className="w-full font-bold text-lg text-school-primary dark:text-white bg-transparent focus:outline-none"
-                        />
-                        <textarea
-                          rows={2}
-                          value={page.customStyles?.hostelDesc || "Includes room accommodation, 4 meals daily, 24x7 resident warden care:"}
-                          onChange={(e) =>
-                            onChange({
-                              ...page,
-                              customStyles: { ...page.customStyles, hostelDesc: e.target.value },
-                            })
-                          }
-                          className="w-full text-xs text-slate-600 dark:text-slate-400 bg-transparent focus:outline-none resize-none"
-                        />
-                        <div className="space-y-2 pt-2 text-xs">
-                          {hostelFees.map((h: any, hIdx: number) => (
-                            <div key={hIdx} className="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-slate-800">
-                              <input
-                                type="text"
-                                value={h.item || h.label || ""}
-                                onChange={(e) => updateHostelFee(hIdx, { item: e.target.value, label: e.target.value })}
-                                className="w-2/3 bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none"
-                              />
-                              <input
-                                type="text"
-                                value={h.fee || ""}
-                                onChange={(e) => updateHostelFee(hIdx, { fee: e.target.value })}
-                                className="w-1/3 text-right font-bold text-emerald-600 dark:text-emerald-400 bg-transparent focus:outline-none"
-                              />
+                      {feeCards.length === 0 ? (
+                        <div className="p-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+                          <p className="text-xs text-slate-400">
+                            No additional facility cards currently configured.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={addFeeCard}
+                            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:bg-amber-400 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>+ Add First Card</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className={`grid grid-cols-1 ${feeCards.length === 1 ? "max-w-2xl mx-auto" : feeCards.length === 2 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"} gap-6`}>
+                          {feeCards.map((card, cIdx) => (
+                            <div
+                              key={card.id || cIdx}
+                              className="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 flex flex-col justify-between group/card relative"
+                            >
+                              <div className="space-y-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <input
+                                    type="text"
+                                    value={card.title || ""}
+                                    onChange={(e) => updateFeeCard(cIdx, { title: e.target.value })}
+                                    placeholder="Card Title (e.g. Optional School Transport)"
+                                    className="w-full font-bold text-base text-school-primary dark:text-white bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteFeeCard(cIdx)}
+                                    title="Delete this card"
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                                <textarea
+                                  rows={2}
+                                  value={card.description || ""}
+                                  onChange={(e) => updateFeeCard(cIdx, { description: e.target.value })}
+                                  placeholder="Brief description or terms of service..."
+                                  className="w-full text-xs text-slate-600 dark:text-slate-400 bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none resize-none transition-colors"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                {(card.items || []).map((item, iIdx) => (
+                                  <div
+                                    key={iIdx}
+                                    className="flex items-center justify-between gap-2 py-1 border-b border-slate-100 dark:border-slate-800/60 group/item"
+                                  >
+                                    <input
+                                      type="text"
+                                      value={item.label || ""}
+                                      onChange={(e) => updateFeeCardItem(cIdx, iIdx, { label: e.target.value })}
+                                      placeholder="Item / Distance slab..."
+                                      className="w-3/5 bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 rounded border border-transparent focus:border-amber-400 focus:outline-none"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={item.value || ""}
+                                      onChange={(e) => updateFeeCardItem(cIdx, iIdx, { value: e.target.value })}
+                                      placeholder="Fee amount..."
+                                      className="w-2/5 text-right font-bold text-xs text-slate-900 dark:text-white bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 rounded border border-transparent focus:border-amber-400 focus:outline-none"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteFeeCardItem(cIdx, iIdx)}
+                                      title="Remove Item"
+                                      className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors opacity-70 group-hover/item:opacity-100 cursor-pointer"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ))}
+
+                                <div className="pt-2 flex justify-start">
+                                  <button
+                                    type="button"
+                                    onClick={() => addFeeCardItem(cIdx)}
+                                    className="text-[11px] font-bold text-blue-500 hover:text-blue-400 flex items-center space-x-1 cursor-pointer py-1 px-1.5 rounded hover:bg-blue-500/10 transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                    <span>+ Add Item</span>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -4669,7 +4997,8 @@ export default function VisualCanvasEditor({
                         <div className="bg-white/10 text-white font-semibold text-sm px-6 py-3 rounded-2xl border border-white/20">
                           <input
                             type="text"
-                            value={page.customStyles?.bannerBtn2Text || "Download Prospectus"}
+                            value={page.customStyles?.bannerBtn2Text || ""}
+                            placeholder="Optional 2nd Button (e.g. Inquire)"
                             onChange={(e) =>
                               onChange({
                                 ...page,
@@ -7319,28 +7648,24 @@ export default function VisualCanvasEditor({
                 )}
 
                 {/* ========================================================================= */}
-                {/* 21. MANDATORY DISCLOSURE & CBSE INFO CANVAS */}
+                {/* 21. MANDATORY DISCLOSURE CANVAS */}
                 {/* ========================================================================= */}
-                {(isMandatoryDisclosurePage || isCbseInfoPage) && (
+                {isMandatoryDisclosurePage && (
                   <div className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-12 space-y-8 bg-white dark:bg-slate-950">
                     <div className="space-y-2">
                       <span className="text-xs font-bold text-rose-500 uppercase tracking-wider">CBSE Compliance</span>
                       <h2 className="text-2xl font-extrabold text-school-primary dark:text-white">
-                        {isMandatoryDisclosurePage ? "CBSE Mandatory Disclosure" : "CBSE School Information"}
+                        CBSE Mandatory Disclosure
                       </h2>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {isMandatoryDisclosurePage
-                          ? "As per CBSE guidelines, the following mandatory disclosure information is published for public access and OASIS/SARAS compliance."
-                          : "School affiliation details, committee information, staff list, and infrastructure details as required by CBSE."}
+                        As per CBSE guidelines, the following mandatory disclosure information is published for public access and OASIS/SARAS compliance.
                       </p>
                     </div>
 
                     {/* Headline and story edit */}
                     <div className="glass-card rounded-2xl p-6 border border-slate-200 dark:border-slate-800 space-y-4">
-                      <input type="text" value={page.customStyles?.storyHeadline || (isMandatoryDisclosurePage ? "CBSE Mandatory Disclosure – Salient Information" : "CIS Mandi – CBSE Affiliation & School Information")} onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, storyHeadline: e.target.value } })} className="w-full font-bold text-lg text-school-primary dark:text-white bg-transparent focus:outline-none" placeholder="Section heading..." />
-                      <textarea rows={5} value={page.customStyles?.mainStory || (isMandatoryDisclosurePage
-                        ? "School Name: Cambridge International School Mandi\nAffiliation No: 630198 (CBSE North)\nSchool Code: 08220\nCategory: Senior Secondary (Classes I–XII)\nAddress: Gutkar, Near Beas River, Mandi, Himachal Pradesh – 175001\nEmail: info@cismandi.edu.in | Phone: +91 1905 243366"
-                        : "Affiliation No: 630198 | School Code: 08220 | UDISE Code: 02040202302\nPrincipal: Dr. (Mrs.) Sunita Rana | Management: Trust (Non-Minority)\nTotal Staff: 87 (Teaching: 62 | Non-Teaching: 25)\nEnrollment: 1,200 students | Classes I–XII")} onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, mainStory: e.target.value } })} className="w-full text-sm text-slate-600 dark:text-slate-400 font-mono bg-transparent focus:outline-none resize-none leading-relaxed" placeholder="Enter compliance information..." />
+                      <input type="text" value={page.customStyles?.storyHeadline || "CBSE Mandatory Disclosure – Salient Information"} onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, storyHeadline: e.target.value } })} className="w-full font-bold text-lg text-school-primary dark:text-white bg-transparent focus:outline-none" placeholder="Section heading..." />
+                      <textarea rows={5} value={page.customStyles?.mainStory || "School Name: Cambridge International School Mandi\nAffiliation No: 630198 (CBSE North)\nSchool Code: 08220\nCategory: Senior Secondary (Classes I–XII)\nAddress: Gutkar, Near Beas River, Mandi, Himachal Pradesh – 175001\nEmail: info@cismandi.edu.in | Phone: +91 1905 243366"} onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, mainStory: e.target.value } })} className="w-full text-sm text-slate-600 dark:text-slate-400 font-mono bg-transparent focus:outline-none resize-none leading-relaxed" placeholder="Enter compliance information..." />
                     </div>
 
                     {/* Download Documents for compliance */}
@@ -7364,6 +7689,335 @@ export default function VisualCanvasEditor({
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* 21.B CBSE SCHOOL INFORMATION CANVAS: DYNAMIC TABLES & AFFILIATION */}
+                {/* ========================================================================= */}
+                {isCbseInfoPage && (
+                  <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-12 space-y-12 bg-white dark:bg-slate-950">
+                    {/* Header Banner */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
+                      <div>
+                        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold mb-2">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>CBSE Regulatory Matrix & Committees</span>
+                        </div>
+                        <h2 className="text-2xl font-extrabold text-school-primary dark:text-white">
+                          CBSE Information & Committee Builder
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Manage affiliation details, School Managing Committee (SMC), PTA, POCSO, and statutory bodies. Add or remove tables, columns, rows, and edit text inline.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={addTableSection}
+                        className="inline-flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-md hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer self-start sm:self-auto"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>+ Add New Table Section</span>
+                      </button>
+                    </div>
+
+                    {/* Affiliation Overview Card */}
+                    <div className="glass-card p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            value={page.customStyles?.storyHeadline || "CBSE Affiliation Certificate & Status"}
+                            onChange={(e) =>
+                              onChange({
+                                ...page,
+                                customStyles: { ...page.customStyles, storyHeadline: e.target.value },
+                              })
+                            }
+                            placeholder="Section Title..."
+                            className="w-full text-xl font-bold text-school-primary dark:text-white bg-transparent focus:outline-none"
+                          />
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
+                            <div className="flex items-center space-x-1">
+                              <span>Affiliation No:</span>
+                              <input
+                                type="text"
+                                value={page.customStyles?.affiliationNo || "630198"}
+                                onChange={(e) =>
+                                  onChange({
+                                    ...page,
+                                    customStyles: { ...page.customStyles, affiliationNo: e.target.value },
+                                  })
+                                }
+                                placeholder="630198"
+                                className="font-mono font-bold text-slate-700 dark:text-slate-300 bg-transparent border-b border-dashed border-slate-400 focus:outline-none w-20"
+                              />
+                            </div>
+                            <span>•</span>
+                            <div className="flex items-center space-x-1">
+                              <span>School Code:</span>
+                              <input
+                                type="text"
+                                value={page.customStyles?.schoolCode || "43190"}
+                                onChange={(e) =>
+                                  onChange({
+                                    ...page,
+                                    customStyles: { ...page.customStyles, schoolCode: e.target.value },
+                                  })
+                                }
+                                placeholder="43190"
+                                className="font-mono font-bold text-slate-700 dark:text-slate-300 bg-transparent border-b border-dashed border-slate-400 focus:outline-none w-20"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <textarea
+                        rows={3}
+                        value={
+                          page.customStyles?.mainStory ||
+                          "Cambridge International School Mandi is permanently recognized by the Directorate of Higher Education, Himachal Pradesh, and provisionally affiliated to the Central Board of Secondary Education (CBSE), New Delhi for Senior Secondary (Science, Commerce, and Humanities) streams up to 31st March 2028."
+                        }
+                        onChange={(e) =>
+                          onChange({
+                            ...page,
+                            customStyles: { ...page.customStyles, mainStory: e.target.value },
+                          })
+                        }
+                        placeholder="Affiliation overview text..."
+                        className="w-full text-slate-600 dark:text-slate-300 text-sm leading-relaxed bg-transparent focus:outline-none resize-none border-t border-slate-100 dark:border-slate-800/80 pt-3"
+                      />
+                    </div>
+
+                    {/* Table Sections List */}
+                    <div className="space-y-10">
+                      {tableSections.length === 0 ? (
+                        <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl space-y-4">
+                          <Users className="w-12 h-12 text-slate-400 mx-auto" />
+                          <h4 className="text-base font-bold text-school-primary dark:text-white">
+                            No Table Sections Added
+                          </h4>
+                          <p className="text-xs text-slate-500 max-w-md mx-auto">
+                            Add table sections to display governing committees like School Managing Committee (SMC), Parent-Teacher Association (PTA), POSH committee, or Student Council.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={addTableSection}
+                            className="inline-flex items-center space-x-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow cursor-pointer"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>+ Add First Table Section</span>
+                          </button>
+                        </div>
+                      ) : (
+                        tableSections.map((sec, sIdx) => (
+                          <div
+                            key={sec.id || sIdx}
+                            className="glass-card rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden space-y-6 p-6 sm:p-8 relative group/section"
+                          >
+                            {/* Section Header Controls */}
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                              <div className="flex-1 min-w-0 space-y-2">
+                                <div className="flex items-center space-x-2">
+                                  <Users className="w-6 h-6 text-amber-500 shrink-0" />
+                                  <input
+                                    type="text"
+                                    value={sec.title || ""}
+                                    onChange={(e) => updateTableSectionMeta(sIdx, { title: e.target.value })}
+                                    placeholder="Section Title (e.g. School Managing Committee (SMC))"
+                                    className="w-full text-xl sm:text-2xl font-bold text-school-primary dark:text-white bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors font-heading"
+                                  />
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                  <input
+                                    type="text"
+                                    value={sec.subtitle || ""}
+                                    onChange={(e) => updateTableSectionMeta(sIdx, { subtitle: e.target.value })}
+                                    placeholder="Optional Subtitle / Description..."
+                                    className="flex-1 text-xs text-slate-500 dark:text-slate-400 bg-transparent hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-900 px-2 py-1 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={sec.badge || ""}
+                                    onChange={(e) => updateTableSectionMeta(sIdx, { badge: e.target.value })}
+                                    placeholder="Badge (e.g. Governing Body)"
+                                    className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/30 focus:outline-none w-36"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Section Top Actions */}
+                              <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
+                                <button
+                                  type="button"
+                                  onClick={() => addColumnToSection(sIdx)}
+                                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-950/80 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 rounded-xl text-xs font-bold border border-sky-200 dark:border-sky-800 shadow-xs cursor-pointer"
+                                  title="Add Column to this table"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>+ Add Column</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => addRowToSection(sIdx)}
+                                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-xl text-xs font-bold border border-emerald-200 dark:border-emerald-800 shadow-xs cursor-pointer"
+                                  title="Add Row to this table"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>+ Add Row</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => deleteTableSection(sIdx)}
+                                  className="inline-flex items-center space-x-1 px-3 py-1.5 text-red-500 hover:text-white hover:bg-red-500 rounded-xl text-xs font-bold border border-red-200 dark:border-red-900/60 transition-colors cursor-pointer"
+                                  title="Delete entire table section"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Delete Section</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Table Editor */}
+                            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md bg-white dark:bg-slate-900">
+                              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                                <thead className="bg-school-primary text-white">
+                                  <tr>
+                                    {sec.columns.map((col, colIdx) => (
+                                      <th key={colIdx} className="p-3 font-bold border-r border-blue-900/40">
+                                        <div className="flex items-center space-x-1.5 group/col">
+                                          <input
+                                            type="text"
+                                            value={col}
+                                            onChange={(e) => updateColumnTitle(sIdx, colIdx, e.target.value)}
+                                            className="w-full bg-blue-950/40 hover:bg-blue-950/70 focus:bg-blue-950 text-white font-bold text-xs sm:text-sm px-2.5 py-1.5 rounded-lg border border-transparent focus:border-amber-400 focus:outline-none transition-colors"
+                                            placeholder="Column title..."
+                                          />
+                                          {sec.columns.length > 1 && (
+                                            <button
+                                              type="button"
+                                              onClick={() => deleteColumnFromSection(sIdx, colIdx)}
+                                              title={`Delete column "${col}"`}
+                                              className="p-1 text-blue-300/60 hover:text-red-400 hover:bg-red-500/20 rounded-md transition-colors cursor-pointer shrink-0"
+                                            >
+                                              <X className="w-3.5 h-3.5" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </th>
+                                    ))}
+                                    <th className="p-3 w-16 text-center font-bold">Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                  {sec.rows.length === 0 ? (
+                                    <tr>
+                                      <td
+                                        colSpan={sec.columns.length + 1}
+                                        className="p-8 text-center text-slate-400"
+                                      >
+                                        <p className="text-xs">No rows in this section yet.</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => addRowToSection(sIdx)}
+                                          className="mt-2 text-xs font-bold text-emerald-500 hover:underline cursor-pointer inline-flex items-center space-x-1"
+                                        >
+                                          <Plus className="w-3.5 h-3.5" />
+                                          <span>+ Add First Row</span>
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    sec.rows.map((row, rowIdx) => (
+                                      <tr
+                                        key={rowIdx}
+                                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                      >
+                                        {sec.columns.map((_, colIdx) => (
+                                          <td
+                                            key={colIdx}
+                                            className="p-2 border-r border-slate-100 dark:border-slate-800/80"
+                                          >
+                                            <input
+                                              type="text"
+                                              value={row[colIdx] || ""}
+                                              onChange={(e) =>
+                                                updateCellInSection(sIdx, rowIdx, colIdx, e.target.value)
+                                              }
+                                              className={`w-full px-2.5 py-1.5 rounded-lg bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800/60 focus:bg-white dark:focus:bg-slate-950 border border-transparent focus:border-amber-400 focus:outline-none transition-colors text-xs sm:text-sm ${
+                                                colIdx === 0
+                                                  ? "font-bold text-school-primary dark:text-amber-300"
+                                                  : colIdx === 1
+                                                  ? "text-school-secondary font-semibold"
+                                                  : "text-slate-600 dark:text-slate-300"
+                                              }`}
+                                              placeholder="Enter cell text..."
+                                            />
+                                          </td>
+                                        ))}
+                                        <td className="p-2 text-center">
+                                          <button
+                                            type="button"
+                                            onClick={() => deleteRowFromSection(sIdx, rowIdx)}
+                                            title="Delete Row"
+                                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Section Footer / Quick Add */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400 pt-2">
+                              <span>
+                                Table: <strong>{sec.rows.length}</strong> rows × <strong>{sec.columns.length}</strong> columns. Click any cell to edit text.
+                              </span>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => addColumnToSection(sIdx)}
+                                  className="inline-flex items-center space-x-1 px-3 py-1 bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-300 hover:bg-sky-100 rounded-lg font-bold border border-sky-200 dark:border-sky-800 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>+ Column</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => addRowToSection(sIdx)}
+                                  className="inline-flex items-center space-x-1 px-3 py-1 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 rounded-lg font-bold border border-emerald-200 dark:border-emerald-800 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>+ Row</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Bottom Add Section CTA */}
+                    <div className="p-6 text-center border-t border-slate-200 dark:border-slate-800 space-y-3">
+                      <button
+                        type="button"
+                        onClick={addTableSection}
+                        className="inline-flex items-center space-x-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-2xl shadow-lg transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>+ Add Another Committee / Table Section</span>
+                      </button>
+                      <p className="text-[11px] text-slate-400">
+                        Create as many statutory tables as needed (PTA, POSH, Academic Advisory, Anti-Ragging, etc.)
+                      </p>
                     </div>
                   </div>
                 )}
@@ -10489,30 +11143,58 @@ export default function VisualCanvasEditor({
               </div>
 
               <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={addRow}
+                    className="py-2 px-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Row</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addColumn}
+                    className="py-2 px-3 bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 border border-sky-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Column</span>
+                  </button>
+                </div>
                 <button
                   type="button"
-                  onClick={addFeeTier}
-                  className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                  onClick={addFeeCard}
+                  className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Academic Fee Tier</span>
+                  <span>+ Add Facility / Fee Card</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={addTransportSlab}
-                  className="w-full py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Transport Slab</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={addHostelFee}
-                  className="w-full py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Hostel Fee Item</span>
-                </button>
+
+                {feeCards.length > 0 && (
+                  <div className="pt-2 space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Active Cards ({feeCards.length})
+                    </span>
+                    {feeCards.map((c, idx) => (
+                      <div
+                        key={c.id || idx}
+                        className="flex items-center justify-between p-2 bg-slate-900 border border-slate-800 rounded-lg text-[11px]"
+                      >
+                        <span className="font-medium text-slate-300 truncate max-w-[180px]">
+                          {c.title || "Untitled Card"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => deleteFeeCard(idx)}
+                          title="Delete Card"
+                          className="p-1 text-slate-500 hover:text-red-400 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -12393,6 +13075,49 @@ export default function VisualCanvasEditor({
                   Configure mandatory disclosure affiliation metrics and official declarations.
                 </p>
               </div>
+
+              {isCbseInfoPage && (
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-blue-400 uppercase tracking-wider block text-[11px]">
+                      📋 Table Sections ({tableSections.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={addTableSection}
+                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>+ Add Section</span>
+                    </button>
+                  </div>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {tableSections.map((sec, idx) => (
+                      <div
+                        key={sec.id || idx}
+                        className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px]"
+                      >
+                        <span className="font-bold text-slate-300 truncate max-w-[140px]">
+                          {sec.title || `Section ${idx + 1}`}
+                        </span>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            {sec.rows.length}R × {sec.columns.length}C
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => deleteTableSection(idx)}
+                            className="text-slate-500 hover:text-red-400 p-0.5 cursor-pointer"
+                            title="Delete section"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">

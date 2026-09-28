@@ -7,7 +7,6 @@ import {
   Download,
   FileText,
   ExternalLink,
-  Printer,
   Building2,
   Users,
   GraduationCap,
@@ -169,10 +168,6 @@ export default function MandatoryDisclosurePage() {
     loadDisclosure();
   }, []);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const generalInfoList = [
     { sl: 1, info: "NAME OF THE SCHOOL", details: data.schoolName },
     { sl: 2, info: "AFFILIATION NO.(IF APPLICABLE)", details: data.affiliationNo },
@@ -206,16 +201,6 @@ export default function MandatoryDisclosurePage() {
             <p className="text-xs text-slate-500 dark:text-slate-400">
               CBSE Affiliation No: <span className="font-bold text-school-secondary">{data.affiliationNo}</span> | School Code: <span className="font-bold text-amber-500">{data.schoolCode}</span>
             </p>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center space-x-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow hover:scale-105 transition-all"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print Official Disclosure</span>
-            </button>
           </div>
         </div>
 

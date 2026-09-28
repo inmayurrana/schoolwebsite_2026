@@ -57,7 +57,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("ADMISSION");
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
   const [heroData, setHeroData] = useState<HeroData>(
     initialData || {
@@ -120,7 +120,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
     loadDynamicHero();
   }, []);
 
-  // Guarantee automatic background video playback on mount/load
+  // Guarantee automatic background video playback on mount/load with sound enabled by default
   useEffect(() => {
     const youtubeId = extractYouTubeId(heroData.heroVideoUrl);
     if (youtubeId) {
@@ -130,11 +130,22 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
             JSON.stringify({ event: "command", func: "playVideo", args: [] }),
             "*"
           );
+          if (!isMuted) {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: "command", func: "unMute", args: [] }),
+              "*"
+            );
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
+              "*"
+            );
+          }
         }
       };
 
       const timer1 = setTimeout(sendPlay, 500);
       const timer2 = setTimeout(sendPlay, 1500);
+      const timer3 = setTimeout(sendPlay, 3000);
       const qualityTimer = setTimeout(() => {
         if (iframeRef.current && iframeRef.current.contentWindow) {
           iframeRef.current.contentWindow.postMessage(
@@ -147,17 +158,57 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
+        clearTimeout(timer3);
         clearTimeout(qualityTimer);
       };
     } else if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = true;
+      videoRef.current.defaultMuted = isMuted;
+      videoRef.current.muted = isMuted;
+      videoRef.current.volume = 1.0;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {});
+        playPromise.catch(() => {
+          if (!isMuted && videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+          }
+        });
       }
     }
-  }, [heroData.heroVideoUrl]);
+  }, [heroData.heroVideoUrl, isMuted]);
+
+  // Ensure sound is active on first user interaction if browser policy deferred audio
+  useEffect(() => {
+    if (isMuted) return;
+
+    const unlockAudio = () => {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "unMute", args: [] }),
+          "*"
+        );
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
+          "*"
+        );
+      }
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1.0;
+        videoRef.current.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+    window.addEventListener("touchstart", unlockAudio, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+    };
+  }, [isMuted]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -230,7 +281,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
             <iframe
               ref={iframeRef}
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
               title="Campus YouTube Hero Video in 1080p HD"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               onLoad={() => {
@@ -239,6 +290,16 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
                     JSON.stringify({ event: "command", func: "playVideo", args: [] }),
                     "*"
                   );
+                  if (!isMuted) {
+                    iframeRef.current.contentWindow.postMessage(
+                      JSON.stringify({ event: "command", func: "unMute", args: [] }),
+                      "*"
+                    );
+                    iframeRef.current.contentWindow.postMessage(
+                      JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
+                      "*"
+                    );
+                  }
                 }
               }}
               style={{
@@ -259,7 +320,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           /* Vimeo Full-HD Autoplay Stream */
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
             <iframe
-              src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=1&quality=1080p`}
+              src={`https://player.vimeo.com/video/${vimeoId}?background=1&autoplay=1&loop=1&byline=0&title=0&muted=${isMuted ? 1 : 0}&quality=1080p`}
               title="Campus Vimeo Hero Video in HD"
               allow="autoplay; fullscreen; picture-in-picture"
               style={{
@@ -282,7 +343,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               ref={videoRef}
               autoPlay
               loop
-              muted
+              muted={isMuted}
               playsInline
               preload="auto"
               poster={

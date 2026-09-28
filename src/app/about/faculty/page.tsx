@@ -69,41 +69,49 @@ export default async function FacultyPage() {
       />
 
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 py-12 sm:py-16 space-y-12">
-        {/* Stats Highlights Banner */}
+        {/* Stats Highlights Banner with 3D Glassmorphic Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
-            <Users className="w-6 h-6 text-amber-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+          <div className="glass-card p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 shadow-lg hover:shadow-2xl hover:border-amber-400/50 hover:-translate-y-1.5 transition-all duration-300 text-center space-y-1.5 backdrop-blur-xl group cursor-default">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+              <Users className="w-6 h-6" />
+            </div>
+            <div className="text-2xl sm:text-4xl font-black font-heading text-school-primary dark:text-white">
               {stat1Value}
             </div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {stat1Label}
             </div>
           </div>
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
-            <GraduationCap className="w-6 h-6 text-blue-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+          <div className="glass-card p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 shadow-lg hover:shadow-2xl hover:border-sky-400/50 hover:-translate-y-1.5 transition-all duration-300 text-center space-y-1.5 backdrop-blur-xl group cursor-default">
+            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+              <GraduationCap className="w-6 h-6" />
+            </div>
+            <div className="text-2xl sm:text-4xl font-black font-heading text-school-primary dark:text-white">
               {stat2Value}
             </div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {stat2Label}
             </div>
           </div>
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
-            <Award className="w-6 h-6 text-emerald-500 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+          <div className="glass-card p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 shadow-lg hover:shadow-2xl hover:border-emerald-400/50 hover:-translate-y-1.5 transition-all duration-300 text-center space-y-1.5 backdrop-blur-xl group cursor-default">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+              <Award className="w-6 h-6" />
+            </div>
+            <div className="text-2xl sm:text-4xl font-black font-heading text-school-primary dark:text-white">
               {stat3Value}
             </div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {stat3Label}
             </div>
           </div>
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 shadow-lg text-center space-y-1">
-            <Sparkles className="w-6 h-6 text-amber-400 mx-auto" />
-            <div className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+          <div className="glass-card p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 shadow-lg hover:shadow-2xl hover:border-amber-400/50 hover:-translate-y-1.5 transition-all duration-300 text-center space-y-1.5 backdrop-blur-xl group cursor-default">
+            <div className="w-12 h-12 rounded-2xl bg-amber-400/10 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div className="text-2xl sm:text-4xl font-black font-heading text-school-primary dark:text-white">
               {stat4Value}
             </div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {stat4Label}
             </div>
           </div>
