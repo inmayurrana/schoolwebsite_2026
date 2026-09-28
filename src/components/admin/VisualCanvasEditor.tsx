@@ -13064,62 +13064,22 @@ export default function VisualCanvasEditor({
             </div>
           )}
 
-          {/* TAB: COMPLIANCE STUDIO */}
+          {/* TAB: COMPLIANCE STUDIO — FULL CBSE EDITOR */}
           {activeInspectorTab === "compliance_studio" && (
             <div className="space-y-4 text-xs">
+              {/* Header */}
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
                 <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
                   ⚖️ CBSE Regulatory & Compliance Studio
                 </span>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure mandatory disclosure affiliation metrics and official declarations.
+                  Edit affiliation details, committee tables, headings, rows, columns and cell text.
                 </p>
               </div>
 
-              {isCbseInfoPage && (
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-blue-400 uppercase tracking-wider block text-[11px]">
-                      📋 Table Sections ({tableSections.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={addTableSection}
-                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>+ Add Section</span>
-                    </button>
-                  </div>
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {tableSections.map((sec, idx) => (
-                      <div
-                        key={sec.id || idx}
-                        className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px]"
-                      >
-                        <span className="font-bold text-slate-300 truncate max-w-[140px]">
-                          {sec.title || `Section ${idx + 1}`}
-                        </span>
-                        <div className="flex items-center space-x-1.5">
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            {sec.rows.length}R × {sec.columns.length}C
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => deleteTableSection(idx)}
-                            className="text-slate-500 hover:text-red-400 p-0.5 cursor-pointer"
-                            title="Delete section"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
+              {/* ── Affiliation Basics ── */}
+              <div className="space-y-2.5 p-3 bg-slate-900 border border-slate-800 rounded-2xl">
+                <span className="font-extrabold text-slate-300 uppercase tracking-wider block text-[10px]">🏫 School Affiliation Details</span>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold block">Affiliation No.</label>
@@ -13129,7 +13089,7 @@ export default function VisualCanvasEditor({
                       onChange={(e) =>
                         onChange({ ...page, customStyles: { ...page.customStyles, affiliationNo: e.target.value } })
                       }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold"
+                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -13140,11 +13100,10 @@ export default function VisualCanvasEditor({
                       onChange={(e) =>
                         onChange({ ...page, customStyles: { ...page.customStyles, schoolCode: e.target.value } })
                       }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold"
+                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
                     />
                   </div>
                 </div>
-
                 <div className="space-y-1">
                   <label className="text-slate-400 font-bold block">Principal Name</label>
                   <input
@@ -13153,10 +13112,9 @@ export default function VisualCanvasEditor({
                     onChange={(e) =>
                       onChange({ ...page, customStyles: { ...page.customStyles, principalName: e.target.value } })
                     }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white focus:border-amber-400 focus:outline-none"
                   />
                 </div>
-
                 <div className="space-y-1">
                   <label className="text-slate-400 font-bold block">Official School Address</label>
                   <textarea
@@ -13165,16 +13123,253 @@ export default function VisualCanvasEditor({
                     onChange={(e) =>
                       onChange({ ...page, customStyles: { ...page.customStyles, schoolAddress: e.target.value } })
                     }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none focus:border-amber-400 focus:outline-none"
                   />
                 </div>
-
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
-                  <span className="font-bold text-amber-400 block text-[11px]">CBSE Mandatory Disclosure PDF</span>
-                  <p className="text-[10px] text-slate-400">
-                    The complete CBSE compliance document can be downloaded or updated directly in the Downloads studio.
-                  </p>
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">Affiliation Card Title</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.storyHeadline || "CBSE Affiliation Certificate & Status"}
+                    onChange={(e) =>
+                      onChange({ ...page, customStyles: { ...page.customStyles, storyHeadline: e.target.value } })
+                    }
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white focus:border-amber-400 focus:outline-none"
+                  />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-slate-400 font-bold block">Affiliation Description</label>
+                  <textarea
+                    rows={3}
+                    value={page.customStyles?.mainStory || "Cambridge International School Mandi is permanently recognized by the Directorate of Higher Education, Himachal Pradesh, and provisionally affiliated to CBSE, New Delhi."}
+                    onChange={(e) =>
+                      onChange({ ...page, customStyles: { ...page.customStyles, mainStory: e.target.value } })
+                    }
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none text-[11px] focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* ── Table Sections CRUD ── */}
+              {isCbseInfoPage && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-blue-400 uppercase tracking-wider block text-[11px]">
+                      📋 Committee Tables ({tableSections.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={addTableSection}
+                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer bg-amber-400/10 hover:bg-amber-400/20 px-2 py-1 rounded-lg border border-amber-400/30 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>+ Add Section</span>
+                    </button>
+                  </div>
+
+                  {tableSections.length === 0 && (
+                    <div className="p-4 text-center border border-dashed border-slate-700 rounded-xl text-slate-500 text-[11px]">
+                      No table sections yet. Click &ldquo;+ Add Section&rdquo; to create one (e.g. SMC, PTA, POCSO).
+                    </div>
+                  )}
+
+                  {tableSections.map((sec, sIdx) => {
+                    const secKey = `cbse_sec_${sec.id || sIdx}`;
+                    return (
+                      <details key={secKey} className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-900 group/sec" open={sIdx === 0}>
+                        <summary className="flex items-center justify-between px-3 py-2.5 bg-slate-800 cursor-pointer select-none list-none hover:bg-slate-750 [&::-webkit-details-marker]:hidden">
+                          <div className="flex items-center space-x-2 min-w-0 flex-1">
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-open/sec:rotate-90 transition-transform shrink-0" />
+                            <span className="text-[11px] font-bold text-slate-200 truncate">
+                              {sec.title || `Section ${sIdx + 1}`}
+                            </span>
+                            <span className="text-[9px] font-mono text-slate-500 shrink-0">
+                              {sec.rows.length}R×{sec.columns.length}C
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1 shrink-0 ml-2">
+                            <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); addRowToSection(sIdx); }}
+                              title="Add row"
+                              className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-bold hover:bg-emerald-500/20 cursor-pointer"
+                            >+Row</button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); addColumnToSection(sIdx); }}
+                              title="Add column"
+                              className="text-[9px] px-1.5 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded font-bold hover:bg-sky-500/20 cursor-pointer"
+                            >+Col</button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); deleteTableSection(sIdx); }}
+                              title="Delete section"
+                              className="p-1 text-slate-600 hover:text-red-400 cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </summary>
+
+                        <div className="divide-y divide-slate-800">
+                          {/* Meta: Title / Subtitle / Badge */}
+                          <div className="px-3 py-2.5 space-y-2">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase">Section Heading</label>
+                              <input
+                                type="text"
+                                value={sec.title || ""}
+                                onChange={(e) => updateTableSectionMeta(sIdx, { title: e.target.value })}
+                                placeholder="e.g. School Managing Committee (SMC)"
+                                className="w-full bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-700 text-white text-[11px] font-bold focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase">Subtitle</label>
+                              <input
+                                type="text"
+                                value={sec.subtitle || ""}
+                                onChange={(e) => updateTableSectionMeta(sIdx, { subtitle: e.target.value })}
+                                placeholder="Brief description of this committee..."
+                                className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px] focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-slate-500 font-bold uppercase">Badge Label</label>
+                              <input
+                                type="text"
+                                value={sec.badge || ""}
+                                onChange={(e) => updateTableSectionMeta(sIdx, { badge: e.target.value })}
+                                placeholder="e.g. Governing Body"
+                                className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-amber-400 font-bold text-[10px] focus:outline-none focus:border-amber-400"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Column Headings */}
+                          <div className="px-3 py-2.5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] text-sky-400 font-bold uppercase">Columns ({sec.columns.length})</label>
+                              <button
+                                type="button"
+                                onClick={() => addColumnToSection(sIdx)}
+                                className="text-[9px] font-bold text-sky-400 hover:text-sky-300 flex items-center space-x-0.5 cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" /><span>Add Column</span>
+                              </button>
+                            </div>
+                            <div className="space-y-1">
+                              {sec.columns.map((col, colIdx) => (
+                                <div key={colIdx} className="flex items-center space-x-1.5">
+                                  <span className="text-[9px] text-slate-600 font-mono w-4 shrink-0 text-center">{colIdx + 1}</span>
+                                  <input
+                                    type="text"
+                                    value={col}
+                                    onChange={(e) => updateColumnTitle(sIdx, colIdx, e.target.value)}
+                                    placeholder={`Column ${colIdx + 1} heading`}
+                                    className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-sky-300 font-bold text-[10px] focus:outline-none focus:border-sky-400"
+                                  />
+                                  {sec.columns.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteColumnFromSection(sIdx, colIdx)}
+                                      title={`Delete column "${col}"`}
+                                      className="p-0.5 text-slate-600 hover:text-red-400 cursor-pointer shrink-0"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Rows Editor */}
+                          <div className="px-3 py-2.5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] text-emerald-400 font-bold uppercase">Rows ({sec.rows.length})</label>
+                              <button
+                                type="button"
+                                onClick={() => addRowToSection(sIdx)}
+                                className="text-[9px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center space-x-0.5 cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" /><span>Add Row</span>
+                              </button>
+                            </div>
+
+                            {sec.rows.length === 0 && (
+                              <p className="text-[10px] text-slate-600 italic py-2">No rows yet. Click &ldquo;+ Add Row&rdquo; above.</p>
+                            )}
+
+                            <div className="space-y-2 max-h-72 overflow-y-auto">
+                              {sec.rows.map((row, rowIdx) => (
+                                <div key={rowIdx} className="bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-1.5 group/row">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-600 font-mono">Row {rowIdx + 1}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteRowFromSection(sIdx, rowIdx)}
+                                      title="Delete row"
+                                      className="p-0.5 text-slate-700 hover:text-red-400 cursor-pointer opacity-0 group-hover/row:opacity-100 transition-opacity"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  {sec.columns.map((colName, colIdx) => (
+                                    <div key={colIdx} className="flex items-start space-x-1.5">
+                                      <span
+                                        className="text-[9px] text-slate-600 w-16 shrink-0 pt-1.5 truncate leading-none"
+                                        title={colName}
+                                      >{colName}:</span>
+                                      <input
+                                        type="text"
+                                        value={row[colIdx] || ""}
+                                        onChange={(e) => updateCellInSection(sIdx, rowIdx, colIdx, e.target.value)}
+                                        placeholder={`${colName}...`}
+                                        className={`flex-1 bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] focus:outline-none focus:border-amber-400 ${
+                                          colIdx === 0
+                                            ? "text-amber-300 font-bold"
+                                            : colIdx === 1
+                                            ? "text-blue-300 font-semibold"
+                                            : "text-slate-300"
+                                        }`}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => addRowToSection(sIdx)}
+                              className="w-full py-1.5 text-[10px] font-bold text-emerald-500 hover:text-emerald-400 border border-dashed border-emerald-800 hover:border-emerald-600 rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>+ Add Row to &ldquo;{sec.title || `Section ${sIdx + 1}`}&rdquo;</span>
+                            </button>
+                          </div>
+                        </div>
+                      </details>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={addTableSection}
+                    className="w-full py-2.5 text-[11px] font-bold text-amber-400 hover:text-amber-300 border border-dashed border-amber-500/40 hover:border-amber-400/70 rounded-2xl flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add Another Committee / Table</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+                <span className="font-bold text-amber-400 block text-[11px]">CBSE Mandatory Disclosure PDF</span>
+                <p className="text-[10px] text-slate-400">
+                  The complete CBSE compliance document can be downloaded or updated directly in the Downloads studio.
+                </p>
               </div>
             </div>
           )}
