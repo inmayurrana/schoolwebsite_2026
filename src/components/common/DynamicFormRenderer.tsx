@@ -724,8 +724,22 @@ export default function DynamicFormRenderer({
                           }`}
                         >
                           <input
+                            id={`file-gallery-${field.name}`}
                             type="file"
                             accept={field.accept || "image/*,.jpg,.jpeg,.png,.webp"}
+                            disabled={uploadingField === field.name}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
+                            }}
+                            className="hidden"
+                          />
+                          {/* Hidden camera-only input (mobile) */}
+                          <input
+                            id={`file-camera-${field.name}`}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
                             disabled={uploadingField === field.name}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -754,6 +768,27 @@ export default function DynamicFormRenderer({
                             </div>
                           )}
                         </label>
+
+                        {/* Mobile quick-action buttons: Camera | Gallery */}
+                        {!uploadingField && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <label
+                              htmlFor={`file-camera-${field.name}`}
+                              className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-400 rounded-xl text-blue-600 dark:text-blue-400 text-xs font-bold cursor-pointer transition-all select-none"
+                            >
+                              <Camera className="w-3.5 h-3.5" />
+                              <span>📷 Take Photo</span>
+                            </label>
+                            <label
+                              htmlFor={`file-gallery-${field.name}`}
+                              className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-400 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold cursor-pointer transition-all select-none"
+                            >
+                              <ImageIcon className="w-3.5 h-3.5" />
+                              <span>🖼️ Choose from Gallery</span>
+                            </label>
+                          </div>
+                        )}
+
                         <div className="flex items-center justify-end text-[11px] text-slate-400 px-1">
                           <button
                             type="button"

@@ -1112,6 +1112,7 @@ export default function VisualCanvasEditor({
     updateFeeCard(cardIdx, { items: newItems });
   };
 
+
   // CBSE Table Sections state & helpers (SMC, PTA, etc.)
   const tableSections: DynamicTableSection[] = Array.isArray(page.customStyles?.tableSections)
     ? page.customStyles.tableSections
@@ -11133,2249 +11134,311 @@ export default function VisualCanvasEditor({
           {/* TAB: FEES STUDIO */}
           {activeInspectorTab === "fees_studio" && (
             <div className="space-y-4 text-xs">
+              {/* Header */}
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
                 <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
                   💳 Fees & Schedule Studio
                 </span>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure tuition tiers, transport slabs, and hostel boarding charges.
+                  Edit table heading, badge, columns, rows, fee cards, transport & hostel slabs — full control.
                 </p>
               </div>
 
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={addRow}
-                    className="py-2 px-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Row</span>
-                  </button>
+              {/* ── Table Title & Badge ── */}
+              <div className="p-3 bg-slate-900 border border-slate-800 rounded-2xl space-y-2.5">
+                <span className="font-extrabold text-slate-300 uppercase tracking-wider block text-[10px]">📝 Table Heading</span>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold block text-[10px] uppercase">Badge / Label above title</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.feesTableBadge ?? "Approved by Management & PTA"}
+                    onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, feesTableBadge: e.target.value } })}
+                    placeholder="e.g. Approved by Management & PTA"
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-sky-400 font-bold text-[10px] focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500 font-bold block text-[10px] uppercase">Table Title</label>
+                  <input
+                    type="text"
+                    value={page.customStyles?.feesTableTitle ?? "Tuition & Composite Fee Breakdown"}
+                    onChange={(e) => onChange({ ...page, customStyles: { ...page.customStyles, feesTableTitle: e.target.value } })}
+                    placeholder="e.g. Tuition & Composite Fee Breakdown"
+                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* ── Column Headings ── */}
+              <div className="p-3 bg-slate-900 border border-slate-800 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sky-400 uppercase tracking-wider block text-[10px]">
+                    Columns ({((page.customStyles?.feesTableColumns) || ["Academic Wing / Grades","One-Time Admission Fee","Annual Composite Fee","Quarterly Tuition Installment","Lab & STEM Fee / Year"]).length})
+                  </span>
                   <button
                     type="button"
                     onClick={addColumn}
-                    className="py-2 px-3 bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 border border-sky-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                    className="text-[9px] font-bold text-sky-400 hover:text-sky-300 flex items-center space-x-0.5 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Column</span>
+                    <Plus className="w-3 h-3" /><span>Add Column</span>
                   </button>
                 </div>
+                {((page.customStyles?.feesTableColumns as string[]) || ["Academic Wing / Grades","One-Time Admission Fee","Annual Composite Fee","Quarterly Tuition Installment","Lab & STEM Fee / Year"]).map((col: string, colIdx: number) => (
+                  <div key={colIdx} className="flex items-center space-x-1.5">
+                    <span className="text-[9px] text-slate-600 font-mono w-4 shrink-0 text-center">{colIdx + 1}</span>
+                    <input
+                      type="text"
+                      value={col}
+                      onChange={(e) => {
+                        const cols = [...((page.customStyles?.feesTableColumns as string[]) || ["Academic Wing / Grades","One-Time Admission Fee","Annual Composite Fee","Quarterly Tuition Installment","Lab & STEM Fee / Year"])];
+                        cols[colIdx] = e.target.value;
+                        onChange({ ...page, customStyles: { ...page.customStyles, feesTableColumns: cols } });
+                      }}
+                      placeholder={`Column ${colIdx + 1}`}
+                      className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-sky-300 font-bold text-[10px] focus:outline-none focus:border-sky-400"
+                    />
+                    {((page.customStyles?.feesTableColumns as string[]) || []).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cols = [...((page.customStyles?.feesTableColumns as string[]) || [])];
+                          cols.splice(colIdx, 1);
+                          // also trim rows
+                          const rows = ((page.customStyles?.feesTableRows as string[][]) || []).map((r) => {
+                            const nr = [...r]; nr.splice(colIdx, 1); return nr;
+                          });
+                          onChange({ ...page, customStyles: { ...page.customStyles, feesTableColumns: cols, feesTableRows: rows } });
+                        }}
+                        className="p-0.5 text-slate-600 hover:text-red-400 cursor-pointer shrink-0"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Row Data Editor ── */}
+              <div className="p-3 bg-slate-900 border border-slate-800 rounded-2xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-emerald-400 uppercase tracking-wider block text-[10px]">
+                    Rows ({((page.customStyles?.feesTableRows as string[][]) || []).length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={addRow}
+                    className="text-[9px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center space-x-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" /><span>Add Row</span>
+                  </button>
+                </div>
+
+                {((page.customStyles?.feesTableRows as string[][]) || []).length === 0 && (
+                  <p className="text-[10px] text-slate-600 italic">No rows yet. Click "+ Add Row" above.</p>
+                )}
+
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {((page.customStyles?.feesTableRows as string[][]) || []).map((row: string[], rIdx: number) => {
+                    const cols = (page.customStyles?.feesTableColumns as string[]) || ["Academic Wing / Grades","One-Time Admission Fee","Annual Composite Fee","Quarterly Tuition Installment","Lab & STEM Fee / Year"];
+                    return (
+                      <div key={rIdx} className="bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-1.5 group/row">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-slate-600 font-mono">Row {rIdx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const rows = [...((page.customStyles?.feesTableRows as string[][]) || [])];
+                              rows.splice(rIdx, 1);
+                              onChange({ ...page, customStyles: { ...page.customStyles, feesTableRows: rows } });
+                            }}
+                            className="p-0.5 text-slate-700 hover:text-red-400 cursor-pointer opacity-0 group-hover/row:opacity-100 transition-opacity"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                        {cols.map((colName: string, cIdx: number) => (
+                          <div key={cIdx} className="flex items-start space-x-1.5">
+                            <span className="text-[9px] text-slate-600 w-16 shrink-0 pt-1.5 truncate" title={colName}>{colName}:</span>
+                            <input
+                              type="text"
+                              value={row[cIdx] || ""}
+                              onChange={(e) => {
+                                const rows = JSON.parse(JSON.stringify((page.customStyles?.feesTableRows as string[][]) || []));
+                                if (!rows[rIdx]) rows[rIdx] = [];
+                                rows[rIdx][cIdx] = e.target.value;
+                                onChange({ ...page, customStyles: { ...page.customStyles, feesTableRows: rows } });
+                              }}
+                              placeholder={`${colName}...`}
+                              className={`flex-1 bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] focus:outline-none focus:border-amber-400 ${cIdx === 0 ? "text-amber-300 font-bold" : cIdx === 3 ? "text-emerald-400 font-semibold" : "text-slate-300"}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="w-full py-1.5 text-[10px] font-bold text-emerald-500 hover:text-emerald-400 border border-dashed border-emerald-800 hover:border-emerald-600 rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3 h-3" /><span>+ Add Row</span>
+                </button>
+              </div>
+
+              {/* ── Fee Cards (Transport, Hostel, etc.) ── */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-amber-400 uppercase tracking-wider block text-[10px]">
+                    💳 Fee Cards ({feeCards.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={addFeeCard}
+                    className="text-[9px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-0.5 cursor-pointer bg-amber-400/10 hover:bg-amber-400/20 px-2 py-1 rounded-lg border border-amber-400/30"
+                  >
+                    <Plus className="w-3 h-3" /><span>+ Add Card</span>
+                  </button>
+                </div>
+
+                {feeCards.length === 0 && (
+                  <div className="p-4 text-center border border-dashed border-slate-700 rounded-xl text-slate-500 text-[10px]">
+                    No fee cards. Add cards for Transport, Hostel etc.
+                  </div>
+                )}
+
+                {feeCards.map((card: any, cIdx: number) => (
+                  <details key={card.id || cIdx} className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-900 group/card" open={cIdx === 0}>
+                    <summary className="flex items-center justify-between px-3 py-2.5 bg-slate-800 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden hover:bg-slate-750">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-open/card:rotate-90 transition-transform shrink-0" />
+                        <span className="text-[11px] font-bold text-slate-200 truncate">{card.title || `Card ${cIdx + 1}`}</span>
+                        <span className="text-[9px] font-mono text-slate-500 shrink-0">{(card.items || []).length} items</span>
+                      </div>
+                      <div className="flex items-center space-x-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); updateFeeCard(cIdx, { items: [...(card.items || []), { label: "New Item", value: "₹0", isHighlight: false }] }); }}
+                          className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-bold hover:bg-emerald-500/20 cursor-pointer"
+                        >+Item</button>
+                        <button type="button" onClick={(e) => { e.preventDefault(); deleteFeeCard(cIdx); }} className="p-1 text-slate-600 hover:text-red-400 cursor-pointer">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </summary>
+
+                    <div className="divide-y divide-slate-800">
+                      <div className="px-3 py-2.5 space-y-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase">Card Title</label>
+                          <input
+                            type="text"
+                            value={card.title || ""}
+                            onChange={(e) => updateFeeCard(cIdx, { title: e.target.value })}
+                            placeholder="e.g. Optional School Transport"
+                            className="w-full bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-700 text-white font-bold text-[11px] focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase">Description</label>
+                          <textarea
+                            rows={2}
+                            value={card.description || ""}
+                            onChange={(e) => updateFeeCard(cIdx, { description: e.target.value })}
+                            placeholder="Brief description of this fee card..."
+                            className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px] resize-none focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="px-3 py-2.5 space-y-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase">Items / Slabs ({(card.items || []).length})</label>
+                        {(card.items || []).length === 0 && (
+                          <p className="text-[10px] text-slate-600 italic">No items. Click "+Item" in header.</p>
+                        )}
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                          {(card.items || []).map((item: any, iIdx: number) => (
+                            <div key={iIdx} className="bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-1 group/item">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-bold text-slate-600 font-mono">Item {iIdx + 1}</span>
+                                <div className="flex items-center space-x-2">
+                                  <label className="flex items-center space-x-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!item.isHighlight}
+                                      onChange={(e) => {
+                                        const items = JSON.parse(JSON.stringify(card.items || []));
+                                        items[iIdx].isHighlight = e.target.checked;
+                                        updateFeeCard(cIdx, { items });
+                                      }}
+                                      className="w-3 h-3 accent-emerald-500"
+                                    />
+                                    <span className="text-[9px] text-emerald-400">Highlight</span>
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const items = (card.items || []).filter((_: any, i: number) => i !== iIdx);
+                                      updateFeeCard(cIdx, { items });
+                                    }}
+                                    className="p-0.5 text-slate-700 hover:text-red-400 cursor-pointer opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <input
+                                  type="text"
+                                  value={item.label || ""}
+                                  onChange={(e) => {
+                                    const items = JSON.parse(JSON.stringify(card.items || []));
+                                    items[iIdx].label = e.target.value;
+                                    updateFeeCard(cIdx, { items });
+                                  }}
+                                  placeholder="Label (e.g. 0–5 km zone)"
+                                  className="bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] focus:outline-none focus:border-amber-400"
+                                />
+                                <input
+                                  type="text"
+                                  value={item.value || ""}
+                                  onChange={(e) => {
+                                    const items = JSON.parse(JSON.stringify(card.items || []));
+                                    items[iIdx].value = e.target.value;
+                                    updateFeeCard(cIdx, { items });
+                                  }}
+                                  placeholder="Value (e.g. ₹1,800/month)"
+                                  className={`bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] focus:outline-none focus:border-amber-400 ${item.isHighlight ? "text-emerald-400 font-bold" : "text-white"}`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updateFeeCard(cIdx, { items: [...(card.items || []), { label: "New Slab", value: "₹0 / month", isHighlight: false }] })}
+                          className="w-full py-1 text-[10px] font-bold text-emerald-500 border border-dashed border-emerald-800 rounded-xl flex items-center justify-center space-x-1 cursor-pointer hover:border-emerald-600"
+                        >
+                          <Plus className="w-3 h-3" /><span>+ Add Item</span>
+                        </button>
+                      </div>
+                    </div>
+                  </details>
+                ))}
+
                 <button
                   type="button"
                   onClick={addFeeCard}
-                  className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                  className="w-full py-2.5 text-[11px] font-bold text-amber-400 hover:text-amber-300 border border-dashed border-amber-500/40 hover:border-amber-400/70 rounded-2xl flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Facility / Fee Card</span>
-                </button>
-
-                {feeCards.length > 0 && (
-                  <div className="pt-2 space-y-1.5">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Active Cards ({feeCards.length})
-                    </span>
-                    {feeCards.map((c, idx) => (
-                      <div
-                        key={c.id || idx}
-                        className="flex items-center justify-between p-2 bg-slate-900 border border-slate-800 rounded-lg text-[11px]"
-                      >
-                        <span className="font-medium text-slate-300 truncate max-w-[180px]">
-                          {c.title || "Untitled Card"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => deleteFeeCard(idx)}
-                          title="Delete Card"
-                          className="p-1 text-slate-500 hover:text-red-400 cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: ADMISSIONS STUDIO */}
-          {activeInspectorTab === "admissions_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  🚀 Admissions Roadmap Studio
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure admission notice banner and step-by-step roadmap cards.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Banner Badge</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.bannerBadge || "Session 2025–2026 Admissions Open"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, bannerBadge: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-white focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-300">Banner Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.bannerTitle || "Begin Your Child's Journey of Excellence"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, bannerTitle: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-white focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={addAdmissionStep}
-                  className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Admission Step</span>
+                  <Plus className="w-3.5 h-3.5" /><span>+ Add Fee Card (Transport / Hostel / Other)</span>
                 </button>
               </div>
             </div>
           )}
 
-          {/* TAB: SCHOLARSHIPS STUDIO */}
-          {activeInspectorTab === "scholarships_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                <span className="font-extrabold text-purple-400 uppercase tracking-wider block">
-                  🏆 Scholarships & Awards Studio
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage merit, sports, and defence fee concessions.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={addScholarshipScheme}
-                  className="w-full py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Scholarship Scheme</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: FACULTY STUDIO */}
-          {activeInspectorTab === "faculty_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  👥 Faculty Highlights & Metric Strip
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure the 4 key faculty credentials displayed in the hero highlights bar.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Metric #1</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat1Value || "58+"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat1Value: e.target.value },
-                        })
-                      }
-                      placeholder="58+"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                    />
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat1Label || "Faculty Members"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat1Label: e.target.value },
-                        })
-                      }
-                      placeholder="Label"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white text-[11px]"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Metric #2</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat2Value || "100%"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat2Value: e.target.value },
-                        })
-                      }
-                      placeholder="100%"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                    />
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat2Label || "Post-Graduate Certified"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat2Label: e.target.value },
-                        })
-                      }
-                      placeholder="Label"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white text-[11px]"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Metric #3</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat3Value || "14+ Yrs"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat3Value: e.target.value },
-                        })
-                      }
-                      placeholder="14+ Yrs"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                    />
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat3Label || "Avg Lead Experience"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat3Label: e.target.value },
-                        })
-                      }
-                      placeholder="Label"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white text-[11px]"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Metric #4</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat4Value || "1 : 15"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat4Value: e.target.value },
-                        })
-                      }
-                      placeholder="1 : 15"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                    />
-                    <input
-                      type="text"
-                      value={page.customStyles?.stat4Label || "Teacher-Student Ratio"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, stat4Label: e.target.value },
-                        })
-                      }
-                      placeholder="Label"
-                      className="bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white text-[11px]"
-                    />
-                  </div>
-                </div>
-
-                <Link
-                  href="/admin/faculty"
-                  className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-bold flex items-center justify-center space-x-1.5 shadow"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Open Faculty Directory Console →</span>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: ACADEMICS STUDIO */}
-          {activeInspectorTab === "academics_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                <span className="font-extrabold text-blue-400 uppercase tracking-wider block">
-                  📚 Academic Curriculum Intro & Wings
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage introductory text, 4 wings, and pedagogical differentiators.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Affiliation Subtitle</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.affiliationLabel || "CBSE AFFILIATION NO. 630198"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        customStyles: { ...page.customStyles, affiliationLabel: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Welcome Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || "Welcome to Academic Curriculum"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Introduction Story</label>
-                  <textarea
-                    rows={3}
-                    value={
-                      page.customStyles?.mainStory ||
-                      "Integrated CBSE & Cambridge framework. Cambridge International School Mandi fosters an engaging, safe, and academically rigorous environment where every learner thrives."
-                    }
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        customStyles: { ...page.customStyles, mainStory: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: ACADEMIC WING STUDIO */}
-          {activeInspectorTab === "wing_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                <span className="font-extrabold text-blue-400 uppercase tracking-wider block">
-                  🎓 Academic Wing Studio
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure age group, class range, narrative story, and curricular milestones.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Wing Badge</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.wingBadge || page.heroBadge || "Academic Tier"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroBadge: e.target.value,
-                        customStyles: { ...page.customStyles, wingBadge: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">Age Group</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.ageGroup || "Ages 3 to 18"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, ageGroup: e.target.value },
-                        })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">Class Range</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.classRange || "Grades Pre-Nursery to 12"}
-                      onChange={(e) =>
-                        onChange({
-                          ...page,
-                          customStyles: { ...page.customStyles, classRange: e.target.value },
-                        })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Story Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Curriculum & Learning Continuum"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Narrative Story</label>
-                  <textarea
-                    rows={3}
-                    value={page.customStyles?.mainStory || page.heroSubtitle || ""}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroSubtitle: e.target.value,
-                        customStyles: { ...page.customStyles, mainStory: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Wing Highlights ({wingHighlights.length})</span>
-                    <button
-                      type="button"
-                      onClick={addWingHighlightItem}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Item
-                    </button>
-                  </div>
-                  {wingHighlights.map((hl, idx) => (
-                    <div key={idx} className="flex items-center space-x-1">
-                      <input
-                        type="text"
-                        value={hl}
-                        onChange={(e) => updateWingHighlightItem(idx, e.target.value)}
-                        className="flex-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-white text-[11px]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => deleteWingHighlightItem(idx)}
-                        className="p-1 text-rose-400 hover:text-rose-300"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {page.slug === "primary" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">Primary Core Subjects ({primarySubjects.length})</span>
-                      <button
-                        type="button"
-                        onClick={addPrimarySubject}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Subject
-                      </button>
-                    </div>
-                    {primarySubjects.map((sub, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={sub.name}
-                            onChange={(e) => updatePrimarySubject(idx, { name: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deletePrimarySubject(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={sub.desc}
-                          onChange={(e) => updatePrimarySubject(idx, { desc: e.target.value })}
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {page.slug === "middle-school" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">STEM Features ({middleFeatures.length})</span>
-                      <button
-                        type="button"
-                        onClick={addMiddleFeature}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Feature
-                      </button>
-                    </div>
-                    {middleFeatures.map((feat, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={feat.title}
-                            onChange={(e) => updateMiddleFeature(idx, { title: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteMiddleFeature(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={feat.desc}
-                          onChange={(e) => updateMiddleFeature(idx, { desc: e.target.value })}
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {page.slug === "senior-secondary" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">Senior Academic Streams ({seniorStreams.length})</span>
-                      <button
-                        type="button"
-                        onClick={addSeniorStream}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Stream
-                      </button>
-                    </div>
-                    {seniorStreams.map((st, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={st.name}
-                            onChange={(e) => updateSeniorStream(idx, { name: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteSeniorStream(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={st.careers}
-                          onChange={(e) => updateSeniorStream(idx, { careers: e.target.value })}
-                          placeholder="Career trajectories..."
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: FACILITIES HUB STUDIO */}
-          {activeInspectorTab === "facilities_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                <span className="font-extrabold text-emerald-400 uppercase tracking-wider block">
-                  🏛️ Campus Facilities Overview
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage facility campus metrics, intro headline, and direct access links.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Campus Capacity Highlights</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] text-slate-400 block mb-1">Campus Size</label>
-                      <input
-                        type="text"
-                        value={page.customStyles?.campusSize || "15+ Acres"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, campusSize: e.target.value } })
-                        }
-                        className="w-full bg-slate-950 px-2 py-1.5 rounded border border-slate-700 text-white font-bold text-center"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-slate-400 block mb-1">Labs Count</label>
-                      <input
-                        type="text"
-                        value={page.customStyles?.labCount || "6+ Labs"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, labCount: e.target.value } })
-                        }
-                        className="w-full bg-slate-950 px-2 py-1.5 rounded border border-slate-700 text-white font-bold text-center"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-slate-400 block mb-1">Sports Arenas</label>
-                      <input
-                        type="text"
-                        value={page.customStyles?.sportsCount || "12+ Sports"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, sportsCount: e.target.value } })
-                        }
-                        className="w-full bg-slate-950 px-2 py-1.5 rounded border border-slate-700 text-white font-bold text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Story Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "World-Class Infrastructure at Mandi"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Introduction Story</label>
-                  <textarea
-                    rows={3}
-                    value={page.customStyles?.mainStory || page.heroSubtitle || "Sprawling across picturesque Himalayan landscapes, Cambridge International School Mandi blends tranquil nature with ultra-modern educational architecture."}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroSubtitle: e.target.value,
-                        customStyles: { ...page.customStyles, mainStory: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
-                  <span className="font-bold text-slate-300 block text-[11px]">Direct Sub-Facility Pages</span>
-                  <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                    {[
-                      { slug: "smart-classrooms", name: "Smart Classrooms" },
-                      { slug: "science-labs", name: "Science Labs" },
-                      { slug: "robotics-lab", name: "Robotics Lab" },
-                      { slug: "library", name: "Central Library" },
-                      { slug: "sports-complex", name: "Sports Complex" },
-                      { slug: "hostel", name: "Boarding Hostel" },
-                      { slug: "transport", name: "GPS Transport" },
-                      { slug: "computer-labs", name: "Computer Labs" },
-                    ].map((fac) => (
-                      <Link
-                        key={fac.slug}
-                        href={`/admin/pages?slug=${fac.slug}`}
-                        className="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-800 truncate block text-center"
-                      >
-                        {fac.name} →
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: SPECIFIC FACILITY STUDIO */}
-          {activeInspectorTab === "facility_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
-                <span className="font-extrabold text-cyan-400 uppercase tracking-wider block">
-                  🖥️ Facility Specifications Studio
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Edit facility highlights, equipment specifications, and custom sub-features.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Facility Badge</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.facilityBadge || page.heroBadge || "Campus Infrastructure"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroBadge: e.target.value,
-                        customStyles: { ...page.customStyles, facilityBadge: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Facility Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Facility Overview"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Facility Narrative</label>
-                  <textarea
-                    rows={3}
-                    value={page.customStyles?.mainStory || page.heroSubtitle || ""}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroSubtitle: e.target.value,
-                        customStyles: { ...page.customStyles, mainStory: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Key Features & Specs ({facilitySpecs.length})</span>
-                    <button
-                      type="button"
-                      onClick={addFacilitySpec}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Spec
-                    </button>
-                  </div>
-                  {facilitySpecs.map((spec, idx) => (
-                    <div key={idx} className="flex items-center space-x-1">
-                      <input
-                        type="text"
-                        value={spec}
-                        onChange={(e) => updateFacilitySpec(idx, e.target.value)}
-                        className="flex-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-white text-[11px]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => deleteFacilitySpec(idx)}
-                        className="p-1 text-rose-400 hover:text-rose-300"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {page.slug === "sports-complex" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">Sports Arenas ({sportsComplexList.length})</span>
-                      <button
-                        type="button"
-                        onClick={addSportsComplexItem}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Arena
-                      </button>
-                    </div>
-                    {sportsComplexList.map((sp, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={sp.title}
-                            onChange={(e) => updateSportsComplexItem(idx, { title: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteSportsComplexItem(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={sp.desc}
-                          onChange={(e) => updateSportsComplexItem(idx, { desc: e.target.value })}
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {page.slug === "transport" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">Bus Routes ({transportRoutesList.length})</span>
-                      <button
-                        type="button"
-                        onClick={addTransportRouteItem}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Route
-                      </button>
-                    </div>
-                    {transportRoutesList.map((rt, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={rt.route}
-                            onChange={(e) => updateTransportRouteItem(idx, { route: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteTransportRouteItem(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={rt.stops}
-                          onChange={(e) => updateTransportRouteItem(idx, { stops: e.target.value })}
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {page.slug === "science-labs" && (
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">Science Labs ({scienceLabList.length})</span>
-                      <button
-                        type="button"
-                        onClick={addScienceLab}
-                        className="text-[10px] text-amber-400 font-bold hover:underline"
-                      >
-                        + Add Lab
-                      </button>
-                    </div>
-                    {scienceLabList.map((lb, idx) => (
-                      <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={lb.name}
-                            onChange={(e) => updateScienceLab(idx, { name: e.target.value })}
-                            className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteScienceLab(idx)}
-                            className="p-1 text-rose-400 hover:text-rose-300"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <input
-                          type="text"
-                          value={lb.desc}
-                          onChange={(e) => updateScienceLab(idx, { desc: e.target.value })}
-                          className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">CTA Button Label</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.ctaText || "Book Campus Tour"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, ctaText: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">CTA Button Link</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.ctaLink || "/contact"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, ctaLink: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono text-[10px]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: STUDENT LIFE STUDIO */}
-          {activeInspectorTab === "student_life_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  🎨 Student Life & House System
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure the 4 student houses (Agni, Prithvi, Vayu, Jal) and co-curricular clubs.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Section Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Vibrant Co-Curricular & Student Life"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Introduction Narrative</label>
-                  <textarea
-                    rows={3}
-                    value={page.customStyles?.mainStory || page.heroSubtitle || "Beyond academic rigor, Cambridge Mandi cultivates leadership, teamwork, artistic brilliance, and holistic well-being."}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroSubtitle: e.target.value,
-                        customStyles: { ...page.customStyles, mainStory: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Co-Curricular Clubs ({studentClubsList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addStudentClub}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Club
-                    </button>
-                  </div>
-                  {studentClubsList.map((cl, idx) => (
-                    <div key={idx} className="space-y-1 p-2 bg-slate-900 rounded-lg border border-slate-800">
-                      <div className="flex items-center space-x-1">
-                        <input
-                          type="text"
-                          value={cl.title}
-                          onChange={(e) => updateStudentClub(idx, { title: e.target.value })}
-                          className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-[11px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => deleteStudentClub(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={cl.desc}
-                        onChange={(e) => updateStudentClub(idx, { desc: e.target.value })}
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px]"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: ACHIEVEMENTS STUDIO */}
-          {activeInspectorTab === "achievements_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  🎖️ Hall of Fame & Achievements
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage metric counters, student laurels, olympiad medals, and national honors.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
-                  <span className="font-bold text-slate-300 block">Metric Counters</span>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat1Value || "150+"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat1Value: e.target.value } })
-                        }
-                        placeholder="150+"
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-center text-xs"
-                      />
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat1Label || "National Laurels"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat1Label: e.target.value } })
-                        }
-                        placeholder="Label"
-                        className="w-full bg-slate-950 px-2 py-0.5 mt-1 rounded border border-slate-700 text-slate-400 text-[10px] text-center"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat2Value || "100%"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat2Value: e.target.value } })
-                        }
-                        placeholder="100%"
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-center text-xs"
-                      />
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat2Label || "Board Pass Rate"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat2Label: e.target.value } })
-                        }
-                        placeholder="Label"
-                        className="w-full bg-slate-950 px-2 py-0.5 mt-1 rounded border border-slate-700 text-slate-400 text-[10px] text-center"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat3Value || "25+"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat3Value: e.target.value } })
-                        }
-                        placeholder="25+"
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-white font-bold text-center text-xs"
-                      />
-                      <input
-                        type="text"
-                        value={page.customStyles?.stat3Label || "State Trophies"}
-                        onChange={(e) =>
-                          onChange({ ...page, customStyles: { ...page.customStyles, stat3Label: e.target.value } })
-                        }
-                        placeholder="Label"
-                        className="w-full bg-slate-950 px-2 py-0.5 mt-1 rounded border border-slate-700 text-slate-400 text-[10px] text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Celebrating Student Laurels"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Laurels & Achievements ({achievementsList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addAchievement}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Laurel
-                    </button>
-                  </div>
-
-                  {achievementsList.map((ach, idx) => (
-                    <div key={ach.id || idx} className="p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-amber-400 font-bold text-[11px]">#{idx + 1} {ach.studentName}</span>
-                        <button
-                          type="button"
-                          onClick={() => deleteAchievement(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={ach.studentName}
-                          onChange={(e) => updateAchievement(idx, { studentName: e.target.value })}
-                          placeholder="Student Name"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={ach.category}
-                          onChange={(e) => updateAchievement(idx, { category: e.target.value })}
-                          placeholder="Category (e.g. Olympiads)"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={ach.rank}
-                          onChange={(e) => updateAchievement(idx, { rank: e.target.value })}
-                          placeholder="Rank / Medal"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={ach.year}
-                          onChange={(e) => updateAchievement(idx, { year: e.target.value })}
-                          placeholder="Year / Session"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value={ach.title}
-                        onChange={(e) => updateAchievement(idx, { title: e.target.value })}
-                        placeholder="Title / Competition Name"
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                      />
-                      <textarea
-                        rows={2}
-                        value={ach.description}
-                        onChange={(e) => updateAchievement(idx, { description: e.target.value })}
-                        placeholder="Description..."
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                      <div className="flex space-x-1.5">
-                        <input
-                          type="text"
-                          value={ach.photoUrl}
-                          onChange={(e) => updateAchievement(idx, { photoUrl: e.target.value })}
-                          placeholder="Photo URL"
-                          className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-400 font-mono text-[9px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => triggerImageUpload("achievement", undefined, undefined, undefined, undefined, idx)}
-                          className="px-2 py-1 bg-slate-800 text-amber-400 rounded text-[10px] font-bold"
-                        >
-                          Upload
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: RESULTS STUDIO */}
-          {activeInspectorTab === "results_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                <span className="font-extrabold text-emerald-400 uppercase tracking-wider block">
-                  📊 Board Examination Toppers
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage Class X & XII board toppers, score percentages, and state distinctions.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Results Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "CBSE Board Examination Results"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Board Toppers List ({resultsToppersList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addResultTopper}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Topper
-                    </button>
-                  </div>
-
-                  {resultsToppersList.map((top, idx) => (
-                    <div key={idx} className="p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-emerald-400 font-bold text-[11px]">#{idx + 1} {top.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => deleteResultTopper(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={top.name}
-                          onChange={(e) => updateResultTopper(idx, { name: e.target.value })}
-                          placeholder="Student Name"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={top.score}
-                          onChange={(e) => updateResultTopper(idx, { score: e.target.value })}
-                          placeholder="Score (e.g. 99.2%)"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={top.stream}
-                          onChange={(e) => updateResultTopper(idx, { stream: e.target.value })}
-                          placeholder="Class / Stream"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={top.rank}
-                          onChange={(e) => updateResultTopper(idx, { rank: e.target.value })}
-                          placeholder="Rank / Distinction"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                      </div>
-                      <div className="flex space-x-1.5">
-                        <input
-                          type="text"
-                          value={top.photo}
-                          onChange={(e) => updateResultTopper(idx, { photo: e.target.value })}
-                          placeholder="Photo URL"
-                          className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-400 font-mono text-[9px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => triggerImageUpload("topper", undefined, undefined, undefined, idx)}
-                          className="px-2 py-1 bg-slate-800 text-amber-400 rounded text-[10px] font-bold"
-                        >
-                          Upload
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: GALLERY STUDIO */}
-          {activeInspectorTab === "gallery_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                <span className="font-extrabold text-purple-400 uppercase tracking-wider block">
-                  📸 Photo & Video Albums
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage featured albums, campus event categories, and cover images.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <Link
-                  href="/admin/gallery"
-                  className="w-full py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 rounded-xl font-bold flex items-center justify-center space-x-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open Full Gallery Media Console →</span>
-                </Link>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Life at Cambridge Mandi"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Featured Albums ({galleryAlbumsList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addGalleryAlbum}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Album
-                    </button>
-                  </div>
-
-                  {galleryAlbumsList.map((alb, idx) => (
-                    <div key={alb.id || idx} className="p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-purple-400 font-bold text-[11px]">#{idx + 1} {alb.title}</span>
-                        <button
-                          type="button"
-                          onClick={() => deleteGalleryAlbum(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={alb.title}
-                          onChange={(e) => updateGalleryAlbum(idx, { title: e.target.value })}
-                          placeholder="Album Title"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={alb.category}
-                          onChange={(e) => updateGalleryAlbum(idx, { category: e.target.value })}
-                          placeholder="Category (e.g. Sports)"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value={alb.photoCount || "25 Photos"}
-                        onChange={(e) => updateGalleryAlbum(idx, { photoCount: e.target.value })}
-                        placeholder="Photo Count (e.g. 48 Photos)"
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[11px]"
-                      />
-                      <textarea
-                        rows={2}
-                        value={alb.description}
-                        onChange={(e) => updateGalleryAlbum(idx, { description: e.target.value })}
-                        placeholder="Album Description..."
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                      <div className="flex space-x-1.5">
-                        <input
-                          type="text"
-                          value={alb.coverImage}
-                          onChange={(e) => updateGalleryAlbum(idx, { coverImage: e.target.value })}
-                          placeholder="Cover Image URL"
-                          className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-400 font-mono text-[9px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => triggerImageUpload("album", undefined, undefined, undefined, undefined, undefined, idx)}
-                          className="px-2 py-1 bg-slate-800 text-amber-400 rounded text-[10px] font-bold"
-                        >
-                          Upload
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: VIRTUAL TOUR STUDIO */}
-          {activeInspectorTab === "virtual_tour_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
-                <span className="font-extrabold text-cyan-400 uppercase tracking-wider block">
-                  🌐 360° Virtual Campus Tour
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage panoramic stops, campus locations, descriptions, and 360 views.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Tour Headline</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || page.heroTitle || "Interactive 360° Campus Tour"}
-                    onChange={(e) =>
-                      onChange({
-                        ...page,
-                        heroTitle: e.target.value,
-                        customStyles: { ...page.customStyles, storyHeadline: e.target.value },
-                      })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Tour Stops ({tourPointsList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addTourPoint}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Stop
-                    </button>
-                  </div>
-
-                  {tourPointsList.map((tp, idx) => (
-                    <div key={tp.id || idx} className="p-2.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-cyan-400 font-bold text-[11px]">#{idx + 1} {tp.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => deleteTourPoint(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={tp.name}
-                          onChange={(e) => updateTourPoint(idx, { name: e.target.value })}
-                          placeholder="Stop Name"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                        />
-                        <input
-                          type="text"
-                          value={tp.category}
-                          onChange={(e) => updateTourPoint(idx, { category: e.target.value })}
-                          placeholder="Category (e.g. Academic)"
-                          className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-white text-[11px]"
-                        />
-                      </div>
-                      <textarea
-                        rows={2}
-                        value={tp.description}
-                        onChange={(e) => updateTourPoint(idx, { description: e.target.value })}
-                        placeholder="Panorama Description..."
-                        className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                      <div className="flex space-x-1.5">
-                        <input
-                          type="text"
-                          value={tp.image}
-                          onChange={(e) => updateTourPoint(idx, { image: e.target.value })}
-                          placeholder="Panorama Image URL"
-                          className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-400 font-mono text-[9px]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => triggerImageUpload("tour", undefined, undefined, undefined, undefined, undefined, undefined, idx)}
-                          className="px-2 py-1 bg-slate-800 text-amber-400 rounded text-[10px] font-bold"
-                        >
-                          Upload
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: APPLY ONLINE STUDIO */}
-          {activeInspectorTab === "apply_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  ⚡ Online Admission Registration
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Configure admission session, helpline contacts, and mandatory checklist.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <Link
-                  href="/admin/forms"
-                  className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Customize Form Fields in Form Builder →</span>
-                </Link>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">Academic Session</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.sessionYear || "2026-2027"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, sessionYear: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-bold"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">Helpline Phone</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.helplinePhone || "+91 1905 222 555"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, helplinePhone: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Helpline Email</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.helplineEmail || "admissions@cismandi.edu.in"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, helplineEmail: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono text-[10px]"
-                  />
-                </div>
-
-                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-200">Mandatory Documents ({applyDocsList.length})</span>
-                    <button
-                      type="button"
-                      onClick={addApplyDoc}
-                      className="text-[10px] text-amber-400 font-bold hover:underline"
-                    >
-                      + Add Doc
-                    </button>
-                  </div>
-                  {applyDocsList.map((doc, idx) => (
-                    <div key={idx} className="flex items-center space-x-1">
-                      <input
-                        type="text"
-                        value={doc}
-                        onChange={(e) => updateApplyDoc(idx, e.target.value)}
-                        className="flex-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-white text-[11px]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => deleteApplyDoc(idx)}
-                        className="p-1 text-rose-400 hover:text-rose-300"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: NEWS STUDIO */}
-          {activeInspectorTab === "news_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                <span className="font-extrabold text-blue-400 uppercase tracking-wider block">
-                  📰 School News & Circulars
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Publish notices, official circulars, exam notifications, and school alerts.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={addNewsItem}
-                  className="w-full py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add New Circular / Notice</span>
-                </button>
-
-                <div className="space-y-2">
-                  {newsItemsList.map((item, idx) => (
-                    <div key={item.id || idx} className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="text"
-                          value={item.badge}
-                          onChange={(e) => updateNewsItem(idx, { badge: e.target.value })}
-                          className="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-bold text-[10px] w-24 border border-blue-500/30"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => deleteNewsItem(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={item.date}
-                        onChange={(e) => updateNewsItem(idx, { date: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-400 text-[10px]"
-                      />
-                      <input
-                        type="text"
-                        value={item.title}
-                        onChange={(e) => updateNewsItem(idx, { title: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                      />
-                      <textarea
-                        rows={2}
-                        value={item.summary}
-                        onChange={(e) => updateNewsItem(idx, { summary: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: EVENTS STUDIO */}
-          {activeInspectorTab === "events_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  📅 School Events & Calendar
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Schedule upcoming celebrations, sports galas, and parent gatherings.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={addEvent}
-                  className="w-full py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add New Event</span>
-                </button>
-
-                <div className="space-y-2">
-                  {eventsList.map((ev, idx) => (
-                    <div key={ev.id || idx} className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={ev.date}
-                            onChange={(e) => updateEvent(idx, { date: e.target.value })}
-                            className="w-10 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-amber-400 font-bold text-center text-[10px]"
-                          />
-                          <input
-                            type="text"
-                            value={ev.month}
-                            onChange={(e) => updateEvent(idx, { month: e.target.value })}
-                            className="w-12 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-white font-bold text-center text-[10px]"
-                          />
-                          <input
-                            type="text"
-                            value={ev.badge}
-                            onChange={(e) => updateEvent(idx, { badge: e.target.value })}
-                            className="w-20 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-slate-400 text-[10px]"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => deleteEvent(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={ev.title}
-                        onChange={(e) => updateEvent(idx, { title: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                      />
-                      <input
-                        type="text"
-                        value={ev.venue}
-                        onChange={(e) => updateEvent(idx, { venue: e.target.value })}
-                        placeholder="Venue..."
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-400 text-[10px]"
-                      />
-                      <textarea
-                        rows={2}
-                        value={ev.description}
-                        onChange={(e) => updateEvent(idx, { description: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: DOWNLOADS STUDIO */}
-          {activeInspectorTab === "downloads_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                <span className="font-extrabold text-emerald-400 uppercase tracking-wider block">
-                  📥 Official Documents & Downloads
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Manage downloadable PDF circulars, forms, syllabus, and parent handbooks.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={addDownloadDoc}
-                  className="w-full py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Download Document</span>
-                </button>
-
-                <div className="space-y-2">
-                  {downloadDocsList.map((doc, idx) => (
-                    <div key={doc.id || idx} className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="text"
-                          value={doc.category}
-                          onChange={(e) => updateDownloadDoc(idx, { category: e.target.value })}
-                          className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold text-[10px] w-28 border border-emerald-500/30"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => deleteDownloadDoc(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={doc.title}
-                        onChange={(e) => updateDownloadDoc(idx, { title: e.target.value })}
-                        placeholder="Document Title"
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                      />
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          value={doc.fileUrl}
-                          onChange={(e) => updateDownloadDoc(idx, { fileUrl: e.target.value })}
-                          placeholder="File URL (/uploads/...)"
-                          className="bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-400 font-mono text-[9px]"
-                        />
-                        <input
-                          type="text"
-                          value={doc.fileSize}
-                          onChange={(e) => updateDownloadDoc(idx, { fileSize: e.target.value })}
-                          placeholder="Size (e.g. 2.4 MB)"
-                          className="bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-400 text-[10px]"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: CAREERS STUDIO */}
-          {activeInspectorTab === "careers_studio" && (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                <span className="font-extrabold text-purple-400 uppercase tracking-wider block">
-                  💼 Careers & Job Openings
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Publish teaching vacancies, administrative roles, and HR application instructions.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">HR Recruiter Email</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.hrEmail || "careers@cismandi.edu.in"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, hrEmail: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono text-[10px]"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addJobOpening}
-                  className="w-full py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 rounded-xl font-bold flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Add Job Vacancy</span>
-                </button>
-
-                <div className="space-y-2">
-                  {jobOpeningsList.map((job, idx) => (
-                    <div key={job.id || idx} className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="text"
-                          value={job.badge}
-                          onChange={(e) => updateJobOpening(idx, { badge: e.target.value })}
-                          className="bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded font-bold text-[10px] w-28 border border-purple-500/30"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => deleteJobOpening(idx)}
-                          className="p-1 text-rose-400 hover:text-rose-300"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={job.title}
-                        onChange={(e) => updateJobOpening(idx, { title: e.target.value })}
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-white font-bold text-[11px]"
-                      />
-                      <textarea
-                        rows={2}
-                        value={job.description}
-                        onChange={(e) => updateJobOpening(idx, { description: e.target.value })}
-                        placeholder="Job Description..."
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-300 text-[10px] resize-none"
-                      />
-                      <input
-                        type="text"
-                        value={job.requirements}
-                        onChange={(e) => updateJobOpening(idx, { requirements: e.target.value })}
-                        placeholder="Qualifications & Experience..."
-                        className="w-full bg-slate-900 px-2 py-1 rounded border border-slate-800 text-slate-400 text-[10px]"
-                      />
-                      <div className="flex items-center space-x-2">
-                        <span className="text-slate-400 text-[10px]">Deadline:</span>
-                        <input
-                          type="text"
-                          value={job.deadline}
-                          onChange={(e) => updateJobOpening(idx, { deadline: e.target.value })}
-                          className="flex-1 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-white text-[10px]"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: COMPLIANCE STUDIO — FULL CBSE EDITOR */}
-          {activeInspectorTab === "compliance_studio" && (
-            <div className="space-y-4 text-xs">
-              {/* Header */}
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                <span className="font-extrabold text-amber-400 uppercase tracking-wider block">
-                  ⚖️ CBSE Regulatory & Compliance Studio
-                </span>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Edit affiliation details, committee tables, headings, rows, columns and cell text.
-                </p>
-              </div>
-
-              {/* ── Affiliation Basics ── */}
-              <div className="space-y-2.5 p-3 bg-slate-900 border border-slate-800 rounded-2xl">
-                <span className="font-extrabold text-slate-300 uppercase tracking-wider block text-[10px]">🏫 School Affiliation Details</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">Affiliation No.</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.affiliationNo || "630198"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, affiliationNo: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-400 font-bold block">School Code</label>
-                    <input
-                      type="text"
-                      value={page.customStyles?.schoolCode || "43187"}
-                      onChange={(e) =>
-                        onChange({ ...page, customStyles: { ...page.customStyles, schoolCode: e.target.value } })
-                      }
-                      className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Principal Name</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.principalName || "Dr. Rajesh Sharma"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, principalName: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Official School Address</label>
-                  <textarea
-                    rows={2}
-                    value={page.customStyles?.schoolAddress || "Near Victoria Bridge, Mandi, Himachal Pradesh 175001"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, schoolAddress: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Affiliation Card Title</label>
-                  <input
-                    type="text"
-                    value={page.customStyles?.storyHeadline || "CBSE Affiliation Certificate & Status"}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, storyHeadline: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-400 font-bold block">Affiliation Description</label>
-                  <textarea
-                    rows={3}
-                    value={page.customStyles?.mainStory || "Cambridge International School Mandi is permanently recognized by the Directorate of Higher Education, Himachal Pradesh, and provisionally affiliated to CBSE, New Delhi."}
-                    onChange={(e) =>
-                      onChange({ ...page, customStyles: { ...page.customStyles, mainStory: e.target.value } })
-                    }
-                    className="w-full bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-700 text-white resize-none text-[11px] focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* ── Table Sections CRUD ── */}
-              {isCbseInfoPage && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-blue-400 uppercase tracking-wider block text-[11px]">
-                      📋 Committee Tables ({tableSections.length})
-                    </span>
-                    <button
-                      type="button"
-                      onClick={addTableSection}
-                      className="text-[10px] font-bold text-amber-400 hover:text-amber-300 flex items-center space-x-1 cursor-pointer bg-amber-400/10 hover:bg-amber-400/20 px-2 py-1 rounded-lg border border-amber-400/30 transition-colors"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>+ Add Section</span>
-                    </button>
-                  </div>
-
-                  {tableSections.length === 0 && (
-                    <div className="p-4 text-center border border-dashed border-slate-700 rounded-xl text-slate-500 text-[11px]">
-                      No table sections yet. Click &ldquo;+ Add Section&rdquo; to create one (e.g. SMC, PTA, POCSO).
-                    </div>
-                  )}
-
-                  {tableSections.map((sec, sIdx) => {
-                    const secKey = `cbse_sec_${sec.id || sIdx}`;
-                    return (
-                      <details key={secKey} className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-900 group/sec" open={sIdx === 0}>
-                        <summary className="flex items-center justify-between px-3 py-2.5 bg-slate-800 cursor-pointer select-none list-none hover:bg-slate-750 [&::-webkit-details-marker]:hidden">
-                          <div className="flex items-center space-x-2 min-w-0 flex-1">
-                            <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-open/sec:rotate-90 transition-transform shrink-0" />
-                            <span className="text-[11px] font-bold text-slate-200 truncate">
-                              {sec.title || `Section ${sIdx + 1}`}
-                            </span>
-                            <span className="text-[9px] font-mono text-slate-500 shrink-0">
-                              {sec.rows.length}R×{sec.columns.length}C
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1 shrink-0 ml-2">
-                            <button
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); addRowToSection(sIdx); }}
-                              title="Add row"
-                              className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded font-bold hover:bg-emerald-500/20 cursor-pointer"
-                            >+Row</button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); addColumnToSection(sIdx); }}
-                              title="Add column"
-                              className="text-[9px] px-1.5 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/30 rounded font-bold hover:bg-sky-500/20 cursor-pointer"
-                            >+Col</button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); deleteTableSection(sIdx); }}
-                              title="Delete section"
-                              className="p-1 text-slate-600 hover:text-red-400 cursor-pointer"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </summary>
-
-                        <div className="divide-y divide-slate-800">
-                          {/* Meta: Title / Subtitle / Badge */}
-                          <div className="px-3 py-2.5 space-y-2">
-                            <div className="space-y-1">
-                              <label className="text-[10px] text-slate-500 font-bold uppercase">Section Heading</label>
-                              <input
-                                type="text"
-                                value={sec.title || ""}
-                                onChange={(e) => updateTableSectionMeta(sIdx, { title: e.target.value })}
-                                placeholder="e.g. School Managing Committee (SMC)"
-                                className="w-full bg-slate-950 px-2 py-1.5 rounded-lg border border-slate-700 text-white text-[11px] font-bold focus:outline-none focus:border-amber-400"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] text-slate-500 font-bold uppercase">Subtitle</label>
-                              <input
-                                type="text"
-                                value={sec.subtitle || ""}
-                                onChange={(e) => updateTableSectionMeta(sIdx, { subtitle: e.target.value })}
-                                placeholder="Brief description of this committee..."
-                                className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-slate-300 text-[10px] focus:outline-none focus:border-amber-400"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-[10px] text-slate-500 font-bold uppercase">Badge Label</label>
-                              <input
-                                type="text"
-                                value={sec.badge || ""}
-                                onChange={(e) => updateTableSectionMeta(sIdx, { badge: e.target.value })}
-                                placeholder="e.g. Governing Body"
-                                className="w-full bg-slate-950 px-2 py-1 rounded border border-slate-700 text-amber-400 font-bold text-[10px] focus:outline-none focus:border-amber-400"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Column Headings */}
-                          <div className="px-3 py-2.5 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[10px] text-sky-400 font-bold uppercase">Columns ({sec.columns.length})</label>
-                              <button
-                                type="button"
-                                onClick={() => addColumnToSection(sIdx)}
-                                className="text-[9px] font-bold text-sky-400 hover:text-sky-300 flex items-center space-x-0.5 cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" /><span>Add Column</span>
-                              </button>
-                            </div>
-                            <div className="space-y-1">
-                              {sec.columns.map((col, colIdx) => (
-                                <div key={colIdx} className="flex items-center space-x-1.5">
-                                  <span className="text-[9px] text-slate-600 font-mono w-4 shrink-0 text-center">{colIdx + 1}</span>
-                                  <input
-                                    type="text"
-                                    value={col}
-                                    onChange={(e) => updateColumnTitle(sIdx, colIdx, e.target.value)}
-                                    placeholder={`Column ${colIdx + 1} heading`}
-                                    className="flex-1 bg-slate-950 px-2 py-1 rounded border border-slate-700 text-sky-300 font-bold text-[10px] focus:outline-none focus:border-sky-400"
-                                  />
-                                  {sec.columns.length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => deleteColumnFromSection(sIdx, colIdx)}
-                                      title={`Delete column "${col}"`}
-                                      className="p-0.5 text-slate-600 hover:text-red-400 cursor-pointer shrink-0"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Rows Editor */}
-                          <div className="px-3 py-2.5 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[10px] text-emerald-400 font-bold uppercase">Rows ({sec.rows.length})</label>
-                              <button
-                                type="button"
-                                onClick={() => addRowToSection(sIdx)}
-                                className="text-[9px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center space-x-0.5 cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" /><span>Add Row</span>
-                              </button>
-                            </div>
-
-                            {sec.rows.length === 0 && (
-                              <p className="text-[10px] text-slate-600 italic py-2">No rows yet. Click &ldquo;+ Add Row&rdquo; above.</p>
-                            )}
-
-                            <div className="space-y-2 max-h-72 overflow-y-auto">
-                              {sec.rows.map((row, rowIdx) => (
-                                <div key={rowIdx} className="bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-1.5 group/row">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-bold text-slate-600 font-mono">Row {rowIdx + 1}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => deleteRowFromSection(sIdx, rowIdx)}
-                                      title="Delete row"
-                                      className="p-0.5 text-slate-700 hover:text-red-400 cursor-pointer opacity-0 group-hover/row:opacity-100 transition-opacity"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  {sec.columns.map((colName, colIdx) => (
-                                    <div key={colIdx} className="flex items-start space-x-1.5">
-                                      <span
-                                        className="text-[9px] text-slate-600 w-16 shrink-0 pt-1.5 truncate leading-none"
-                                        title={colName}
-                                      >{colName}:</span>
-                                      <input
-                                        type="text"
-                                        value={row[colIdx] || ""}
-                                        onChange={(e) => updateCellInSection(sIdx, rowIdx, colIdx, e.target.value)}
-                                        placeholder={`${colName}...`}
-                                        className={`flex-1 bg-slate-900 px-2 py-1 rounded border border-slate-800 text-[10px] focus:outline-none focus:border-amber-400 ${
-                                          colIdx === 0
-                                            ? "text-amber-300 font-bold"
-                                            : colIdx === 1
-                                            ? "text-blue-300 font-semibold"
-                                            : "text-slate-300"
-                                        }`}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => addRowToSection(sIdx)}
-                              className="w-full py-1.5 text-[10px] font-bold text-emerald-500 hover:text-emerald-400 border border-dashed border-emerald-800 hover:border-emerald-600 rounded-xl flex items-center justify-center space-x-1 cursor-pointer transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                              <span>+ Add Row to &ldquo;{sec.title || `Section ${sIdx + 1}`}&rdquo;</span>
-                            </button>
-                          </div>
-                        </div>
-                      </details>
-                    );
-                  })}
-
-                  <button
-                    type="button"
-                    onClick={addTableSection}
-                    className="w-full py-2.5 text-[11px] font-bold text-amber-400 hover:text-amber-300 border border-dashed border-amber-500/40 hover:border-amber-400/70 rounded-2xl flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add Another Committee / Table</span>
-                  </button>
-                </div>
-              )}
-
-              <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
-                <span className="font-bold text-amber-400 block text-[11px]">CBSE Mandatory Disclosure PDF</span>
-                <p className="text-[10px] text-slate-400">
-                  The complete CBSE compliance document can be downloaded or updated directly in the Downloads studio.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: CONTACT STUDIO */}
-          {activeInspectorTab === "contact_studio" && (
+                    {activeInspectorTab === "contact_studio" && (
             <div className="space-y-4 text-xs">
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
                 <span className="font-extrabold text-blue-400 uppercase tracking-wider block">
