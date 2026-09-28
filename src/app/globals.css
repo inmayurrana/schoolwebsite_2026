@@ -586,4 +586,101 @@ div[class*="next-dev-tools"] {
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 102, 255, 0.25);
 }
 
+/* ==========================================================================
+   SQUARESPACE MODERN UI EFFECTS (INLINE CSS TOKENS)
+   ========================================================================== */
+
+/* 1. Cursor-Tracking Spotlight Glow */
+[data-spotlight-cards="true"] .sqsp-spotlight,
+[data-spotlight-cards="true"] .spotlight-card,
+[data-spotlight-cards="true"] .clean-card,
+[data-spotlight-cards="true"] .glass-card,
+[data-spotlight-cards="true"] .feature-card {
+  position: relative;
+  overflow: hidden;
+}
+[data-spotlight-cards="true"] .sqsp-spotlight::before,
+[data-spotlight-cards="true"] .spotlight-card::before,
+[data-spotlight-cards="true"] .clean-card::before,
+[data-spotlight-cards="true"] .glass-card::before,
+[data-spotlight-cards="true"] .feature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    480px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--spotlight-glow-color, rgba(245, 158, 11, 0.28)),
+    transparent 75%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+[data-spotlight-cards="true"] .sqsp-spotlight:hover::before,
+[data-spotlight-cards="true"] .spotlight-card:hover::before,
+[data-spotlight-cards="true"] .clean-card:hover::before,
+[data-spotlight-cards="true"] .glass-card:hover::before,
+[data-spotlight-cards="true"] .feature-card:hover::before {
+  opacity: 1;
+}
+
+/* 2. Magnetic CTA Buttons with Sliding Arrow */
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn,
+[data-magnetic-buttons="true"] .btn-magnetic {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn:hover,
+[data-magnetic-buttons="true"] .btn-magnetic:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn:active,
+[data-magnetic-buttons="true"] .btn-magnetic:active {
+  transform: translateY(0) scale(0.98);
+}
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn .sliding-arrow,
+[data-magnetic-buttons="true"] .btn-arrow-slide {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn:hover .sliding-arrow,
+[data-magnetic-buttons="true"] .sqsp-magnetic-btn:hover .btn-arrow-slide {
+  transform: translateX(4px);
+}
+
+/* 3. Cinematic Image Zoom */
+[data-image-zoom="true"] .sqsp-img-zoom img,
+[data-image-zoom="true"] .cinematic-zoom-wrapper img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+[data-image-zoom="true"] .sqsp-img-zoom:hover img,
+[data-image-zoom="true"] .cinematic-zoom-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+/* 4. Frosted Floating Header Dock */
+[data-floating-header="true"] nav.sticky.top-0 {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 768px) {
+  [data-floating-header="true"] nav.sticky.top-0.glass-nav {
+    top: 10px;
+    width: calc(100% - 2rem);
+    max-width: 1820px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.12);
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* 5. Smooth Tab Sliding */
+.sqsp-tab-pill {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -24,6 +24,7 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import UiEffectsSelectorModal from "@/components/ui/UiEffectsSelectorModal";
 
 const themePresets = [
   {
@@ -136,6 +137,7 @@ export default function AdminThemeStudio() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [showEffectsModal, setShowEffectsModal] = useState(false);
 
   useEffect(() => {
     async function loadTheme() {
@@ -380,6 +382,43 @@ export default function AdminThemeStudio() {
           })}
         </div>
       </div>
+
+      {/* Modern UI Effects Studio (Squarespace Effects) Section */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-blue-500/10 border border-amber-400/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-400/20 shrink-0">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm sm:text-base font-black text-white">
+                Squarespace Modern UI Effects Studio
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950 uppercase tracking-wider">
+                Live Studio
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Customize cursor spotlight glow, magnetic CTA buttons, cinematic image zooms, floating header dock & hairline scroll progress bar.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowEffectsModal(true)}
+          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-400/20 flex items-center space-x-2 transition-all cursor-pointer shrink-0 active:scale-95"
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Configure Modern UI Effects</span>
+        </button>
+      </div>
+
+      {/* Modern UI Effects Modal */}
+      <UiEffectsSelectorModal
+        isOpen={showEffectsModal}
+        onClose={() => setShowEffectsModal(false)}
+      />
 
       {/* Main Studio Editor: 2-Column Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

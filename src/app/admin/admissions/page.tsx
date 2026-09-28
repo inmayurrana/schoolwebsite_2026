@@ -356,11 +356,12 @@ export default function AdminAdmissionsPage() {
                 return (
                   <tr
                     key={app.id}
-                    className={`transition-colors ${
-                      isSelected ? "bg-slate-900/90" : "hover:bg-slate-900/50"
+                    onClick={() => setSelectedApp(app)}
+                    className={`transition-colors cursor-pointer group ${
+                      isSelected ? "bg-slate-900/90" : "hover:bg-slate-900/70"
                     }`}
                   >
-                    <td className="p-3.5">
+                    <td className="p-3.5" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -369,7 +370,9 @@ export default function AdminAdmissionsPage() {
                       />
                     </td>
                     <td className="p-3.5">
-                      <p className="font-bold text-white text-sm">{app.studentName}</p>
+                      <p className="font-bold text-white text-sm group-hover:text-amber-400 transition-colors">
+                        {app.studentName}
+                      </p>
                       <p className="font-mono text-[11px] text-amber-400 font-bold">
                         {app.applicationNo}
                       </p>
@@ -401,12 +404,12 @@ export default function AdminAdmissionsPage() {
                         <span className="text-slate-500 text-[10px]">None</span>
                       )}
                     </td>
-                    <td className="p-3.5">
+                    <td className="p-3.5" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={app.status}
                         disabled={updating}
                         onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                        className="bg-slate-900 text-white px-2.5 py-1 text-[11px] rounded-lg border border-slate-700 font-bold focus:outline-none"
+                        className="bg-slate-900 text-white px-2.5 py-1 text-[11px] rounded-lg border border-slate-700 font-bold focus:outline-none cursor-pointer"
                       >
                         <option value="SUBMITTED">SUBMITTED</option>
                         <option value="UNDER_REVIEW">UNDER_REVIEW</option>
@@ -416,12 +419,12 @@ export default function AdminAdmissionsPage() {
                         <option value="REJECTED">REJECTED</option>
                       </select>
                     </td>
-                    <td className="p-3.5 text-right">
+                    <td className="p-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => setSelectedApp(app)}
                           className="p-1.5 rounded-lg bg-slate-800 hover:bg-school-secondary text-slate-200 hover:text-white transition-colors"
-                          title="View Complete Dossier"
+                          title="View Complete Dossier & Contacts"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -444,14 +447,17 @@ export default function AdminAdmissionsPage() {
 
       {/* Candidate Detail Modal */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 rounded-3xl max-w-2xl w-full border border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6 text-slate-200 overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div>
-                <span className="text-xs font-mono font-bold text-amber-400">
+            <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+              <div className="space-y-1">
+                <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-md border border-amber-400/20">
                   {selectedApp.applicationNo}
                 </span>
-                <h3 className="text-xl font-bold text-white">{selectedApp.studentName}</h3>
+                <h3 className="text-xl font-bold text-white pt-1">{selectedApp.studentName}</h3>
+                <p className="text-xs text-slate-400">
+                  Applying for <strong className="text-white">{selectedApp.gradeApplying}</strong> ({selectedApp.academicYear})
+                </p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -463,10 +469,51 @@ export default function AdminAdmissionsPage() {
                 </button>
                 <button
                   onClick={() => setSelectedApp(null)}
-                  className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
+              </div>
+            </div>
+
+            {/* Contact Details Quick Action Bar */}
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Applicant & Parent Contact Info</span>
+                </span>
+                <span className="text-xs font-bold text-white font-mono">{selectedApp.phone}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedApp.phone && (
+                  <a
+                    href={`tel:${selectedApp.phone.replace(/[^0-9+]/g, "")}`}
+                    className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call Primary ({selectedApp.phone})</span>
+                  </a>
+                )}
+                {selectedApp.phone && (
+                  <a
+                    href={`https://wa.me/${selectedApp.phone.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors"
+                  >
+                    <span>💬 WhatsApp</span>
+                  </a>
+                )}
+                {selectedApp.email && (
+                  <a
+                    href={`mailto:${selectedApp.email}?subject=Admission Application ${selectedApp.applicationNo} - Cambridge International School`}
+                    className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Send Email ({selectedApp.email})</span>
+                  </a>
+                )}
               </div>
             </div>
 
@@ -476,6 +523,11 @@ export default function AdminAdmissionsPage() {
                 <p className="text-white">Grade: {selectedApp.gradeApplying}</p>
                 {selectedApp.stream && <p className="text-white">Stream: {selectedApp.stream}</p>}
                 <p className="text-slate-400">Year: {selectedApp.academicYear}</p>
+                {selectedApp.previousSchool && (
+                  <p className="text-slate-400 pt-1">
+                    Prev School: <span className="text-white">{selectedApp.previousSchool}</span> ({selectedApp.previousGrade || "N/A"})
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1 bg-slate-950 p-4 rounded-xl border border-slate-800">
@@ -483,18 +535,52 @@ export default function AdminAdmissionsPage() {
                 <p className="text-white">DOB: {selectedApp.dob}</p>
                 <p className="text-white">Gender: {selectedApp.gender}</p>
                 <p className="text-white">Blood: {selectedApp.bloodGroup || "N/A"}</p>
+                <div className="flex items-center space-x-2 pt-1">
+                  {selectedApp.transportRequired && (
+                    <span className="bg-sky-950 text-sky-400 border border-sky-800 text-[10px] px-2 py-0.5 rounded-full">
+                      Bus Transport
+                    </span>
+                  )}
+                  {selectedApp.hostelRequired && (
+                    <span className="bg-purple-950 text-purple-400 border border-purple-800 text-[10px] px-2 py-0.5 rounded-full">
+                      Hostel
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 bg-slate-950 p-4 rounded-xl border border-slate-800 col-span-2 sm:col-span-1">
-                <p className="text-slate-400 font-bold">Father's Info</p>
-                <p className="text-white">{selectedApp.fatherName}</p>
-                <p className="text-slate-300">{selectedApp.fatherPhone}</p>
+                <p className="text-slate-400 font-bold">Father's Particulars</p>
+                <p className="text-white font-semibold">{selectedApp.fatherName}</p>
+                <div className="flex items-center space-x-2 pt-0.5">
+                  <span className="text-slate-300 font-mono">{selectedApp.fatherPhone}</span>
+                  {selectedApp.fatherPhone && (
+                    <a
+                      href={`tel:${selectedApp.fatherPhone.replace(/[^0-9+]/g, "")}`}
+                      className="text-emerald-400 hover:underline font-bold text-[11px] flex items-center space-x-1"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>Call</span>
+                    </a>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 bg-slate-950 p-4 rounded-xl border border-slate-800 col-span-2 sm:col-span-1">
-                <p className="text-slate-400 font-bold">Mother's Info</p>
-                <p className="text-white">{selectedApp.motherName}</p>
-                <p className="text-slate-300">{selectedApp.motherPhone}</p>
+                <p className="text-slate-400 font-bold">Mother's Particulars</p>
+                <p className="text-white font-semibold">{selectedApp.motherName}</p>
+                <div className="flex items-center space-x-2 pt-0.5">
+                  <span className="text-slate-300 font-mono">{selectedApp.motherPhone}</span>
+                  {selectedApp.motherPhone && (
+                    <a
+                      href={`tel:${selectedApp.motherPhone.replace(/[^0-9+]/g, "")}`}
+                      className="text-emerald-400 hover:underline font-bold text-[11px] flex items-center space-x-1"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>Call</span>
+                    </a>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1 bg-slate-950 p-4 rounded-xl border border-slate-800 col-span-2">
@@ -506,23 +592,40 @@ export default function AdminAdmissionsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-              <span className="text-xs text-slate-500 font-mono">
-                Submitted on {formatDate(selectedApp.submittedAt)}
-              </span>
+            <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-slate-800 gap-3">
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <span className="text-xs font-bold text-slate-400">Application Status:</span>
+                <select
+                  value={selectedApp.status}
+                  disabled={updating}
+                  onChange={async (e) => {
+                    const newStatus = e.target.value;
+                    await handleStatusChange(selectedApp.id, newStatus);
+                    setSelectedApp((prev) => (prev ? { ...prev, status: newStatus } : null));
+                  }}
+                  className="bg-slate-950 text-white font-bold text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="SUBMITTED">SUBMITTED</option>
+                  <option value="UNDER_REVIEW">UNDER_REVIEW</option>
+                  <option value="INTERVIEW_SCHEDULED">INTERVIEW_SCHEDULED</option>
+                  <option value="PROVISIONALLY_ADMITTED">PROVISIONALLY_ADMITTED</option>
+                  <option value="ADMITTED">ADMITTED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </div>
 
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
                 <button
                   onClick={() => setDeleteConfirmId(selectedApp.id)}
                   className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white text-xs font-bold border border-rose-800/80 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Application</span>
+                  <span>Delete</span>
                 </button>
 
                 <button
                   onClick={() => setSelectedApp(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Close Dossier
                 </button>

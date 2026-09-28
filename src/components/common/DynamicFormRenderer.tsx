@@ -84,6 +84,7 @@ export default function DynamicFormRenderer({
     initialForm ? getInitialFormData(initialForm) : {}
   );
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [dragOverField, setDragOverField] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<{ field: string; message: string } | null>(null);
   const [manualUrlFields, setManualUrlFields] = useState<Record<string, boolean>>({});
 
@@ -717,29 +718,40 @@ export default function DynamicFormRenderer({
                     ) : (
                       <div className="space-y-2">
                         <label
-                          className={`border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(field.name);
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(field.name);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField((prev) => (prev === field.name ? null : prev));
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(null);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
+                          }}
+                          className={`group relative border-2 border-dashed rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none ${
                             uploadingField === field.name
                               ? "border-amber-400 bg-amber-400/5 opacity-75"
-                              : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 bg-slate-50/60 dark:bg-slate-950/40 hover:bg-amber-400/5"
+                              : dragOverField === field.name
+                              ? "border-amber-500 bg-amber-500/10 ring-4 ring-amber-500/20 scale-[1.01] shadow-lg"
+                              : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 bg-slate-50/70 dark:bg-slate-950/40 hover:bg-amber-400/5 hover:scale-[1.005] hover:shadow-md"
                           }`}
                         >
                           <input
-                            id={`file-gallery-${field.name}`}
+                            id={`file-${field.name}`}
                             type="file"
                             accept={field.accept || "image/*,.jpg,.jpeg,.png,.webp"}
-                            disabled={uploadingField === field.name}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
-                            }}
-                            className="hidden"
-                          />
-                          {/* Hidden camera-only input (mobile) */}
-                          <input
-                            id={`file-camera-${field.name}`}
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
                             disabled={uploadingField === field.name}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
@@ -754,40 +766,47 @@ export default function DynamicFormRenderer({
                                 Uploading & compressing photo...
                               </p>
                             </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-1">
-                                <Camera className="w-5 h-5" />
+                          ) : dragOverField === field.name ? (
+                            <div className="space-y-2 py-1 animate-pulse">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-md">
+                                <Upload className="w-6 h-6 animate-bounce" />
                               </div>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                {field.uploadButtonText || "Click to browse or drag & drop photo"}
+                              <p className="text-sm font-extrabold text-amber-600 dark:text-amber-400">
+                                Drop photo now to upload!
                               </p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {field.helperText || `Supported formats: JPG, PNG, WebP (Max ${field.maxSizeMB || 5}MB)`}
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Release mouse to process photo
                               </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-500 flex items-center justify-center mx-auto transition-transform group-hover:scale-110 shadow-sm border border-amber-500/20">
+                                <Camera className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                                  {field.uploadButtonText || "Click to browse or drag & drop photo"}
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                  {field.helperText || `Upload student's recent color passport size photo (JPG, PNG up to ${field.maxSizeMB || 5}MB)`}
+                                </p>
+                              </div>
+                              <div className="inline-flex items-center space-x-2 pt-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                                <span className="flex items-center space-x-1">
+                                  <Camera className="w-3 h-3 text-blue-500" />
+                                  <span>Take Photo</span>
+                                </span>
+                                <span>•</span>
+                                <span className="flex items-center space-x-1">
+                                  <ImageIcon className="w-3 h-3 text-emerald-500" />
+                                  <span>Choose from Gallery</span>
+                                </span>
+                                <span>•</span>
+                                <span>Drag & Drop</span>
+                              </div>
                             </div>
                           )}
                         </label>
-
-                        {/* Mobile quick-action buttons: Camera | Gallery */}
-                        {!uploadingField && (
-                          <div className="grid grid-cols-2 gap-2">
-                            <label
-                              htmlFor={`file-camera-${field.name}`}
-                              className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-400 rounded-xl text-blue-600 dark:text-blue-400 text-xs font-bold cursor-pointer transition-all select-none"
-                            >
-                              <Camera className="w-3.5 h-3.5" />
-                              <span>📷 Take Photo</span>
-                            </label>
-                            <label
-                              htmlFor={`file-gallery-${field.name}`}
-                              className="flex items-center justify-center space-x-1.5 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-400 rounded-xl text-emerald-600 dark:text-emerald-400 text-xs font-bold cursor-pointer transition-all select-none"
-                            >
-                              <ImageIcon className="w-3.5 h-3.5" />
-                              <span>🖼️ Choose from Gallery</span>
-                            </label>
-                          </div>
-                        )}
 
                         <div className="flex items-center justify-end text-[11px] text-slate-400 px-1">
                           <button
@@ -892,13 +911,38 @@ export default function DynamicFormRenderer({
                     ) : (
                       <div className="space-y-2">
                         <label
-                          className={`border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(field.name);
+                          }}
+                          onDragEnter={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(field.name);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField((prev) => (prev === field.name ? null : prev));
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDragOverField(null);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) handleFileUpload(field.name, file, field.maxSizeMB || 10);
+                          }}
+                          className={`group relative border-2 border-dashed rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 select-none ${
                             uploadingField === field.name
                               ? "border-amber-400 bg-amber-400/5 opacity-75"
-                              : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 bg-slate-50/60 dark:bg-slate-950/40 hover:bg-amber-400/5"
+                              : dragOverField === field.name
+                              ? "border-amber-500 bg-amber-500/10 ring-4 ring-amber-500/20 scale-[1.01] shadow-lg"
+                              : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 bg-slate-50/70 dark:bg-slate-950/40 hover:bg-amber-400/5 hover:scale-[1.005] hover:shadow-md"
                           }`}
                         >
                           <input
+                            id={`file-${field.name}`}
                             type="file"
                             accept={field.accept || (field.type === "document" ? ".pdf,.doc,.docx,.jpg,.png" : "*/*")}
                             disabled={uploadingField === field.name}
@@ -915,17 +959,36 @@ export default function DynamicFormRenderer({
                                 Uploading document to server...
                               </p>
                             </div>
-                          ) : (
-                            <div className="space-y-1.5">
-                              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-1">
-                                <FileText className="w-5 h-5" />
+                          ) : dragOverField === field.name ? (
+                            <div className="space-y-2 py-1 animate-pulse">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-md">
+                                <Upload className="w-6 h-6 animate-bounce" />
                               </div>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                                {field.uploadButtonText || "Click to browse or drag & drop document"}
+                              <p className="text-sm font-extrabold text-amber-600 dark:text-amber-400">
+                                Drop document now to upload!
                               </p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {field.helperText || `Supported formats: PDF, Word DOC/DOCX (Max ${field.maxSizeMB || 10}MB)`}
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Release mouse to process document
                               </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-500 flex items-center justify-center mx-auto transition-transform group-hover:scale-110 shadow-sm border border-amber-500/20">
+                                <FileText className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
+                                  {field.uploadButtonText || "Click to browse or drag & drop document"}
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                  {field.helperText || `Supported formats: PDF, Word DOC/DOCX (Max ${field.maxSizeMB || 10}MB)`}
+                                </p>
+                              </div>
+                              <div className="inline-flex items-center space-x-2 pt-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                                <span>Browse Files</span>
+                                <span>•</span>
+                                <span>Drag & Drop</span>
+                              </div>
                             </div>
                           )}
                         </label>

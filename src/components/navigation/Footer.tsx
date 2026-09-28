@@ -10,7 +10,6 @@ import {
   Mail,
   Clock,
   ShieldCheck,
-  Send,
   ExternalLink,
   Heart,
   ChevronRight,
@@ -76,8 +75,6 @@ const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
 
 export default function Footer() {
   const { themeConfig } = useTheme();
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({
     cbse_affiliation_no: "630198",
     school_code: "43190",
@@ -184,13 +181,6 @@ export default function Footer() {
     loadSettings();
   }, []);
 
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail("");
-    }
-  };
 
   // Determine separate footer logo
   const footerLogoUrl = siteSettings.footer_logo_url || themeConfig?.logoImageUrl || "";
@@ -327,35 +317,6 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Newsletter */}
-            <div className="pt-2">
-              <p className="text-xs font-bold text-white uppercase tracking-wider mb-2">
-                Subscribe to School Circulars & Newsletter
-              </p>
-              {subscribed ? (
-                <div className="flex items-center space-x-2 text-emerald-400 text-xs bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-800">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Thank you! You have subscribed to official updates.</span>
-                </div>
-              ) : (
-                <form onSubmit={handleSubscribe} className="flex gap-2">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter parent's email address..."
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-slate-900/90 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 focus:outline-none focus:border-amber-400 flex-1"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-school-secondary hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center justify-center shadow-md"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </form>
-              )}
-            </div>
           </div>
 
           {/* Dynamic Columns 2, 3, 4 */}

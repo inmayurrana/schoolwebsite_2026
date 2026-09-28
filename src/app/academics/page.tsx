@@ -130,41 +130,78 @@ export default async function AcademicsPage() {
           </p>
         </div>
 
-        {/* 4 Wings Cards */}
+        {/* 4 Wings Cards with Dynamic Hover Color-Shifting Effects */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {dynamicSections.map((sec, idx) => (
-            <div
-              key={idx}
-              className="glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-xl hover:shadow-2xl transition-all flex flex-col justify-between group"
-            >
-              <div className="space-y-4">
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${sec.color} flex items-center justify-center text-white shadow-md`}>
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-semibold text-school-secondary uppercase tracking-wider">
-                    {sec.grades}
-                  </span>
-                  <h3 className="text-xl font-bold text-school-primary dark:text-white mt-1">
-                    {sec.title}
-                  </h3>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {sec.desc}
-                </p>
-              </div>
+          {dynamicSections.map((sec, idx) => {
+            const hoverConfig = [
+              {
+                // Pre-Primary (Amber/Orange)
+                bg: "hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-slate-900",
+                border: "hover:border-amber-400 dark:hover:border-amber-400",
+                shadow: "hover:shadow-[0_20px_50px_-10px_rgba(245,158,11,0.25)]",
+                text: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+                badge: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+              },
+              {
+                // Primary (Blue/Indigo)
+                bg: "hover:bg-gradient-to-br hover:from-blue-500/15 hover:via-indigo-500/10 hover:to-white dark:hover:from-blue-950/40 dark:hover:via-indigo-950/20 dark:hover:to-slate-900",
+                border: "hover:border-blue-400 dark:hover:border-blue-400",
+                shadow: "hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.25)]",
+                text: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
+                badge: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
+              },
+              {
+                // Middle School (Emerald/Teal)
+                bg: "hover:bg-gradient-to-br hover:from-emerald-500/15 hover:via-teal-500/10 hover:to-white dark:hover:from-emerald-950/40 dark:hover:via-teal-950/20 dark:hover:to-slate-900",
+                border: "hover:border-emerald-400 dark:hover:border-emerald-400",
+                shadow: "hover:shadow-[0_20px_50px_-10px_rgba(16,185,129,0.25)]",
+                text: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+                badge: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+              },
+              {
+                // Senior Secondary (Purple/Pink)
+                bg: "hover:bg-gradient-to-br hover:from-purple-500/15 hover:via-pink-500/10 hover:to-white dark:hover:from-purple-950/40 dark:hover:via-pink-950/20 dark:hover:to-slate-900",
+                border: "hover:border-purple-400 dark:hover:border-purple-400",
+                shadow: "hover:shadow-[0_20px_50px_-10px_rgba(168,85,247,0.25)]",
+                text: "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+                badge: "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+              },
+            ][idx % 4];
 
-              <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
-                <Link
-                  href={sec.link}
-                  className="inline-flex items-center space-x-2 text-xs font-bold text-school-secondary hover:text-blue-700 dark:hover:text-amber-400 group-hover:translate-x-1 transition-transform"
-                >
-                  <span>Explore {sec.title} Wing</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+            return (
+              <div
+                key={idx}
+                className={`glass-card rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1.5 ${hoverConfig.bg} ${hoverConfig.border} ${hoverConfig.shadow}`}
+              >
+                <div className="space-y-4">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${sec.color} flex items-center justify-center text-white shadow-md group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className={`text-xs font-semibold text-school-secondary uppercase tracking-wider transition-colors duration-300 ${hoverConfig.badge}`}>
+                      {sec.grades}
+                    </span>
+                    <h3 className={`text-xl font-bold text-school-primary dark:text-white mt-1 transition-colors duration-300 ${hoverConfig.text}`}>
+                      {sec.title}
+                    </h3>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {sec.desc}
+                  </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
+                  <Link
+                    href={sec.link}
+                    className={`inline-flex items-center space-x-2 text-xs font-bold text-school-secondary hover:text-blue-700 dark:hover:text-amber-400 group-hover:translate-x-1 transition-all duration-300 ${hoverConfig.text}`}
+                  >
+                    <span>Explore {sec.title} Wing</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Stream Differentiators */}

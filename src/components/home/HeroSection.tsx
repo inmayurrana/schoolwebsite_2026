@@ -24,6 +24,13 @@ import {
 import QuickEnquiryModal from "../ui/QuickEnquiryModal";
 import { useTheme } from "../providers/ThemeProvider";
 
+declare global {
+  interface Window {
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
 interface HeroData {
   heroBadge?: string;
   heroTitle?: string;
@@ -54,10 +61,12 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
   const { t } = useTheme();
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const ytPlayerRef = useRef<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("ADMISSION");
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   const [heroData, setHeroData] = useState<HeroData>(
     initialData || {
@@ -77,6 +86,18 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
 
   const [affiliationNo, setAffiliationNo] = useState("630198");
   const [schoolLevel, setSchoolLevel] = useState("Senior Secondary");
+  const [badge1Title, setBadge1Title] = useState("");
+  const [badge1Subtitle, setBadge1Subtitle] = useState("");
+  const [badge2Title, setBadge2Title] = useState("10-Acre Campus");
+  const [badge2Subtitle, setBadge2Subtitle] = useState("Alpine Serenity");
+  const [badge3Title, setBadge3Title] = useState("100% Board Results");
+  const [badge3Subtitle, setBadge3Subtitle] = useState("District Distinctions");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadDynamicHero() {
@@ -99,19 +120,25 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           }
         }
 
-        // Fetch dynamic site settings for affiliation number
+        // Fetch dynamic site settings for affiliation number and badges
         const settingsRes = await fetch("/api/settings");
         if (settingsRes.ok) {
           const sData = await settingsRes.json();
-          if (sData.settingsMap?.cbse_affiliation_no) {
-            setAffiliationNo(sData.settingsMap.cbse_affiliation_no);
-          } else if (Array.isArray(sData.settings)) {
-            const found = sData.settings.find((s: any) => s.key === "cbse_affiliation_no");
-            if (found?.value) setAffiliationNo(found.value);
+          const sMap = sData.settingsMap || {};
+          if (Array.isArray(sData.settings)) {
+            sData.settings.forEach((s: any) => {
+              if (s.key && s.value) sMap[s.key] = s.value;
+            });
           }
-          if (sData.settingsMap?.school_level) {
-            setSchoolLevel(sData.settingsMap.school_level);
-          }
+
+          if (sMap.cbse_affiliation_no) setAffiliationNo(sMap.cbse_affiliation_no);
+          if (sMap.school_level) setSchoolLevel(sMap.school_level);
+          if (sMap.hero_badge_1_title) setBadge1Title(sMap.hero_badge_1_title);
+          if (sMap.hero_badge_1_subtitle) setBadge1Subtitle(sMap.hero_badge_1_subtitle);
+          if (sMap.hero_badge_2_title) setBadge2Title(sMap.hero_badge_2_title);
+          if (sMap.hero_badge_2_subtitle) setBadge2Subtitle(sMap.hero_badge_2_subtitle);
+          if (sMap.hero_badge_3_title) setBadge3Title(sMap.hero_badge_3_title);
+          if (sMap.hero_badge_3_subtitle) setBadge3Subtitle(sMap.hero_badge_3_subtitle);
         }
       } catch (err) {
         // fallback
@@ -120,120 +147,206 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
     loadDynamicHero();
   }, []);
 
-  // Guarantee automatic background video playback on mount/load with sound enabled by default
-  useEffect(() => {
-    const youtubeId = extractYouTubeId(heroData.heroVideoUrl);
-    if (youtubeId) {
-      const sendPlay = () => {
-        if (iframeRef.current && iframeRef.current.contentWindow) {
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-            "*"
-          );
-          if (!isMuted) {
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "unMute", args: [] }),
-              "*"
-            );
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-              "*"
-            );
-          }
+  const isVideoMode = heroData.heroMediaType !== "IMAGE";
+  const youtubeId = isVideoMode ? extractYouTubeId(heroData.heroVideoUrl) : null;
+  const vimeoId = isVideoMode && !youtubeId ? extractVimeoId(heroData.heroVideoUrl) : null;
+
+  // Unified controller to guarantee playback and sound ON
+  const enableSoundAndPlay = () => {
+    setIsMuted(false);
+    setIsPlaying(true);
+
+    // 1. YouTube IFrame API instance
+    if (ytPlayerRef.current) {
+      try {
+        if (typeof ytPlayerRef.current.playVideo === "function") {
+          ytPlayerRef.current.playVideo();
         }
+        if (typeof ytPlayerRef.current.unMute === "function") {
+          ytPlayerRef.current.unMute();
+        }
+        if (typeof ytPlayerRef.current.setVolume === "function") {
+          ytPlayerRef.current.setVolume(100);
+        }
+      } catch (err) {}
+    }
+
+    // 2. Direct postMessage to YouTube iframe (dual format for broad compatibility)
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        const cw = iframeRef.current.contentWindow;
+        cw.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: "" }), "*");
+        cw.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+        cw.postMessage(JSON.stringify({ event: "command", func: "unMute", args: "" }), "*");
+        cw.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*");
+        cw.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+      } catch (err) {}
+    }
+
+    // 3. HTML5 Video Element
+    if (videoRef.current) {
+      try {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1.0;
+        videoRef.current.play().catch(() => {});
+      } catch (err) {}
+    }
+  };
+
+  // Initialize official YouTube Iframe Player API for precise sound and play control
+  useEffect(() => {
+    if (!youtubeId || typeof window === "undefined") return;
+
+    const setupPlayer = () => {
+      if (!window.YT || !window.YT.Player || !iframeRef.current) return;
+      try {
+        if (ytPlayerRef.current) {
+          try {
+            ytPlayerRef.current.destroy();
+          } catch (e) {}
+        }
+
+        ytPlayerRef.current = new window.YT.Player(iframeRef.current, {
+          events: {
+            onReady: (event: any) => {
+              try {
+                event.target.playVideo();
+                event.target.unMute();
+                event.target.setVolume(100);
+              } catch (e) {}
+            },
+            onStateChange: (event: any) => {
+              // 1 = PLAYING
+              if (event.data === 1) {
+                setIsPlaying(true);
+                try {
+                  event.target.unMute();
+                  event.target.setVolume(100);
+                } catch (e) {}
+              }
+            },
+          },
+        });
+      } catch (err) {
+        // Fallback handled by postMessage timers
+      }
+    };
+
+    if (window.YT && window.YT.Player) {
+      setupPlayer();
+    } else {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prev) prev();
+        setupPlayer();
       };
 
-      const timer1 = setTimeout(sendPlay, 500);
-      const timer2 = setTimeout(sendPlay, 1500);
-      const timer3 = setTimeout(sendPlay, 3000);
+      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        const first = document.getElementsByTagName("script")[0];
+        first?.parentNode?.insertBefore(tag, first);
+      }
+    }
+
+    return () => {
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch (e) {}
+        ytPlayerRef.current = null;
+      }
+    };
+  }, [youtubeId, heroData.heroVideoUrl]);
+
+  // Guarantee automatic background video playback on mount with periodic triggers
+  useEffect(() => {
+    if (youtubeId) {
+      const timers = [150, 450, 1000, 1800, 2800, 4200].map((delay) =>
+        setTimeout(() => {
+          enableSoundAndPlay();
+        }, delay)
+      );
+
       const qualityTimer = setTimeout(() => {
         if (iframeRef.current && iframeRef.current.contentWindow) {
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: "command", func: "setPlaybackQuality", args: ["hd1080"] }),
-            "*"
-          );
+          try {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: "command", func: "setPlaybackQuality", args: ["hd1080"] }),
+              "*"
+            );
+          } catch (e) {}
         }
       }, 2500);
 
       return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-        clearTimeout(timer3);
+        timers.forEach(clearTimeout);
         clearTimeout(qualityTimer);
       };
     } else if (videoRef.current) {
-      videoRef.current.defaultMuted = isMuted;
-      videoRef.current.muted = isMuted;
+      videoRef.current.defaultMuted = false;
+      videoRef.current.muted = false;
       videoRef.current.volume = 1.0;
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          if (!isMuted && videoRef.current) {
+          // If browser policy deferred unmuted autoplay, start muted first so it runs, then unmute on first gesture
+          if (videoRef.current) {
             videoRef.current.muted = true;
             videoRef.current.play().catch(() => {});
           }
         });
       }
     }
-  }, [heroData.heroVideoUrl, isMuted]);
+  }, [youtubeId, heroData.heroVideoUrl]);
 
-  // Ensure sound is active on first user interaction if browser policy deferred audio
+  // Seamlessly unlock sound on ANY user gesture if browser policy temporarily deferred audio
   useEffect(() => {
-    if (isMuted) return;
-
     const unlockAudio = () => {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "unMute", args: [] }),
-          "*"
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-          "*"
-        );
-      }
-      if (videoRef.current) {
-        videoRef.current.muted = false;
-        videoRef.current.volume = 1.0;
-        videoRef.current.play().catch(() => {});
-      }
+      enableSoundAndPlay();
     };
 
-    window.addEventListener("pointerdown", unlockAudio, { once: true });
-    window.addEventListener("keydown", unlockAudio, { once: true });
-    window.addEventListener("touchstart", unlockAudio, { once: true });
+    const events = ["click", "pointerdown", "touchstart", "keydown", "wheel", "scroll"];
+    events.forEach((ev) => window.addEventListener(ev, unlockAudio, { passive: true }));
 
     return () => {
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("keydown", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
+      events.forEach((ev) => window.removeEventListener(ev, unlockAudio));
     };
-  }, [isMuted]);
+  }, []);
 
   const togglePlay = () => {
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+
+    if (ytPlayerRef.current) {
+      try {
+        if (nextPlaying) {
+          ytPlayerRef.current.playVideo();
+        } else {
+          ytPlayerRef.current.pauseVideo();
+        }
+      } catch (e) {}
+    }
+
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
+      if (nextPlaying) {
+        videoRef.current.play().catch(() => {});
       } else {
-        videoRef.current.play();
-        setIsPlaying(true);
+        videoRef.current.pause();
       }
     }
+
     if (iframeRef.current && iframeRef.current.contentWindow) {
-      if (isPlaying) {
+      try {
         iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+          JSON.stringify({
+            event: "command",
+            func: nextPlaying ? "playVideo" : "pauseVideo",
+            args: "",
+          }),
           "*"
         );
-        setIsPlaying(false);
-      } else {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-          "*"
-        );
-        setIsPlaying(true);
-      }
+      } catch (e) {}
     }
   };
 
@@ -241,39 +354,36 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
 
-    if (videoRef.current) {
-      videoRef.current.muted = nextMuted;
-      if (!nextMuted) {
-        videoRef.current.volume = 1.0;
-        videoRef.current.play().catch(() => {});
+    if (nextMuted) {
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.mute === "function") {
+        try {
+          ytPlayerRef.current.mute();
+        } catch (e) {}
       }
-    }
-
-    if (iframeRef.current && iframeRef.current.contentWindow) {
-      if (nextMuted) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "mute", args: [] }),
-          "*"
-        );
-      } else {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "unMute", args: [] }),
-          "*"
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-          "*"
-        );
+      if (videoRef.current) {
+        videoRef.current.muted = true;
       }
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        try {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: "command", func: "mute", args: "" }),
+            "*"
+          );
+        } catch (e) {}
+      }
+    } else {
+      enableSoundAndPlay();
     }
   };
 
-  const isVideoMode = heroData.heroMediaType !== "IMAGE";
-  const youtubeId = isVideoMode ? extractYouTubeId(heroData.heroVideoUrl) : null;
-  const vimeoId = isVideoMode && !youtubeId ? extractVimeoId(heroData.heroVideoUrl) : null;
+  const currentOrigin =
+    origin || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
 
   return (
-    <section className="relative w-full overflow-hidden min-h-[640px] lg:min-h-[780px] flex items-center justify-center text-white bg-slate-950">
+    <section
+      onClick={() => enableSoundAndPlay()}
+      className="relative w-full overflow-hidden min-h-[640px] lg:min-h-[780px] flex items-center justify-center text-white bg-slate-950"
+    >
       {/* 1. Cinematic Full-HD Background Video / Image Layer */}
       {isVideoMode ? (
         youtubeId ? (
@@ -281,26 +391,14 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
             <iframe
               ref={iframeRef}
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&vq=hd1080&hd=1`}
+              id="hero-youtube-iframe"
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&mute=1&loop=1&playlist=${youtubeId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(
+                currentOrigin
+              )}&widget_referrer=${encodeURIComponent(currentOrigin)}&vq=hd1080&hd=1`}
               title="Campus YouTube Hero Video in 1080p HD"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               onLoad={() => {
-                if (iframeRef.current && iframeRef.current.contentWindow) {
-                  iframeRef.current.contentWindow.postMessage(
-                    JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-                    "*"
-                  );
-                  if (!isMuted) {
-                    iframeRef.current.contentWindow.postMessage(
-                      JSON.stringify({ event: "command", func: "unMute", args: [] }),
-                      "*"
-                    );
-                    iframeRef.current.contentWindow.postMessage(
-                      JSON.stringify({ event: "command", func: "setVolume", args: [100] }),
-                      "*"
-                    );
-                  }
-                }
+                enableSoundAndPlay();
               }}
               style={{
                 width: "100vw",
@@ -316,6 +414,7 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               className="pointer-events-none object-cover will-change-transform"
             />
           </div>
+
         ) : vimeoId ? (
           /* Vimeo Full-HD Autoplay Stream */
           <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0 bg-slate-950">
@@ -460,10 +559,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               </div>
               <div>
                 <span className="text-xs font-black text-white block tracking-wide">
-                  CBSE Affiliated {affiliationNo || "630198"}
+                  {badge1Title || `CBSE Affiliated ${affiliationNo || "630198"}`}
                 </span>
                 <span className="text-[11px] text-blue-200 font-medium block mt-0.5">
-                  {schoolLevel || "Senior Secondary"}
+                  {badge1Subtitle || schoolLevel || "Senior Secondary"}
                 </span>
               </div>
             </div>
@@ -474,10 +573,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               </div>
               <div>
                 <span className="text-xs font-black text-white block tracking-wide">
-                  10-Acre Campus
+                  {badge2Title || "10-Acre Campus"}
                 </span>
                 <span className="text-[11px] text-amber-200 font-medium block mt-0.5">
-                  Alpine Serenity
+                  {badge2Subtitle || "Alpine Serenity"}
                 </span>
               </div>
             </div>
@@ -488,10 +587,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
               </div>
               <div>
                 <span className="text-xs font-black text-white block tracking-wide">
-                  100% Board Results
+                  {badge3Title || "100% Board Results"}
                 </span>
                 <span className="text-[11px] text-emerald-200 font-medium block mt-0.5">
-                  District Distinctions
+                  {badge3Subtitle || "District Distinctions"}
                 </span>
               </div>
             </div>
@@ -509,7 +608,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
 
           {/* Sound Mute / Unmute Audio Toggle */}
           <button
-            onClick={toggleMute}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMute();
+            }}
             aria-label={isMuted ? "Allow video sound (Unmute)" : "Mute video sound"}
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer ${
               isMuted
@@ -533,7 +635,10 @@ export default function HeroSection({ initialData }: { initialData?: HeroData })
 
           {/* Play / Pause Toggle */}
           <button
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
             aria-label={isPlaying ? "Pause video" : "Play video"}
             className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
             title={isPlaying ? "Pause video" : "Play video"}

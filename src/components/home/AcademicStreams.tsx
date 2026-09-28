@@ -102,10 +102,10 @@ export default function AcademicStreams({ customStyles }: AcademicStreamsProps) 
             <button
               key={wing.id}
               onClick={() => setActiveWingId(wing.id)}
-              className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center space-x-2 cursor-pointer ${
+              className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 shadow-sm flex items-center space-x-2 cursor-pointer ${
                 activeWing.id === wing.id
                   ? "bg-gradient-to-r from-school-secondary to-blue-600 text-white shadow-lg scale-105 border border-blue-400/40"
-                  : "glass-btn text-slate-700 dark:text-slate-200"
+                  : "glass-btn text-slate-700 dark:text-slate-200 hover:bg-blue-500/10 hover:border-blue-400/60 hover:text-blue-600 dark:hover:text-blue-300 hover:shadow-md hover:scale-102"
               }`}
             >
               <span>{wing.title}</span>
@@ -114,15 +114,15 @@ export default function AcademicStreams({ customStyles }: AcademicStreamsProps) 
           ))}
         </div>
 
-        {/* Active Wing Glass Showcase */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-10 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        {/* Active Wing Glass Showcase with Dynamic Hover Color-Shift */}
+        <div className="glass-panel rounded-3xl p-6 sm:p-10 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border border-slate-200/80 dark:border-white/10 hover:border-blue-400/60 hover:shadow-[0_25px_60px_-15px_rgba(0,102,255,0.22)] transition-all duration-500 hover:bg-gradient-to-br hover:from-white hover:via-blue-50/30 hover:to-white dark:hover:from-slate-900 dark:hover:via-blue-950/20 dark:hover:to-slate-900 group">
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center space-x-2 glass-badge-gold text-amber-600 dark:text-amber-400 text-xs font-bold px-3.5 py-1 rounded-full">
+            <div className="inline-flex items-center space-x-2 glass-badge-gold text-amber-600 dark:text-amber-400 text-xs font-bold px-3.5 py-1 rounded-full group-hover:scale-105 transition-transform">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Age Group: {activeWing.age}</span>
             </div>
 
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white">
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-school-primary dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
               {activeWing.title} ({activeWing.grades})
             </h3>
 
@@ -138,7 +138,7 @@ export default function AcademicStreams({ customStyles }: AcademicStreamsProps) 
                 {(activeWing.subjects || []).map((sub: string, idx: number) => (
                   <div
                     key={idx}
-                    className="glass-card-interactive flex items-center space-x-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 p-3 rounded-xl"
+                    className="glass-card-interactive flex items-center space-x-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 p-3 rounded-xl border border-slate-200/80 dark:border-white/5 hover:bg-emerald-500/10 hover:border-emerald-400/60 hover:text-emerald-700 dark:hover:text-emerald-300 hover:shadow-sm transition-all duration-200 cursor-default"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span>{sub}</span>

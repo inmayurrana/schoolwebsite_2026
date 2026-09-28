@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { UiEffectsProvider } from "@/components/providers/UiEffectsProvider";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/navigation/Footer";
 import NoticeTicker from "@/components/ui/NoticeTicker";
@@ -21,6 +22,8 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
+
+import { prisma } from "@/lib/prisma";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,6 +45,17 @@ export const metadata: Metadata = {
     "Top International School Himachal",
   ],
   authors: [{ name: "Cambridge International School Mandi" }],
+  icons: {
+    icon: [
+      { url: "/api/favicon", sizes: "any", type: "image/png" },
+      { url: "/icon.png", sizes: "any" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: ["/api/favicon"],
+    apple: [
+      { url: "/api/favicon?size=180", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
     title: "Cambridge International School, Mandi",
     description: "Empowering Global Minds Amidst Himalayan Serenity • CBSE Affiliated No. 630198",
@@ -60,14 +74,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let faviconUrl = "/api/favicon";
+  try {
+    const versionSetting = await prisma.siteSetting.findUnique({
+      where: { key: "favicon_version" },
+    });
+    const v = versionSetting?.value || "1";
+    faviconUrl = `/api/favicon?v=${v}`;
+  } catch (e) {}
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href={faviconUrl} sizes="any" type="image/png" />
+        <link rel="shortcut icon" href={faviconUrl} />
+        <link rel="apple-touch-icon" href={`${faviconUrl}&size=180`} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://images.unsplash.com" />
@@ -75,13 +101,15 @@ export default function RootLayout({
       </head>
       <body className={`${poppins.variable} ${inter.variable} min-h-screen flex flex-col font-sans antialiased selection:bg-amber-400 selection:text-slate-950`}>
         <ThemeProvider>
-          <InstantNavigation />
-          <NoticeTicker />
-          <Navbar />
-          <main className="flex-1">
-            <PageVisibilityGuard>{children}</PageVisibilityGuard>
-          </main>
-          <Footer />
+          <UiEffectsProvider>
+            <InstantNavigation />
+            <NoticeTicker />
+            <Navbar />
+            <main className="flex-1">
+              <PageVisibilityGuard>{children}</PageVisibilityGuard>
+            </main>
+            <Footer />
+          </UiEffectsProvider>
         </ThemeProvider>
       </body>
     </html>

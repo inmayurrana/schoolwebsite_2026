@@ -28,7 +28,9 @@ import {
   Palette,
   LayoutTemplate,
   Share2,
+  Sliders,
 } from "lucide-react";
+import UiEffectsSelectorModal from "@/components/ui/UiEffectsSelectorModal";
 
 export default function AdminLayout({
   children,
@@ -40,6 +42,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [effectsModalOpen, setEffectsModalOpen] = useState(false);
 
   // Skip auth layout for login page
   const isLoginPage = pathname === "/admin/login";
@@ -93,6 +96,7 @@ export default function AdminLayout({
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Page & Content Studio", href: "/admin/pages", icon: Layers, badge: "Editor" },
     { label: "Theme & Visual Effects", href: "/admin/theme", icon: Palette, badge: "Colors" },
+    { label: "Modern UI Effects", href: "/admin/ui-effects", icon: Sparkles, badge: "Live FX" },
     { label: "Header & Footer Studio", href: "/admin/header-footer", icon: LayoutTemplate, badge: "Menu" },
     { label: "Social Media & Feeds", href: "/admin/social-media", icon: Share2, badge: "FB & YT" },
     { label: "Mandatory Disclosure", href: "/admin/mandatory-disclosure", icon: ShieldCheck, badge: "CBSE" },
@@ -187,8 +191,25 @@ export default function AdminLayout({
           </nav>
         </div>
 
+        {/* Modern UI Effects Studio Trigger in Admin Sidebar */}
+        <div className="pt-3 border-t border-white/10">
+          <button
+            type="button"
+            onClick={() => setEffectsModalOpen(true)}
+            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-blue-500/15 to-indigo-500/15 hover:from-amber-500/25 hover:to-indigo-500/25 border border-amber-400/40 hover:border-amber-400 text-amber-300 hover:text-white transition-all duration-300 flex items-center justify-between group shadow-md shadow-amber-400/5 cursor-pointer text-xs font-bold"
+          >
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <span>Modern UI Effects</span>
+            </div>
+            <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider group-hover:scale-105 transition-transform">
+              Edit
+            </span>
+          </button>
+        </div>
+
         {/* User Info & Logout Footer */}
-        <div className="pt-4 border-t border-white/10 space-y-3">
+        <div className="pt-3 border-t border-white/10 space-y-3">
           <div className="flex items-center space-x-3 px-1">
             <div className="w-9 h-9 rounded-full bg-slate-800 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold text-xs shadow">
               {user?.name ? user.name[0] : "A"}
@@ -226,6 +247,12 @@ export default function AdminLayout({
       <main className="flex-1 min-w-0 bg-slate-950 min-h-screen p-4 sm:p-6 lg:p-8 overflow-y-auto relative z-10">
         {children}
       </main>
+
+      {/* Modern UI Effects Studio Modal Available Across All Admin Pages */}
+      <UiEffectsSelectorModal
+        isOpen={effectsModalOpen}
+        onClose={() => setEffectsModalOpen(false)}
+      />
     </div>
   );
 }

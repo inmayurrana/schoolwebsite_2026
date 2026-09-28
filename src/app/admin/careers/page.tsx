@@ -677,10 +677,14 @@ export default function AdminCareersPage() {
                   <tbody className="divide-y divide-slate-800/60">
                     {filteredApps.map((app) => {
                       return (
-                        <tr key={app.id} className="hover:bg-slate-900/50 transition-colors group">
+                        <tr
+                          key={app.id}
+                          onClick={() => setSelectedApp(app)}
+                          className="hover:bg-slate-900/70 transition-colors group cursor-pointer"
+                        >
                           {/* Candidate Profile */}
                           <td className="p-4">
-                            <div className="font-bold text-sm text-white flex items-center space-x-1.5">
+                            <div className="font-bold text-sm text-white group-hover:text-amber-400 transition-colors flex items-center space-x-1.5">
                               <span>{app.applicantName}</span>
                             </div>
                             <div className="text-[11px] text-slate-400 space-y-0.5 mt-0.5">
@@ -719,7 +723,7 @@ export default function AdminCareersPage() {
                           </td>
 
                           {/* Status Dropdown */}
-                          <td className="p-4 whitespace-nowrap">
+                          <td className="p-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <select
                               value={app.status}
                               onChange={(e) => handleUpdateAppStatus(app.id, e.target.value)}
@@ -744,7 +748,7 @@ export default function AdminCareersPage() {
                           </td>
 
                           {/* Resume Link */}
-                          <td className="p-4 whitespace-nowrap">
+                          <td className="p-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {app.resumeUrl ? (
                               <a
                                 href={app.resumeUrl}
@@ -761,7 +765,7 @@ export default function AdminCareersPage() {
                           </td>
 
                           {/* Actions */}
-                          <td className="p-4 text-right whitespace-nowrap">
+                          <td className="p-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end space-x-2">
                               <button
                                 onClick={() => setSelectedApp(app)}

@@ -37,6 +37,9 @@ import {
   Share2,
   Play,
   Tv,
+  Sun,
+  Moon,
+  Zap,
 } from "lucide-react";
 
 interface NavChildItem {
@@ -250,6 +253,19 @@ export default function AdminHeaderFooterStudio() {
   const [headerLogoMode, setHeaderLogoMode] = useState<"IMAGE_ONLY" | "TEXT_AND_ICON" | "IMAGE_AND_TEXT">("IMAGE_ONLY");
   const [headerLogoHeight, setHeaderLogoHeight] = useState(50);
 
+  // Browser Tab Icon (Favicon) & Border Light Effect State
+  const [siteFaviconUrl, setSiteFaviconUrl] = useState("/uploads/LOGO_c_72ead6e76f87.webp");
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [faviconLightEffect, setFaviconLightEffect] = useState(true);
+  const [faviconBorderColor, setFaviconBorderColor] = useState("#F59E0B"); // default imperial amber/gold
+  const [faviconBorderWidth, setFaviconBorderWidth] = useState(2.5);
+  const [faviconLightStyle, setFaviconLightStyle] = useState<"glow" | "neon" | "dual" | "subtle">("glow");
+  const [faviconGlowIntensity, setFaviconGlowIntensity] = useState<"soft" | "medium" | "vibrant">("vibrant");
+  const [faviconBgColor, setFaviconBgColor] = useState("#0A2540"); // Cambridge Navy
+  const [faviconShape, setFaviconShape] = useState<"rounded" | "circle" | "square">("rounded");
+  const [savingFaviconInstant, setSavingFaviconInstant] = useState(false);
+  const [faviconSavedSuccess, setFaviconSavedSuccess] = useState(false);
+
   const [navLinks, setNavLinks] = useState<NavItem[]>(DEFAULT_NAV_LINKS);
   const [headerButtons, setHeaderButtons] = useState<HeaderButton[]>(DEFAULT_HEADER_BUTTONS);
 
@@ -305,6 +321,14 @@ export default function AdminHeaderFooterStudio() {
             if (map.header_logo_url) setHeaderLogoUrl(map.header_logo_url);
             if (map.header_logo_mode) setHeaderLogoMode(map.header_logo_mode as any);
             if (map.header_logo_height) setHeaderLogoHeight(parseInt(map.header_logo_height) || 50);
+            if (map.site_favicon_url) setSiteFaviconUrl(map.site_favicon_url);
+            if (map.favicon_light_effect_enabled !== undefined) setFaviconLightEffect(map.favicon_light_effect_enabled === "true");
+            if (map.favicon_border_color) setFaviconBorderColor(map.favicon_border_color);
+            if (map.favicon_border_width) setFaviconBorderWidth(parseFloat(map.favicon_border_width) || 2.5);
+            if (map.favicon_light_style) setFaviconLightStyle(map.favicon_light_style as any);
+            if (map.favicon_glow_intensity) setFaviconGlowIntensity(map.favicon_glow_intensity as any);
+            if (map.favicon_bg_color) setFaviconBgColor(map.favicon_bg_color);
+            if (map.favicon_shape) setFaviconShape(map.favicon_shape as any);
 
             // Separate Footer Logo settings
             if (map.footer_logo_url) setFooterLogoUrl(map.footer_logo_url);
@@ -404,6 +428,58 @@ export default function AdminHeaderFooterStudio() {
     }
   };
 
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFavicon(true);
+    const body = new FormData();
+    body.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (data.url) {
+        setSiteFaviconUrl(data.url);
+      }
+    } catch (err) {
+      console.error("Favicon upload failed:", err);
+    } finally {
+      setUploadingFavicon(false);
+    }
+  };
+
+  const handleSaveFaviconSettings = async () => {
+    setSavingFaviconInstant(true);
+    setFaviconSavedSuccess(false);
+    try {
+      const payload = [
+        { key: "site_favicon_url", value: siteFaviconUrl, category: "HEADER" },
+        { key: "favicon_light_effect_enabled", value: faviconLightEffect ? "true" : "false", category: "HEADER" },
+        { key: "favicon_border_color", value: faviconBorderColor, category: "HEADER" },
+        { key: "favicon_border_width", value: faviconBorderWidth.toString(), category: "HEADER" },
+        { key: "favicon_light_style", value: faviconLightStyle, category: "HEADER" },
+        { key: "favicon_glow_intensity", value: faviconGlowIntensity, category: "HEADER" },
+        { key: "favicon_bg_color", value: faviconBgColor, category: "HEADER" },
+        { key: "favicon_shape", value: faviconShape, category: "HEADER" },
+        { key: "favicon_version", value: Date.now().toString(), category: "HEADER" },
+      ];
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: payload }),
+      });
+      if (res.ok) {
+        setFaviconSavedSuccess(true);
+        setTimeout(() => setFaviconSavedSuccess(false), 4000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingFaviconInstant(false);
+    }
+  };
+
   const handleSaveAll = async () => {
     setSaving(true);
     setSuccess(false);
@@ -420,6 +496,15 @@ export default function AdminHeaderFooterStudio() {
       { key: "header_logo_url", value: headerLogoUrl, category: "HEADER" },
       { key: "header_logo_mode", value: headerLogoMode, category: "HEADER" },
       { key: "header_logo_height", value: headerLogoHeight.toString(), category: "HEADER" },
+      { key: "site_favicon_url", value: siteFaviconUrl, category: "HEADER" },
+      { key: "favicon_light_effect_enabled", value: faviconLightEffect ? "true" : "false", category: "HEADER" },
+      { key: "favicon_border_color", value: faviconBorderColor, category: "HEADER" },
+      { key: "favicon_border_width", value: faviconBorderWidth.toString(), category: "HEADER" },
+      { key: "favicon_light_style", value: faviconLightStyle, category: "HEADER" },
+      { key: "favicon_glow_intensity", value: faviconGlowIntensity, category: "HEADER" },
+      { key: "favicon_bg_color", value: faviconBgColor, category: "HEADER" },
+      { key: "favicon_shape", value: faviconShape, category: "HEADER" },
+      { key: "favicon_version", value: Date.now().toString(), category: "HEADER" },
       { key: "header_nav_links", value: JSON.stringify(navLinks), category: "HEADER" },
       { key: "header_buttons_json", value: JSON.stringify(headerButtons), category: "HEADER" },
 
@@ -871,13 +956,491 @@ export default function AdminHeaderFooterStudio() {
             </div>
           </div>
 
+          {/* 3. Browser Tab Icon (Favicon & Border Light Effects) */}
+          <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-6 space-y-7 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center space-x-2">
+                  <Globe className="w-5 h-5 text-amber-400" />
+                  <span>3. Browser Tab Icon (Favicon & Border Light Effects)</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Configure glowing border light effects and contrast plates so your tab icon is sharply visible across all light and dark browser windows.
+                </p>
+              </div>
+              <span className="text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/30 px-3.5 py-1 rounded-full font-bold self-start sm:self-auto">
+                Appears on Browser Tabs, Window Title & Bookmarks
+              </span>
+            </div>
+
+            {/* DUAL REAL-TIME BROWSER TAB SIMULATION (LIGHT & DARK CHROME) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                  <Eye className="w-4 h-4 text-amber-400" />
+                  <span>Live Browser Tab Simulations (Real Chrome Preview)</span>
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Verify high contrast against both light and dark browser themes
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* 1. Chrome Light Theme Tab Preview */}
+                <div className="p-4 bg-[#DFE1E5] rounded-2xl border border-slate-300 shadow-inner space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
+                    <span className="flex items-center space-x-1.5">
+                      <Sun className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Google Chrome — Light Mode Tab</span>
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                      ✓ High Contrast Guaranteed
+                    </span>
+                  </div>
+
+                  {/* Browser Chrome Bar */}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <div className="flex items-center space-x-1 pl-1">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
+                    </div>
+
+                    {/* Active Tab on White */}
+                    <div className="bg-white rounded-t-xl px-3.5 py-2 border-t border-x border-slate-200/90 shadow-sm flex items-center space-x-2.5 flex-1 max-w-sm">
+                      <div
+                        style={{
+                          width: 20,
+                          height: 20,
+                          backgroundColor: faviconLightEffect ? faviconBgColor : "transparent",
+                          border: faviconLightEffect ? `${Math.min(faviconBorderWidth, 2)}px solid ${faviconBorderColor}` : "none",
+                          borderRadius: faviconShape === "circle" ? "9999px" : faviconShape === "square" ? "2px" : "5px",
+                          boxShadow: faviconLightEffect
+                            ? `0 0 6px ${faviconBorderColor}, inset 0 0 2px ${faviconBorderColor}`
+                            : "none",
+                        }}
+                        className="flex items-center justify-center overflow-hidden flex-shrink-0 transition-all"
+                      >
+                        {siteFaviconUrl ? (
+                          <img
+                            src={siteFaviconUrl}
+                            alt="Tab Favicon"
+                            className="w-3.5 h-3.5 object-contain"
+                          />
+                        ) : (
+                          <Globe className="w-3.5 h-3.5 text-slate-400" />
+                        )}
+                      </div>
+
+                      <span className="text-xs font-semibold text-slate-800 truncate">
+                        Cambridge International School, Mandi
+                      </span>
+                      <span className="text-slate-400 text-xs ml-auto">🔊</span>
+                      <span className="text-slate-400 text-xs ml-1 cursor-default">✕</span>
+                    </div>
+
+                    <div className="text-slate-500 text-xs font-bold px-1">+</div>
+                  </div>
+                </div>
+
+                {/* 2. Chrome Dark Theme Tab Preview */}
+                <div className="p-4 bg-[#1E293B] rounded-2xl border border-slate-700 shadow-inner space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+                    <span className="flex items-center space-x-1.5">
+                      <Moon className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Google Chrome — Dark Mode Tab</span>
+                    </span>
+                    <span className="text-[10px] text-amber-300 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                      ✨ Radiant Bloom Active
+                    </span>
+                  </div>
+
+                  {/* Browser Chrome Bar */}
+                  <div className="flex items-center space-x-2 pt-1">
+                    <div className="flex items-center space-x-1 pl-1">
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-600" />
+                    </div>
+
+                    {/* Active Tab on Dark */}
+                    <div className="bg-[#0F172A] rounded-t-xl px-3.5 py-2 border-t border-x border-slate-700/90 shadow-sm flex items-center space-x-2.5 flex-1 max-w-sm">
+                      <div
+                        style={{
+                          width: 20,
+                          height: 20,
+                          backgroundColor: faviconLightEffect ? faviconBgColor : "transparent",
+                          border: faviconLightEffect ? `${Math.min(faviconBorderWidth, 2)}px solid ${faviconBorderColor}` : "none",
+                          borderRadius: faviconShape === "circle" ? "9999px" : faviconShape === "square" ? "2px" : "5px",
+                          boxShadow: faviconLightEffect
+                            ? `0 0 8px ${faviconBorderColor}, inset 0 0 3px ${faviconBorderColor}`
+                            : "none",
+                        }}
+                        className="flex items-center justify-center overflow-hidden flex-shrink-0 transition-all"
+                      >
+                        {siteFaviconUrl ? (
+                          <img
+                            src={siteFaviconUrl}
+                            alt="Tab Favicon"
+                            className="w-3.5 h-3.5 object-contain"
+                          />
+                        ) : (
+                          <Globe className="w-3.5 h-3.5 text-slate-400" />
+                        )}
+                      </div>
+
+                      <span className="text-xs font-semibold text-slate-200 truncate">
+                        Cambridge International School, Mandi
+                      </span>
+                      <span className="text-emerald-400 text-xs ml-auto">🔊</span>
+                      <span className="text-slate-500 text-xs ml-1 cursor-default">✕</span>
+                    </div>
+
+                    <div className="text-slate-500 text-xs font-bold px-1">+</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* LIGHT EFFECT & BORDER COLOR CUSTOMIZER */}
+            <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-5 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-2 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/30">
+                    <Zap className="w-4 h-4 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Icon Border Light Effect & Color Controls</h3>
+                    <p className="text-[11px] text-slate-400">
+                      Give your tab icon a radiant neon or golden border glow so it never gets washed out.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="cursor-pointer inline-flex items-center space-x-2 bg-slate-900 px-3.5 py-1.5 rounded-xl border border-slate-700 text-xs font-bold">
+                  <input
+                    type="checkbox"
+                    checked={faviconLightEffect}
+                    onChange={(e) => setFaviconLightEffect(e.target.checked)}
+                    className="w-4 h-4 accent-amber-400 rounded cursor-pointer"
+                  />
+                  <span className={faviconLightEffect ? "text-amber-400" : "text-slate-400"}>
+                    {faviconLightEffect ? "Light Effect: Enabled" : "Light Effect: Disabled"}
+                  </span>
+                </label>
+              </div>
+
+              {faviconLightEffect && (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  {/* Row 1: Spotlight Preview + Border Color Presets */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    {/* Spotlight Zoomed Card */}
+                    <div className="md:col-span-4 flex flex-col items-center justify-center p-6 bg-slate-900/90 rounded-2xl border border-slate-800 text-center relative overflow-hidden group">
+                      <div
+                        className="absolute inset-0 opacity-20 pointer-events-none blur-xl transition-all duration-500"
+                        style={{ backgroundColor: faviconBorderColor }}
+                      />
+
+                      <div className="relative z-10 flex flex-col items-center space-y-3">
+                        <div
+                          style={{
+                            width: 68,
+                            height: 68,
+                            backgroundColor: faviconBgColor,
+                            border: `${faviconBorderWidth}px solid ${faviconBorderColor}`,
+                            borderRadius: faviconShape === "circle" ? "9999px" : faviconShape === "square" ? "4px" : "18px",
+                            boxShadow:
+                              faviconLightStyle === "neon"
+                                ? `0 0 12px ${faviconBorderColor}, 0 0 24px ${faviconBorderColor}, inset 0 0 6px ${faviconBorderColor}`
+                                : faviconLightStyle === "dual"
+                                ? `0 0 0 2px #ffffff, 0 0 16px ${faviconBorderColor}, inset 0 0 5px ${faviconBorderColor}`
+                                : faviconLightStyle === "subtle"
+                                ? `0 0 8px ${faviconBorderColor}`
+                                : `0 0 14px ${faviconBorderColor}, 0 0 28px ${faviconBorderColor}88, inset 0 0 6px ${faviconBorderColor}77`,
+                          }}
+                          className="flex items-center justify-center overflow-hidden transition-all duration-300"
+                        >
+                          {siteFaviconUrl ? (
+                            <img
+                              src={siteFaviconUrl}
+                              alt="Active Tab Favicon"
+                              className="w-11 h-11 object-contain"
+                            />
+                          ) : (
+                            <Globe className="w-10 h-10 text-slate-400" />
+                          )}
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-mono font-bold text-amber-300 block">
+                            {faviconBorderColor.toUpperCase()}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium block">
+                            Active Icon & Glowing Border
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Border Light Color Palette */}
+                    <div className="md:col-span-8 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center space-x-1.5">
+                          <Palette className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Select Border Light Color:</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">Click to switch light glow</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {[
+                          { name: "Amber Gold", hex: "#F59E0B", desc: "Warm Royal Glow" },
+                          { name: "Electric Cyan", hex: "#00F2FE", desc: "High Contrast Neon" },
+                          { name: "Sapphire Blue", hex: "#3B82F6", desc: "School Primary" },
+                          { name: "Emerald Neon", hex: "#10B981", desc: "Vibrant Eco Green" },
+                          { name: "Cyber Violet", hex: "#A855F7", desc: "Ultra Radiant Purple" },
+                          { name: "Crimson Rose", hex: "#F43F5E", desc: "Warm Ruby Light" },
+                          { name: "Diamond White", hex: "#FFFFFF", desc: "Crisp Clean Halo" },
+                          { name: "Solar Orange", hex: "#FF8C00", desc: "Radiant Sunset" },
+                        ].map((c) => {
+                          const isSelected = faviconBorderColor.toLowerCase() === c.hex.toLowerCase();
+                          return (
+                            <button
+                              key={c.hex}
+                              type="button"
+                              onClick={() => setFaviconBorderColor(c.hex)}
+                              className={`p-2.5 rounded-xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-slate-800 border-amber-400 shadow-md scale-[1.02]"
+                                  : "bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-850"
+                              }`}
+                            >
+                              <div
+                                style={{
+                                  backgroundColor: c.hex,
+                                  boxShadow: `0 0 8px ${c.hex}`,
+                                }}
+                                className="w-5 h-5 rounded-full flex-shrink-0 border border-white/40"
+                              />
+                              <div className="truncate">
+                                <span className={`text-[11px] font-bold block truncate ${isSelected ? "text-white" : "text-slate-300"}`}>
+                                  {c.name}
+                                </span>
+                                <span className="text-[9px] text-slate-400 block font-mono">{c.hex}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Custom Hex Color Picker */}
+                      <div className="flex items-center space-x-3 pt-2">
+                        <label className="text-[11px] font-bold text-slate-300 flex items-center space-x-1.5 flex-shrink-0">
+                          <span>Or Pick Custom Light Color:</span>
+                        </label>
+                        <div className="flex items-center space-x-2 flex-1 max-w-xs">
+                          <input
+                            type="color"
+                            value={faviconBorderColor}
+                            onChange={(e) => setFaviconBorderColor(e.target.value)}
+                            className="w-8 h-8 rounded-lg border border-slate-700 bg-transparent cursor-pointer"
+                          />
+                          <input
+                            type="text"
+                            value={faviconBorderColor}
+                            onChange={(e) => setFaviconBorderColor(e.target.value)}
+                            placeholder="#F59E0B"
+                            className="w-full bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 font-mono focus:outline-none focus:border-amber-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Contrast Plate, Light Style, Glow Intensity & Border Width */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-800/80">
+                    {/* Plate Background (Crucial for white icons!) */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">
+                        Icon Background Plate
+                      </label>
+                      <select
+                        value={faviconBgColor}
+                        onChange={(e) => setFaviconBgColor(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                      >
+                        <option value="#0A2540">🏛️ Cambridge Navy (#0A2540)</option>
+                        <option value="#0F172A">🌌 Midnight Slate (#0F172A)</option>
+                        <option value="#000000">⬛ Pitch Black (#000000)</option>
+                        <option value="#1E3A8A">👑 Royal Blue (#1E3A8A)</option>
+                        <option value="#FFFFFF">⚪ Crisp White (#FFFFFF)</option>
+                        <option value="transparent">🔲 Transparent</option>
+                      </select>
+                      <span className="text-[10px] text-slate-400 block">
+                        Keeps white logos visible on light tabs
+                      </span>
+                    </div>
+
+                    {/* Light Style */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">
+                        Light Effect Style
+                      </label>
+                      <select
+                        value={faviconLightStyle}
+                        onChange={(e) => setFaviconLightStyle(e.target.value as any)}
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                      >
+                        <option value="glow">🌟 Radiant Bloom</option>
+                        <option value="neon">⚡ Laser Neon Edge</option>
+                        <option value="dual">💫 Dual Ring Aura</option>
+                        <option value="subtle">💡 Clean Accent</option>
+                      </select>
+                      <span className="text-[10px] text-slate-400 block">
+                        Lighting aesthetic around edges
+                      </span>
+                    </div>
+
+                    {/* Glow Intensity */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">
+                        Glow Intensity
+                      </label>
+                      <select
+                        value={faviconGlowIntensity}
+                        onChange={(e) => setFaviconGlowIntensity(e.target.value as any)}
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs font-bold px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                      >
+                        <option value="soft">Subtle / Soft (0.5)</option>
+                        <option value="medium">Balanced (0.75)</option>
+                        <option value="vibrant">Ultra Radiant (1.0)</option>
+                      </select>
+                      <span className="text-[10px] text-slate-400 block">
+                        Bloom luminance in browser
+                      </span>
+                    </div>
+
+                    {/* Shape & Border Thickness */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">
+                        Icon Plate Shape
+                      </label>
+                      <div className="grid grid-cols-3 gap-1">
+                        {[
+                          { id: "rounded", label: "Squircle" },
+                          { id: "circle", label: "Circle" },
+                          { id: "square", label: "Square" },
+                        ].map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => setFaviconShape(s.id as any)}
+                            className={`py-1.5 text-[11px] font-bold rounded-lg border transition-all cursor-pointer ${
+                              faviconShape === s.id
+                                ? "bg-amber-400 text-slate-950 border-amber-400"
+                                : "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800"
+                            }`}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-slate-400 block">
+                        Border width: {faviconBorderWidth}px
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Favicon Upload & Source Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center p-4 bg-slate-950/70 rounded-xl border border-slate-800">
+              <div className="md:col-span-12 space-y-4">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <label className="cursor-pointer inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition-all">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingFavicon ? "Uploading..." : "Upload Tab Icon / Favicon"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFaviconUpload}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {headerLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setSiteFaviconUrl(headerLogoUrl)}
+                      className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Use Header Logo as Tab Icon</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setSiteFaviconUrl("/uploads/LOGO_c_72ead6e76f87.webp")}
+                    className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Reset to Cambridge Crest (White & Navy)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveFaviconSettings}
+                    disabled={savingFaviconInstant}
+                    className={`ml-auto inline-flex items-center space-x-2 text-xs font-black px-4 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer ${
+                      faviconSavedSuccess
+                        ? "bg-emerald-500 text-slate-950 scale-105"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white"
+                    }`}
+                  >
+                    {savingFaviconInstant ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Updating Tab Favicon...</span>
+                      </>
+                    ) : faviconSavedSuccess ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Favicon Live & Updated!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 fill-current text-amber-400" />
+                        <span>⚡ Save & Update Browser Favicon Now</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Or paste direct image URL (.png, .ico, .webp, .svg):
+                  </label>
+                  <input
+                    type="text"
+                    value={siteFaviconUrl}
+                    onChange={(e) => setSiteFaviconUrl(e.target.value)}
+                    placeholder="/uploads/... or https://..."
+                    className="w-full bg-slate-900 text-white text-xs px-3.5 py-2 rounded-lg border border-slate-700 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Main Navigation Menu Builder */}
           <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-6 space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
                 <h2 className="text-base font-bold text-white flex items-center space-x-2">
                   <Layers className="w-4 h-4 text-amber-400" />
-                  <span>3. Main Navigation Menu Tree Builder</span>
+                  <span>4. Main Navigation Menu Tree Builder</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Add, edit, reorder navigation items and their dropdown children.

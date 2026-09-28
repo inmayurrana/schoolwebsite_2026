@@ -1,4 +1,4 @@
-﻿export const revalidate = 60;
+export const revalidate = 60;
 import React from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
@@ -54,34 +54,70 @@ export default function StudentLifePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {houses.map((h, idx) => (
-              <div
-                key={idx}
-                className="glass-card rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-lg space-y-3 text-center group"
-              >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${h.color} text-white flex items-center justify-center mx-auto shadow-md group-hover:scale-110 transition-transform`}>
-                  <Flag className="w-7 h-7" />
+            {houses.map((h, idx) => {
+              const hoverTheme = [
+                // 0: Himalaya House (Blue)
+                {
+                  bg: "hover:bg-gradient-to-b hover:from-blue-500/15 hover:via-indigo-500/10 hover:to-white dark:hover:from-blue-950/40 dark:hover:via-indigo-950/20 dark:hover:to-slate-900",
+                  border: "hover:border-blue-400 dark:hover:border-blue-400",
+                  shadow: "hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.3)]",
+                  text: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
+                },
+                // 1: Shivalik House (Green)
+                {
+                  bg: "hover:bg-gradient-to-b hover:from-emerald-500/15 hover:via-teal-500/10 hover:to-white dark:hover:from-emerald-950/40 dark:hover:via-teal-950/20 dark:hover:to-slate-900",
+                  border: "hover:border-emerald-400 dark:hover:border-emerald-400",
+                  shadow: "hover:shadow-[0_20px_50px_-10px_rgba(16,185,129,0.3)]",
+                  text: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+                },
+                // 2: Beas House (Red)
+                {
+                  bg: "hover:bg-gradient-to-b hover:from-rose-500/15 hover:via-red-500/10 hover:to-white dark:hover:from-rose-950/40 dark:hover:via-red-950/20 dark:hover:to-slate-900",
+                  border: "hover:border-rose-400 dark:hover:border-rose-400",
+                  shadow: "hover:shadow-[0_20px_50px_-10px_rgba(244,63,94,0.3)]",
+                  text: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
+                },
+                // 3: Pir Panjal House (Yellow/Amber)
+                {
+                  bg: "hover:bg-gradient-to-b hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-slate-900",
+                  border: "hover:border-amber-400 dark:hover:border-amber-400",
+                  shadow: "hover:shadow-[0_20px_50px_-10px_rgba(245,158,11,0.3)]",
+                  text: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+                },
+              ][idx % 4];
+
+              return (
+                <div
+                  key={idx}
+                  className={`glass-card rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-lg space-y-3 text-center group transition-all duration-300 hover:-translate-y-1.5 ${hoverTheme.bg} ${hoverTheme.border} ${hoverTheme.shadow}`}
+                >
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${h.color} text-white flex items-center justify-center mx-auto shadow-md group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                    <Flag className="w-7 h-7" />
+                  </div>
+                  <h3 className={`font-bold text-base text-school-primary dark:text-white transition-colors duration-300 ${hoverTheme.text}`}>{h.name}</h3>
+                  <p className="text-xs text-slate-500 italic">"{h.motto}"</p>
                 </div>
-                <h3 className="font-bold text-base text-school-primary dark:text-white">{h.name}</h3>
-                <p className="text-xs text-slate-500 italic">"{h.motto}"</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Clubs Grid */}
+        {/* Clubs Grid with Dynamic Color Changing Hover */}
         <div className="space-y-6">
           <h3 className="text-2xl font-bold text-school-primary dark:text-white text-center">
             Active Student Clubs & Societies
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clubs.map((c, idx) => (
-              <div key={idx} className="bg-slate-50 dark:bg-slate-800/60 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
-                <h4 className="font-bold text-sm text-school-primary dark:text-white flex items-center space-x-2">
-                  <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
+              <div
+                key={idx}
+                className="bg-slate-50 dark:bg-slate-800/60 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2 hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/5 hover:to-white dark:hover:from-amber-950/30 dark:hover:via-slate-800 dark:hover:to-slate-900 hover:border-amber-400/80 hover:shadow-lg hover:shadow-amber-500/15 transition-all duration-300 hover:-translate-y-1 group cursor-default"
+              >
+                <h4 className="font-bold text-sm text-school-primary dark:text-white flex items-center space-x-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors duration-300">
+                  <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 group-hover:scale-125 transition-transform" />
                   <span>{c.title}</span>
                 </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 pl-6">{c.desc}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 pl-6 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">{c.desc}</p>
               </div>
             ))}
           </div>

@@ -100,24 +100,84 @@ export default function WhyChooseUs({ customStyles }: WhyChooseUsProps) {
           </p>
         </div>
 
-        {/* 8-Card Responsive Wide Grid with Glass Cards */}
+        {/* 8-Card Responsive Wide Grid with Dynamic Hover Color-Shifting Effects */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {customReasons.map((reason: any, idx: number) => {
             const Icon = DEFAULT_ICONS[idx % DEFAULT_ICONS.length] || Globe;
             const colorClass = reason.color || defaultReasons[idx % defaultReasons.length]?.color || "from-blue-500 to-indigo-600";
+            
+            const hoverConfig = [
+              // 0: Blue (Blended Pedagogy)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-blue-500/15 hover:via-indigo-500/10 hover:to-white dark:hover:from-blue-950/40 dark:hover:via-indigo-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-blue-400 dark:hover:border-blue-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(59,130,246,0.3)]",
+                hoverText: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
+              },
+              // 1: Amber/Orange (STEM & Robotics)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-amber-400 dark:hover:border-amber-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(245,158,11,0.3)]",
+                hoverText: "group-hover:text-amber-600 dark:group-hover:text-amber-400",
+              },
+              // 2: Emerald/Teal (Olympic Sports & Aquatic Center)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-emerald-500/15 hover:via-teal-500/10 hover:to-white dark:hover:from-emerald-950/40 dark:hover:via-teal-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-emerald-400 dark:hover:border-emerald-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(16,185,129,0.3)]",
+                hoverText: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+              },
+              // 3: Purple/Rose (Boarding & Hostel)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-purple-500/15 hover:via-pink-500/10 hover:to-white dark:hover:from-purple-950/40 dark:hover:via-pink-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-purple-400 dark:hover:border-purple-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(168,85,247,0.3)]",
+                hoverText: "group-hover:text-purple-600 dark:group-hover:text-purple-400",
+              },
+              // 4: Sky/Blue (GPS Bus Fleet)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-sky-500/15 hover:via-blue-500/10 hover:to-white dark:hover:from-sky-950/40 dark:hover:via-blue-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-sky-400 dark:hover:border-sky-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(14,165,233,0.3)]",
+                hoverText: "group-hover:text-sky-600 dark:group-hover:text-sky-400",
+              },
+              // 5: Rose/Red (Mentorship)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-rose-500/15 hover:via-red-500/10 hover:to-white dark:hover:from-rose-950/40 dark:hover:via-red-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-rose-400 dark:hover:border-rose-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(244,63,94,0.3)]",
+                hoverText: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
+              },
+              // 6: Teal/Cyan (100% Safety & CCTV Campus)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-teal-500/15 hover:via-cyan-500/10 hover:to-white dark:hover:from-teal-950/40 dark:hover:via-cyan-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-teal-400 dark:hover:border-teal-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(20,184,166,0.3)]",
+                hoverText: "group-hover:text-teal-600 dark:group-hover:text-teal-400",
+              },
+              // 7: Forest Green (Eco-Leadership & Clean Air)
+              {
+                hoverBg: "hover:bg-gradient-to-br hover:from-emerald-500/15 hover:via-green-500/10 hover:to-white dark:hover:from-emerald-950/40 dark:hover:via-green-950/20 dark:hover:to-[#071933]",
+                hoverBorder: "hover:border-emerald-400 dark:hover:border-emerald-400",
+                hoverShadow: "hover:shadow-[0_20px_45px_-12px_rgba(16,185,129,0.3)]",
+                hoverText: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+              },
+            ][idx % 8];
+
             return (
               <div
                 key={idx}
-                className="glass-card-interactive p-7 rounded-3xl flex flex-col justify-between group"
+                className={`glass-card-interactive p-7 rounded-3xl flex flex-col justify-between group border border-slate-200/90 dark:border-white/10 transition-all duration-300 hover:-translate-y-1.5 ${hoverConfig.hoverBg} ${hoverConfig.hoverBorder} ${hoverConfig.hoverShadow}`}
               >
                 <div className="space-y-4">
                   <div
-                    className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border border-white/20`}
+                    className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${colorClass} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300 border border-white/20`}
                   >
                     <Icon className="w-7 h-7" />
                   </div>
 
-                  <h3 className="text-lg font-bold text-school-primary dark:text-white leading-snug">
+                  <h3 className={`text-lg font-bold text-school-primary dark:text-white leading-snug transition-colors duration-300 ${hoverConfig.hoverText}`}>
                     {reason.title}
                   </h3>
 
@@ -126,7 +186,7 @@ export default function WhyChooseUs({ customStyles }: WhyChooseUsProps) {
                   </p>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-200/50 dark:border-white/10 flex items-center justify-between text-xs font-semibold text-school-secondary dark:text-amber-400 group-hover:translate-x-1 transition-transform">
+                <div className={`pt-4 mt-4 border-t border-slate-200/50 dark:border-white/10 flex items-center justify-between text-xs font-semibold text-school-secondary dark:text-amber-400 group-hover:translate-x-1 transition-all duration-300 ${hoverConfig.hoverText}`}>
                   <span>Explore Standard</span>
                   <span>→</span>
                 </div>

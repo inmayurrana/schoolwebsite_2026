@@ -23,9 +23,12 @@ import {
   Briefcase,
   Star,
   RotateCcw,
+  Copy,
+  Check,
+  Tv,
 } from "lucide-react";
-import Faculty3DBackground from "./Faculty3DBackground";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import { useUiEffects } from "@/components/providers/UiEffectsProvider";
 
 export interface FacultyMember {
   id: string;
@@ -46,9 +49,9 @@ interface Props {
 }
 
 /**
- * 3D Executive List Row with dynamic specular glare, zoom triggers & multi-layer parallax
+ * Modern High-Impact Faculty List Card with smooth mouse-over zoom
  */
-function Faculty3DListRow({
+function FacultyListRow({
   member,
   index,
   onOpenZoom,
@@ -57,82 +60,33 @@ function Faculty3DListRow({
   index: number;
   onOpenZoom: (m: FacultyMember) => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, glareOpacity: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -7;
-    const rotateY = ((x - centerX) / centerX) * 7;
-
-    setTilt({
-      rotateX,
-      rotateY,
-      glareX: (x / rect.width) * 100,
-      glareY: (y / rect.height) * 100,
-      glareOpacity: 0.28,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, glareOpacity: 0 });
-  };
-
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 25 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ scale: 1.018, y: -3 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      style={{
-        perspective: 1200,
-        transformStyle: "preserve-3d",
-      }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="relative z-10 hover:z-20 group cursor-pointer"
       onClick={() => onOpenZoom(member)}
     >
-      <div
-        style={{
-          transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
-          transformStyle: "preserve-3d",
-          transition: "transform 0.12s ease-out",
-        }}
-        className="glass-card relative rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-lg hover:shadow-2xl hover:border-amber-400/60 bg-white/95 dark:bg-slate-900/95 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden backdrop-blur-xl transition-all duration-300"
-      >
-        {/* Dynamic 3D Specular Light */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-3xl transition-opacity duration-300"
-          style={{
-            opacity: tilt.glareOpacity,
-            background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(251, 191, 36, 0.32) 0%, rgba(56, 189, 248, 0.18) 35%, transparent 70%)`,
-          }}
-        />
+      <div className="relative rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-2xl hover:border-amber-400/80 bg-white/95 dark:bg-slate-900/95 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden backdrop-blur-xl transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-white group-hover:via-amber-50/20 group-hover:to-white dark:group-hover:from-slate-900 dark:group-hover:via-amber-950/10 dark:group-hover:to-slate-900">
+        
+        {/* Subtle hover gradient glow border line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400/0 to-transparent group-hover:via-amber-400 transition-all duration-500" />
 
-        {/* Left & Middle Block: Avatar + Academic Details */}
+        {/* Left & Middle Block: Avatar with Hover Zoom + Academic Details */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 flex-1 min-w-0">
-          {/* 3D Parallax Avatar with Zoom Lens Overlay */}
-          <div
-            style={{ transform: "translateZ(38px)", transformStyle: "preserve-3d" }}
-            className="relative shrink-0"
-          >
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-xl group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all duration-500 bg-slate-100 dark:bg-slate-950">
+          {/* Avatar Container with smooth hover zoom */}
+          <div className="relative shrink-0">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shadow-lg group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all duration-300 bg-slate-100 dark:bg-slate-950">
               <OptimizedImage
                 src={
                   member.photoUrl ||
                   "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=75"
                 }
                 alt={member.name}
-                className="w-full h-full object-cover group-hover:scale-120 group-hover:rotate-1 transition-transform duration-500 ease-out"
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-115"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent pointer-events-none" />
 
@@ -140,7 +94,7 @@ function Faculty3DListRow({
               <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
                 <div className="bg-amber-400 text-slate-950 px-2 py-1 rounded-full text-[10px] font-black flex items-center space-x-1 shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                   <ZoomIn className="w-3 h-3" />
-                  <span>Zoom</span>
+                  <span>HD Zoom</span>
                 </div>
               </div>
             </div>
@@ -148,8 +102,7 @@ function Faculty3DListRow({
             {/* Leadership Star / Sparkle Badge */}
             {member.isLeadership && (
               <span
-                style={{ transform: "translateZ(48px)" }}
-                className="absolute -top-2 -right-2 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 p-1.5 rounded-full shadow-lg border border-white/70 animate-pulse"
+                className="absolute -top-2 -right-2 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 p-1.5 rounded-full shadow-lg border border-white/80 animate-pulse"
                 title="Leadership Pillar"
               >
                 <Star className="w-3.5 h-3.5 fill-slate-950" />
@@ -158,10 +111,7 @@ function Faculty3DListRow({
           </div>
 
           {/* Academic Profile Details */}
-          <div
-            style={{ transform: "translateZ(26px)", transformStyle: "preserve-3d" }}
-            className="space-y-2 flex-1 min-w-0"
-          >
+          <div className="space-y-2 flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-lg sm:text-xl font-black font-heading text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors tracking-tight">
                 {member.name}
@@ -211,11 +161,8 @@ function Faculty3DListRow({
           </div>
         </div>
 
-        {/* Right Block: 3D Interactive Action Column */}
-        <div
-          style={{ transform: "translateZ(32px)", transformStyle: "preserve-3d" }}
-          className="flex sm:flex-row lg:flex-col items-center sm:items-end justify-between lg:justify-center gap-3 w-full lg:w-auto shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800/80 pt-4 lg:pt-0 lg:pl-6"
-        >
+        {/* Right Block: Action Column */}
+        <div className="flex sm:flex-row lg:flex-col items-center sm:items-end justify-between lg:justify-center gap-3 w-full lg:w-auto shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 dark:border-slate-800/80 pt-4 lg:pt-0 lg:pl-6">
           <div className="hidden sm:flex items-center space-x-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Verified Educator</span>
@@ -238,10 +185,10 @@ function Faculty3DListRow({
                 e.stopPropagation();
                 onOpenZoom(member);
               }}
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
             >
               <ZoomIn className="w-3.5 h-3.5" />
-              <span>3D Zoom Profile</span>
+              <span>View HD Profile</span>
             </button>
           </div>
         </div>
@@ -251,9 +198,9 @@ function Faculty3DListRow({
 }
 
 /**
- * 3D Tilt Grid Card with depth layers, dynamic lighting and zoom preview
+ * Advanced High-End HD Faculty Grid Card with Precision Optics & Viewfinder HUD
  */
-function Faculty3DGridCard({
+function FacultyGridCard({
   member,
   index,
   onOpenZoom,
@@ -262,159 +209,122 @@ function Faculty3DGridCard({
   index: number;
   onOpenZoom: (m: FacultyMember) => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, glareOpacity: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -11;
-    const rotateY = ((x - centerX) / centerX) * 11;
-
-    setTilt({
-      rotateX,
-      rotateY,
-      glareX: (x / rect.width) * 100,
-      glareY: (y / rect.height) * 100,
-      glareOpacity: 0.32,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50, glareOpacity: 0 });
-  };
-
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ scale: 1.03, y: -5 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      style={{
-        perspective: 1200,
-        transformStyle: "preserve-3d",
-      }}
-      className="relative z-10 hover:z-20 cursor-pointer group"
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: "easeOut" }}
+      className="relative z-10 hover:z-20 cursor-pointer group flex flex-col h-full"
       onClick={() => onOpenZoom(member)}
     >
-      <div
-        style={{
-          transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
-          transformStyle: "preserve-3d",
-          transition: "transform 0.12s ease-out",
-        }}
-        className="glass-card rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl bg-white/95 dark:bg-slate-900/95 flex flex-col hover:shadow-2xl hover:border-amber-400/60 transition-all duration-300 relative backdrop-blur-xl"
-      >
-        {/* Specular Glare */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-3xl transition-opacity duration-300 z-20"
-          style={{
-            opacity: tilt.glareOpacity,
-            background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(251, 191, 36, 0.35) 0%, rgba(56, 189, 248, 0.18) 45%, transparent 70%)`,
-          }}
-        />
+      <div className="spotlight-card sqsp-spotlight rounded-[28px] overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-lg hover:shadow-[0_25px_60px_-12px_rgba(15,23,42,0.18),0_0_35px_rgba(245,158,11,0.2)] dark:hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_40px_rgba(245,158,11,0.25)] bg-white/95 dark:bg-[#0c1424]/95 flex flex-col flex-1 hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all duration-500 relative backdrop-blur-2xl">
+        
+        {/* Ambient Ring Inset for Refined Glass Depth */}
+        <div className="absolute inset-0 rounded-[28px] pointer-events-none ring-1 ring-inset ring-black/5 dark:ring-white/10 group-hover:ring-amber-400/30 transition-all duration-300 z-20" />
 
-        {/* 3D Photo Area with Interactive Zoom */}
-        <div
-          style={{ transform: "translateZ(32px)", transformStyle: "preserve-3d" }}
-          className="relative h-64 w-full bg-slate-100 dark:bg-slate-950 overflow-hidden"
-        >
+        {/* Photo Viewport */}
+        <div className="relative h-72 sm:h-76 w-full bg-slate-950 overflow-hidden">
           <OptimizedImage
             src={
               member.photoUrl ||
-              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=450&auto=format&fit=crop&q=75"
+              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80"
             }
             alt={member.name}
-            className="w-full h-full object-cover group-hover:scale-118 group-hover:rotate-1 transition-transform duration-500 ease-out"
+            className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent pointer-events-none" />
 
-          {/* Floating Badges */}
-          <div
-            style={{ transform: "translateZ(46px)" }}
-            className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none"
-          >
-            <span className="bg-school-primary/90 dark:bg-slate-950/90 backdrop-blur-md text-amber-300 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-amber-400/40 shadow-lg tracking-wider">
-              {member.department}
+          {/* Cinematic Vignette Overlays: Top Ambient Shade & Bottom Contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-transparent to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none z-10" />
+
+          {/* Floating Badges: Department & Leadership */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+            {/* Department Tag with Neon Pulsing Beacon */}
+            <span className="bg-slate-950/80 dark:bg-slate-900/85 backdrop-blur-xl text-amber-300 text-[10px] font-black uppercase px-3 py-1.5 rounded-full border border-amber-400/40 shadow-xl tracking-wider flex items-center space-x-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span>{member.department}</span>
             </span>
 
+            {/* Leadership Gold Foil Badge */}
             {member.isLeadership && (
-              <span className="bg-gradient-to-r from-amber-500 to-amber-300 text-slate-950 text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-lg flex items-center space-x-1 border border-white/60">
-                <Star className="w-3 h-3 fill-slate-950" />
+              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 text-[10px] font-black uppercase px-3 py-1.5 rounded-full shadow-lg shadow-amber-500/30 flex items-center space-x-1 border border-white/80 ring-2 ring-amber-400/30 tracking-wider">
+                <Star className="w-3 h-3 fill-slate-950 text-slate-950 shrink-0" />
                 <span>Leadership</span>
               </span>
             )}
           </div>
-
-          {/* Quick Zoom Overlay on Photo */}
-          <div className="absolute bottom-3 right-3 z-10">
-            <div className="bg-slate-950/80 hover:bg-amber-400 hover:text-slate-950 text-white p-2 rounded-xl backdrop-blur-md border border-white/20 transition-all duration-300 shadow-lg flex items-center space-x-1.5 text-xs font-bold">
-              <ZoomIn className="w-3.5 h-3.5" />
-              <span className="text-[10px] uppercase font-black tracking-wider">Zoom</span>
-            </div>
-          </div>
         </div>
 
-        {/* 3D Content Area */}
-        <div
-          style={{ transform: "translateZ(26px)" }}
-          className="p-6 flex-1 flex flex-col justify-between space-y-4 transition-transform duration-300 group-hover:scale-[1.01] origin-top"
-        >
-          <div className="space-y-2.5">
+        {/* Content Area with Advanced UI & HUD Credential Chips */}
+        <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            {/* Header: Name + Verified Check + Designation */}
             <div>
-              <h3 className="text-lg sm:text-xl font-black font-heading text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors tracking-tight">
-                {member.name}
-              </h3>
-              <p className="text-xs font-bold text-sky-600 dark:text-sky-400 mt-0.5">
-                {member.designation}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xl font-black font-heading text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors tracking-tight flex items-center">
+                  <span>{member.name}</span>
+                  <span title="Verified Faculty Profile" className="inline-flex items-center ml-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-sky-500 fill-sky-500/15 shrink-0" />
+                  </span>
+                </h3>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-md border border-sky-200 dark:border-sky-800/50 mt-1">
+                <span>{member.designation}</span>
+              </div>
             </div>
 
-            <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 pt-1">
+            {/* Credential HUD Chips: Education & Experience */}
+            <div className="grid grid-cols-1 gap-2 pt-1">
               {member.qualification && (
-                <div className="flex items-start space-x-2">
-                  <GraduationCap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <span className="leading-snug font-medium">{member.qualification}</span>
+                <div className="flex items-center space-x-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 px-3 py-2 rounded-2xl border border-slate-200/70 dark:border-white/5 transition-colors">
+                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">Education</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{member.qualification}</p>
+                  </div>
                 </div>
               )}
               {member.experience && (
-                <div className="flex items-start space-x-2">
-                  <Award className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" />
-                  <span className="leading-snug font-medium">{member.experience}</span>
+                <div className="flex items-center space-x-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800/80 px-3 py-2 rounded-2xl border border-slate-200/70 dark:border-white/5 transition-colors">
+                  <div className="w-7 h-7 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center shrink-0 border border-sky-500/20">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">Experience</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{member.experience}</p>
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* Truncated Bio Preview */}
             {member.bio && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
                 {member.bio}
               </p>
             )}
           </div>
 
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-              Cambridge International
-            </span>
+          {/* Action Bar & Accreditation Footer */}
+          <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center space-x-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>Cambridge International</span>
+            </div>
 
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenZoom(member);
               }}
-              className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-500 hover:text-amber-400 transition-colors"
+              className="inline-flex items-center space-x-1.5 text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 group-hover:bg-amber-500 group-hover:text-slate-950 dark:group-hover:text-slate-950 px-3.5 py-1.5 rounded-full border border-amber-500/30 group-hover:border-amber-500 transition-all duration-300 shadow-xs cursor-pointer group/cta"
             >
               <span>View Profile</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 group-hover/cta:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
@@ -424,9 +334,9 @@ function Faculty3DGridCard({
 }
 
 /**
- * High-End 3D Zoom Profile Modal with interactive magnification & credentials
+ * State-of-the-Art Interactive HD Profile Modal with Lens Inspection & Dossier
  */
-function Faculty3DZoomModal({
+function FacultyHDProfileModal({
   member,
   onClose,
 }: {
@@ -434,8 +344,18 @@ function Faculty3DZoomModal({
   onClose: () => void;
 }) {
   const [zoomLevel, setZoomLevel] = useState(1);
-  const modalCardRef = useRef<HTMLDivElement>(null);
-  const [modalTilt, setModalTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const [activeTab, setActiveTab] = useState<"bio" | "specialization" | "contact">("bio");
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const { config: uiConfig } = useUiEffects();
+  const lightBorderActive = uiConfig?.photoLightBorderEffect ?? true;
+  const activeLightMode = uiConfig?.photoLightBorderMode || "spectrum";
+
+  const lightGradients = {
+    spectrum: "conic-gradient(from 0deg, #F59E0B, #00F0FF, #3B82F6, #10B981, #EC4899, #8B5CF6, #F59E0B)",
+    cyanGold: "conic-gradient(from 0deg, #F59E0B, #00F0FF, #F59E0B, #00F0FF, #F59E0B)",
+    aurora: "conic-gradient(from 0deg, #10B981, #00F0FF, #6366F1, #10B981, #00F0FF)",
+    sunset: "conic-gradient(from 0deg, #F59E0B, #EF4444, #EC4899, #8B5CF6, #F59E0B)",
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -445,161 +365,198 @@ function Faculty3DZoomModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!modalCardRef.current) return;
-    const rect = modalCardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
-    setModalTilt({ rotateX, rotateY });
+  const handleCopyEmail = () => {
+    if (!member.email) return;
+    navigator.clipboard.writeText(member.email);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
   };
 
-  const handleMouseLeave = () => {
-    setModalTilt({ rotateX: 0, rotateY: 0 });
+  const handleToggleZoom = () => {
+    setZoomLevel((prev) => (prev >= 2 ? 1 : prev + 0.5));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Cinematic Blur Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/85 backdrop-blur-xl cursor-pointer"
+        className="fixed inset-0 bg-slate-950/85 backdrop-blur-2xl cursor-pointer"
       />
 
-      {/* 3D Floating Modal Card */}
+      {/* Modern Interactive HD Modal Container */}
       <motion.div
-        ref={modalCardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+        initial={{ opacity: 0, scale: 0.92, y: 25 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 30 }}
-        transition={{ type: "spring", damping: 25, stiffness: 280 }}
-        style={{
-          perspective: 1200,
-          transformStyle: "preserve-3d",
-        }}
-        className="relative z-10 w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-slate-900 border border-amber-400/40 shadow-[0_25px_70px_rgba(0,0,0,0.85)] text-white backdrop-blur-2xl"
+        exit={{ opacity: 0, scale: 0.92, y: 25 }}
+        transition={{ type: "spring", damping: 28, stiffness: 320 }}
+        className="relative z-10 w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-slate-900 border border-slate-700/80 shadow-[0_25px_80px_rgba(0,0,0,0.9)] text-white backdrop-blur-3xl overflow-hidden"
       >
-        <div
-          style={{
-            transform: `rotateX(${modalTilt.rotateX}deg) rotateY(${modalTilt.rotateY}deg)`,
-            transformStyle: "preserve-3d",
-            transition: "transform 0.15s ease-out",
-          }}
-          className="p-6 sm:p-10 space-y-8"
-        >
-          {/* Header bar with Close Button */}
-          <div className="flex items-center justify-between pb-4 border-b border-white/10">
-            <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-amber-400 animate-ping" />
-              <span className="text-xs font-black uppercase tracking-widest text-amber-300">
-                Educator 3D Zoom Profile
-              </span>
+        {/* Top Header Bar */}
+        <div className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+          <div className="flex items-center space-x-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 shadow-[0_0_10px_#10b981]"></span>
+            </span>
+            <div className="flex items-center space-x-2 text-xs font-black uppercase tracking-wider text-slate-300">
+              <GraduationCap className="w-4 h-4 text-amber-400" />
+              <span>Mentors</span>
             </div>
-
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-              title="Close Profile (Esc)"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            title="Close Profile (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Main Body */}
+        <div className="p-6 sm:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            {/* Left 5 Cols: Interactive Zoom Portrait */}
+            
+            {/* Left 5 Cols: Interactive HD Zoom Visual Inspector with Multi-Light Frame */}
             <div className="md:col-span-5 space-y-4">
-              <div className="relative rounded-3xl overflow-hidden border-2 border-amber-400/60 shadow-[0_0_35px_rgba(245,158,11,0.3)] bg-slate-950 aspect-[4/5] group flex items-center justify-center">
-                <div
-                  className="w-full h-full transition-transform duration-300 ease-out"
-                  style={{
-                    transform: `scale(${zoomLevel})`,
-                    cursor: zoomLevel > 1 ? "grab" : "zoom-in",
-                  }}
-                  onClick={() => setZoomLevel((prev) => (prev >= 2 ? 1 : prev + 0.5))}
-                >
-                  <img
-                    src={
-                      member.photoUrl ||
-                      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=85"
-                    }
-                    alt={member.name}
-                    className="w-full h-full object-cover select-none"
-                  />
-                </div>
+              
+              {/* Multi-Light Photo Frame Chassis: Light effect confined strictly to the border of the photo */}
+              <div className="relative rounded-[30px] p-[2.5px] overflow-hidden flex items-center justify-center shadow-2xl bg-slate-900 border border-slate-800">
+                
+                {/* Sharp Rotating Multi-Light Laser Beam Border (Confined strictly to photo border perimeter) */}
+                {lightBorderActive && (
+                  <div className="absolute inset-0 rounded-[30px] overflow-hidden pointer-events-none">
+                    <div 
+                      className="w-[200%] h-[200%] absolute -top-1/2 -left-1/2 animate-[spin_5s_linear_infinite]"
+                      style={{
+                        background: lightGradients[activeLightMode] || lightGradients.spectrum,
+                      }}
+                    />
+                  </div>
+                )}
 
-                {/* Floating Zoom Controls Bar */}
-                <div className="absolute bottom-3 inset-x-3 flex items-center justify-center gap-2 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 z-20">
-                  <button
-                    onClick={() => setZoomLevel((z) => Math.max(1, z - 0.25))}
-                    disabled={zoomLevel <= 1}
-                    className="p-1 text-slate-300 hover:text-white disabled:opacity-30 cursor-pointer"
-                    title="Zoom Out"
+                {/* Core Obsidian Frame Body */}
+                <div className="relative w-full aspect-[4/5] rounded-[27.5px] overflow-hidden bg-slate-950 z-10 flex items-center justify-center">
+
+                  {/* Multi-Color Neon Viewfinder Brackets */}
+                  <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400 shadow-[0_0_10px_#00F0FF] rounded-tl pointer-events-none z-20" />
+                  <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t-2 border-r-2 border-amber-400 shadow-[0_0_10px_#F59E0B] rounded-tr pointer-events-none z-20" />
+                  <div className="absolute bottom-16 left-3.5 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400 shadow-[0_0_10px_#10B981] rounded-bl pointer-events-none z-20" />
+                  <div className="absolute bottom-16 right-3.5 w-3.5 h-3.5 border-b-2 border-r-2 border-fuchsia-400 shadow-[0_0_10px_#EC4899] rounded-br pointer-events-none z-20" />
+
+                  {/* 1080p HD Badge on Photo */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-emerald-400/50 text-[10px] font-black text-emerald-400 shadow-md">
+                    <Tv className="w-3 h-3" />
+                    <span>1080p Ultra-HD</span>
+                  </div>
+
+                  {member.isLeadership && (
+                    <div className="absolute top-3 right-3 z-20 flex items-center space-x-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 text-[10px] font-black uppercase shadow-lg border border-white/80">
+                      <Star className="w-3 h-3 fill-slate-950" />
+                      <span>Leadership</span>
+                    </div>
+                  )}
+
+                  {/* Magnified Image Container */}
+                  <div
+                    className="w-full h-full transition-transform duration-300 ease-out overflow-hidden flex items-center justify-center"
+                    style={{
+                      cursor: zoomLevel > 1 ? "grab" : "zoom-in",
+                    }}
+                    onClick={handleToggleZoom}
+                    title="Click to zoom in/out"
                   >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
+                    <img
+                      src={
+                        member.photoUrl ||
+                        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=85"
+                      }
+                      alt={member.name}
+                      style={{
+                        transform: `scale(${zoomLevel})`,
+                        transition: "transform 0.25s ease-out",
+                      }}
+                      className="w-full h-full object-cover select-none will-change-transform"
+                    />
+                  </div>
 
-                  <span className="text-[11px] font-bold text-amber-400 min-w-[45px] text-center">
-                    {Math.round(zoomLevel * 100)}%
-                  </span>
+                  {/* Floating Zoom Controls Bar */}
+                  <div className="absolute bottom-3 inset-x-3 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/20 z-20 shadow-xl">
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setZoomLevel((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                        disabled={zoomLevel <= 1}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 cursor-pointer transition-colors"
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="w-4 h-4" />
+                      </button>
 
-                  <button
-                    onClick={() => setZoomLevel((z) => Math.min(2.5, z + 0.25))}
-                    disabled={zoomLevel >= 2.5}
-                    className="p-1 text-slate-300 hover:text-white disabled:opacity-30 cursor-pointer"
-                    title="Zoom In"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
+                      <span className="text-[11px] font-black text-amber-400 min-w-[50px] text-center font-mono">
+                        {Math.round(zoomLevel * 100)}%
+                      </span>
 
-                  <button
-                    onClick={() => setZoomLevel(1)}
-                    className="p-1 text-slate-400 hover:text-white border-l border-white/20 pl-2 cursor-pointer"
-                    title="Reset Zoom"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
+                      <button
+                        onClick={() => setZoomLevel((z) => Math.min(2.5, +(z + 0.25).toFixed(2)))}
+                        disabled={zoomLevel >= 2.5}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 cursor-pointer transition-colors"
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center space-x-1 border-l border-white/20 pl-2">
+                      <button
+                        onClick={() => setZoomLevel(1)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 cursor-pointer transition-colors text-[10px] font-bold flex items-center space-x-1"
+                        title="Reset Zoom (100%)"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Reset</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <p className="text-[11px] text-center text-slate-400">
-                Click photo or use controls to zoom into details
+              <p className="text-[11px] text-center text-slate-400 flex items-center justify-center space-x-1 pt-1">
+                <ZoomIn className="w-3 h-3 text-amber-400" />
+                <span>Click image to toggle zoom or use controls (+/-)</span>
               </p>
             </div>
 
-            {/* Right 7 Cols: Full Profile Information */}
+            {/* Right 7 Cols: Full Profile Information & Interactive Tabs */}
             <div className="md:col-span-7 space-y-6">
+              
+              {/* Name & Academic Rank Headline */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="bg-amber-400 text-slate-950 text-xs font-black uppercase px-3 py-1 rounded-full shadow-md">
                     {member.department}
                   </span>
-                  {member.isLeadership && (
-                    <span className="bg-amber-500/20 text-amber-300 text-xs font-black uppercase px-3 py-1 rounded-full border border-amber-400/40 flex items-center space-x-1.5">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>Leadership Pillar</span>
-                    </span>
-                  )}
+                  
+                  <span className="bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase px-3 py-1 rounded-full border border-emerald-500/30 flex items-center space-x-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Verified Cambridge Faculty</span>
+                  </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-4xl font-black font-heading text-white">
+                <h2 className="text-2xl sm:text-4xl font-black font-heading text-white tracking-tight">
                   {member.name}
                 </h2>
+                
                 <p className="text-base sm:text-lg font-bold text-sky-400">
                   {member.designation}
                 </p>
               </div>
 
-              {/* Badges Matrix */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 4-Card Credentials Grid */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start space-x-3">
                   <div className="p-2 rounded-xl bg-amber-400/20 text-amber-400 shrink-0">
                     <GraduationCap className="w-5 h-5" />
@@ -609,7 +566,7 @@ function Faculty3DZoomModal({
                       Qualification
                     </span>
                     <span className="text-xs font-bold text-white block mt-0.5">
-                      {member.qualification || "Post-Graduate Certified"}
+                      {member.qualification || "Post-Graduate"}
                     </span>
                   </div>
                 </div>
@@ -620,27 +577,138 @@ function Faculty3DZoomModal({
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Teaching Experience
+                      Lead Experience
                     </span>
                     <span className="text-xs font-bold text-white block mt-0.5">
                       {member.experience || "Senior Mentor"}
                     </span>
                   </div>
                 </div>
+
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start space-x-3">
+                  <div className="p-2 rounded-xl bg-purple-400/20 text-purple-400 shrink-0">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Academic Wing
+                    </span>
+                    <span className="text-xs font-bold text-white block mt-0.5">
+                      {member.department}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start space-x-3">
+                  <div className="p-2 rounded-xl bg-emerald-400/20 text-emerald-400 shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Pedagogy Standard
+                    </span>
+                    <span className="text-xs font-bold text-white block mt-0.5">
+                      CBSE / Cambridge
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Biography Section */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Pedagogy & Background
-                </h4>
-                <p className="text-sm text-slate-200 leading-relaxed bg-white/5 p-4 rounded-2xl border border-white/10">
-                  {member.bio ||
-                    `${member.name} plays a vital role in our academic ecosystem at Cambridge International School, Mandi, inspiring students toward academic excellence, critical inquiry, and compassionate global citizenship.`}
-                </p>
+              {/* Interactive Tabs */}
+              <div className="space-y-3">
+                <div className="flex border-b border-white/10 space-x-2">
+                  <button
+                    onClick={() => setActiveTab("bio")}
+                    className={`pb-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                      activeTab === "bio"
+                        ? "border-amber-400 text-amber-300"
+                        : "border-transparent text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Academic Biography
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("specialization")}
+                    className={`pb-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                      activeTab === "specialization"
+                        ? "border-amber-400 text-amber-300"
+                        : "border-transparent text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    Specializations & Subjects
+                  </button>
+                  {member.email && (
+                    <button
+                      onClick={() => setActiveTab("contact")}
+                      className={`pb-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                        activeTab === "contact"
+                          ? "border-amber-400 text-amber-300"
+                          : "border-transparent text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      Direct Contact
+                    </button>
+                  )}
+                </div>
+
+                {/* Tab 1: Biography */}
+                {activeTab === "bio" && (
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
+                    <p className="text-sm text-slate-200 leading-relaxed">
+                      {member.bio ||
+                        `${member.name} serves as a foundational educator at Cambridge International School, Mandi, empowering students with rigorous scientific inquiry, critical analysis, and compassionate leadership.`}
+                    </p>
+                  </div>
+                )}
+
+                {/* Tab 2: Specialization */}
+                {activeTab === "specialization" && (
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2.5 text-xs text-slate-300">
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>Specialized Curriculum: <strong>CBSE & Cambridge Analytical Inquiry</strong></span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="w-4 h-4 text-sky-400 shrink-0" />
+                      <span>Domain Focus: <strong>{member.department} Mentorship & Character Development</strong></span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Award className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>Teaching Methodology: <strong>Experiential Hands-on Discovery & Student Engagement</strong></span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 3: Direct Contact */}
+                {activeTab === "contact" && member.email && (
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-700">
+                      <div className="flex items-center space-x-2 text-xs">
+                        <Mail className="w-4 h-4 text-amber-400" />
+                        <span className="font-mono text-slate-200">{member.email}</span>
+                      </div>
+                      <button
+                        onClick={handleCopyEmail}
+                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
+                      >
+                        {copiedEmail ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-400">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Actions */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 {member.email && (
                   <a
@@ -648,15 +716,15 @@ function Faculty3DZoomModal({
                     className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors border border-white/20 cursor-pointer"
                   >
                     <Mail className="w-4 h-4 text-amber-400" />
-                    <span>Send Email ({member.email})</span>
+                    <span>Send Official Email</span>
                   </a>
                 )}
 
                 <button
                   onClick={onClose}
-                  className="inline-flex items-center space-x-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                  className="inline-flex items-center space-x-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer ml-auto"
                 >
-                  <span>Close Preview</span>
+                  <span>Close Profile</span>
                 </button>
               </div>
             </div>
@@ -670,7 +738,7 @@ function Faculty3DZoomModal({
 export default function FacultyDirectoryClient({ initialFaculty }: Props) {
   const [selectedDept, setSelectedDept] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [zoomMember, setZoomMember] = useState<FacultyMember | null>(null);
 
   // Calculate department list with counts
@@ -702,8 +770,11 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
 
   return (
     <div className="relative space-y-8">
-      {/* 3D Background Orbital Mesh */}
-      <Faculty3DBackground />
+      {/* Clean Modern Ambient Background Glow (3D Wireframe Removed) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-amber-400/5 dark:bg-amber-400/10 rounded-full blur-3xl" />
+        <div className="absolute top-2/3 -right-32 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
+      </div>
 
       {/* Filter & Search Bar */}
       <motion.div
@@ -726,7 +797,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -747,7 +818,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
             <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setViewMode("list")}
-                title="Executive List View"
+                title="List View"
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   viewMode === "list"
                     ? "bg-white dark:bg-slate-900 text-school-primary dark:text-amber-300 shadow-sm border border-slate-200/50 dark:border-slate-700/50"
@@ -755,11 +826,11 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
                 }`}
               >
                 <List className="w-4 h-4" />
-                <span className="hidden sm:inline">3D List</span>
+                <span className="hidden sm:inline">List View</span>
               </button>
               <button
                 onClick={() => setViewMode("grid")}
-                title="3D Card Grid View"
+                title="Grid View"
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   viewMode === "grid"
                     ? "bg-white dark:bg-slate-900 text-school-primary dark:text-amber-300 shadow-sm border border-slate-200/50 dark:border-slate-700/50"
@@ -767,7 +838,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
-                <span className="hidden sm:inline">3D Grid</span>
+                <span className="hidden sm:inline">Grid View</span>
               </button>
             </div>
           </div>
@@ -829,7 +900,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
           ) : viewMode === "list" ? (
             <motion.div key="list-container" className="space-y-4">
               {filteredFaculty.map((member, idx) => (
-                <Faculty3DListRow
+                <FacultyListRow
                   key={member.id}
                   member={member}
                   index={idx}
@@ -843,7 +914,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
             >
               {filteredFaculty.map((member, idx) => (
-                <Faculty3DGridCard
+                <FacultyGridCard
                   key={member.id}
                   member={member}
                   index={idx}
@@ -855,10 +926,10 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* 3D Zoom Profile Lightbox Modal */}
+      {/* State-of-the-Art Interactive HD Profile Modal */}
       <AnimatePresence>
         {zoomMember && (
-          <Faculty3DZoomModal
+          <FacultyHDProfileModal
             member={zoomMember}
             onClose={() => setZoomMember(null)}
           />

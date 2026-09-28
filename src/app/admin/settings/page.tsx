@@ -7,6 +7,8 @@ import {
   Save,
   CheckCircle2,
   ShieldCheck,
+  Award,
+  BookOpen,
   Phone,
   Mail,
   MapPin,
@@ -76,6 +78,12 @@ export default function AdminSettingsPage() {
     youtube_url: "https://youtube.com/@cismandi",
     campus_drive_time: "5 Minutes drive from Mandi Town / Victoria Bridge",
     campus_transport_info: "GPS Monitored School Bus Transport Across Mandi & Ner Chowk",
+    hero_badge_1_title: "CBSE Affiliated 630198",
+    hero_badge_1_subtitle: "Senior Secondary",
+    hero_badge_2_title: "10-Acre Campus",
+    hero_badge_2_subtitle: "Alpine Serenity",
+    hero_badge_3_title: "100% Board Results",
+    hero_badge_3_subtitle: "District Distinctions",
   });
 
   const [detectingLocation, setDetectingLocation] = useState(false);
@@ -215,7 +223,7 @@ export default function AdminSettingsPage() {
         key,
         value,
         category:
-          key.startsWith("cbse_") || key.startsWith("school_")
+          key.startsWith("cbse_") || key.startsWith("school_") || key.startsWith("hero_")
             ? "GENERAL"
             : key.startsWith("contact_") || key.startsWith("whatsapp_") || key.startsWith("campus_") || key === "latitude" || key === "longitude" || key.startsWith("google_map_")
             ? "CONTACT"
@@ -369,8 +377,166 @@ export default function AdminSettingsPage() {
                 value={settings.school_name || ""}
                 onChange={(e) => handleChange("school_name", e.target.value)}
                 placeholder="Cambridge International School, Mandi"
-                className="w-full bg-[#051329] text-white px-4 py-3 rounded-xl border border-slate-700 focus:border-blue-400 focus:outline-none text-xs"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 1B: Hero Section Feature Cards & Badges (Homepage Bottom Highlights) */}
+        <div className="bg-[#0d1f33] border border-amber-400/30 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-700/60">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-400/15 text-amber-400 flex items-center justify-center border border-amber-400/30">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-base font-bold text-white">Homepage Hero Feature Cards & Badges</h2>
+                  <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Hero Section
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Customize the 3 prominent highlight cards displayed at the bottom of the homepage Hero banner.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Badges Edit Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Badge 1 */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-blue-500/30 space-y-3">
+              <div className="flex items-center space-x-2 text-blue-400 pb-2 border-b border-slate-800">
+                <Award className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Highlight Card 1</span>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Top Title</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_1_title || ""}
+                  onChange={(e) => handleChange("hero_badge_1_title", e.target.value)}
+                  placeholder="e.g. CBSE Affiliated 630198"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-blue-400 focus:outline-none text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Subtitle / Tag</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_1_subtitle || ""}
+                  onChange={(e) => handleChange("hero_badge_1_subtitle", e.target.value)}
+                  placeholder="e.g. Senior Secondary"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-blue-400 focus:outline-none text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Badge 2 */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-amber-500/30 space-y-3">
+              <div className="flex items-center space-x-2 text-amber-400 pb-2 border-b border-slate-800">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Highlight Card 2</span>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Top Title</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_2_title || ""}
+                  onChange={(e) => handleChange("hero_badge_2_title", e.target.value)}
+                  placeholder="e.g. 10-Acre Campus"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-amber-400 focus:outline-none text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Subtitle / Tag</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_2_subtitle || ""}
+                  onChange={(e) => handleChange("hero_badge_2_subtitle", e.target.value)}
+                  placeholder="e.g. Alpine Serenity"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-amber-400 focus:outline-none text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Badge 3 */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-emerald-500/30 space-y-3">
+              <div className="flex items-center space-x-2 text-emerald-400 pb-2 border-b border-slate-800">
+                <BookOpen className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider">Highlight Card 3</span>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Top Title</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_3_title || ""}
+                  onChange={(e) => handleChange("hero_badge_3_title", e.target.value)}
+                  placeholder="e.g. 100% Board Results"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-emerald-400 focus:outline-none text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-300">Subtitle / Tag</label>
+                <input
+                  type="text"
+                  value={settings.hero_badge_3_subtitle || ""}
+                  onChange={(e) => handleChange("hero_badge_3_subtitle", e.target.value)}
+                  placeholder="e.g. District Distinctions"
+                  className="w-full bg-[#051329] text-white px-3 py-2 rounded-xl border border-slate-700 focus:border-emerald-400 focus:outline-none text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Live Preview Box */}
+          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+              Live Appearance on Homepage Hero
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-[#0A2540] border border-blue-400/40 shadow">
+                <div className="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-400/40">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block leading-tight">
+                    {settings.hero_badge_1_title || "CBSE Affiliated 630198"}
+                  </span>
+                  <span className="text-[10px] text-blue-200 block">
+                    {settings.hero_badge_1_subtitle || "Senior Secondary"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-[#0A2540] border border-amber-400/40 shadow">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/40">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block leading-tight">
+                    {settings.hero_badge_2_title || "10-Acre Campus"}
+                  </span>
+                  <span className="text-[10px] text-amber-200 block">
+                    {settings.hero_badge_2_subtitle || "Alpine Serenity"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-[#0A2540] border border-emerald-400/40 shadow">
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-400/40">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-white block leading-tight">
+                    {settings.hero_badge_3_title || "100% Board Results"}
+                  </span>
+                  <span className="text-[10px] text-emerald-200 block">
+                    {settings.hero_badge_3_subtitle || "District Distinctions"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

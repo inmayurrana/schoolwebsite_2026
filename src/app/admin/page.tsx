@@ -105,6 +105,14 @@ export default async function AdminDashboardPage() {
         {/* Quick Action Toolbar */}
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/admin/ui-effects"
+            className="inline-flex items-center space-x-1.5 bg-gradient-to-r from-amber-500/20 via-blue-500/20 to-indigo-500/20 hover:from-amber-500/30 hover:to-indigo-500/30 text-amber-300 text-xs font-bold px-3.5 py-2 rounded-xl border border-amber-400/50 transition-all shadow-md"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Modern UI Effects</span>
+          </Link>
+
+          <Link
             href="/admin/social-media"
             className="inline-flex items-center space-x-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-rose-500/30 transition-colors"
           >
