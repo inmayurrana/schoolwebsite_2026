@@ -17,6 +17,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
+import { getInitialDisabledSlugs, fetchClientDisabledSlugs, updateClientVisibilityCache } from "@/lib/clientVisibility";
 
 interface FooterColumnLink {
   label: string;
@@ -85,38 +86,30 @@ export default function Footer() {
   });
 
   const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(DEFAULT_FOOTER_COLUMNS);
-  const [disabledSlugs, setDisabledSlugs] = useState<Set<string>>(new Set());
+  const [disabledSlugs, setDisabledSlugs] = useState<Set<string>>(() => getInitialDisabledSlugs());
 
   useEffect(() => {
-    async function loadVisibility() {
-      try {
-        const res = await fetch("/api/pages/visibility", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.visibility) {
-            const set = new Set<string>();
-            Object.entries(data.visibility).forEach(([k, v]) => {
-              if (v === false) {
-                set.add(k.toLowerCase().trim());
-                set.add("/" + k.toLowerCase().trim());
-              }
-            });
-            setDisabledSlugs(set);
-          }
-        }
-      } catch (_) {}
+    async function loadVisibility(force = false) {
+      const set = await fetchClientDisabledSlugs(force);
+      setDisabledSlugs(new Set(set));
     }
     loadVisibility();
 
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "cis_page_visibility_updated") {
-        loadVisibility();
+      if (e.key === "cis_page_visibility_updated" || e.key === "cis_disabled_slugs") {
+        loadVisibility(true);
       }
     };
     window.addEventListener("storage", handleStorage);
 
-    const handleCustomVisibility = () => {
-      loadVisibility();
+    // Custom local event listener for instant in-memory sync (0ms)
+    const handleCustomVisibility = (e?: any) => {
+      if (e?.detail?.disabledSlugs && Array.isArray(e.detail.disabledSlugs)) {
+        updateClientVisibilityCache(e.detail.disabledSlugs);
+        setDisabledSlugs(new Set(e.detail.disabledSlugs));
+      } else {
+        loadVisibility(true);
+      }
     };
     window.addEventListener("cis_visibility_changed", handleCustomVisibility);
 
@@ -124,8 +117,13 @@ export default function Footer() {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       try {
         channel = new BroadcastChannel("cis_visibility_channel");
-        channel.onmessage = () => {
-          loadVisibility();
+        channel.onmessage = (event) => {
+          if (event?.data?.disabledSlugs && Array.isArray(event.data.disabledSlugs)) {
+            updateClientVisibilityCache(event.data.disabledSlugs);
+            setDisabledSlugs(new Set(event.data.disabledSlugs));
+          } else {
+            loadVisibility(true);
+          }
         };
       } catch (_) {}
     }
@@ -328,41 +326,45 @@ export default function Footer() {
           </div>
 
           {/* Dynamic Columns 2, 3, 4 */}
-          {footerColumns.slice(0, 2).map((col, idx) => (
-            <div key={col.id || idx} className="space-y-4">
-              <h4 className="text-white font-bold text-sm uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center space-x-2">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    idx === 0 ? "bg-amber-400" : "bg-school-secondary"
-                  }`}
-                />
-                <span>{col.title}</span>
-              </h4>
-              <ul className="space-y-2.5 text-xs text-slate-400">
-                {col.links.map((link, lIdx) => (
-                  <li key={lIdx}>
-                    <Link
-                      href={link.href}
-                      target={link.external ? "_blank" : undefined}
-                      rel={link.external ? "noopener noreferrer" : undefined}
-                      className={`transition-colors flex items-center space-x-1.5 ${
-                        link.highlight
-                          ? "text-amber-400 font-semibold hover:underline"
-                          : "hover:text-amber-400"
-                      }`}
-                    >
-                      <ChevronRight
-                        className={`w-3 h-3 ${
-                          link.highlight ? "text-amber-400" : "text-slate-600"
+          {footerColumns.slice(0, 2).map((col, idx) => {
+            const visibleLinks = col.links.filter((link) => !isPathDisabled(link.href));
+            if (visibleLinks.length === 0) return null;
+            return (
+              <div key={col.id || idx} className="space-y-4">
+                <h4 className="text-white font-bold text-sm uppercase tracking-wider border-b border-slate-800 pb-2 flex items-center space-x-2">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      idx === 0 ? "bg-amber-400" : "bg-school-secondary"
+                    }`}
+                  />
+                  <span>{col.title}</span>
+                </h4>
+                <ul className="space-y-2.5 text-xs text-slate-400">
+                  {visibleLinks.map((link, lIdx) => (
+                    <li key={lIdx}>
+                      <Link
+                        href={link.href}
+                        target={link.external ? "_blank" : undefined}
+                        rel={link.external ? "noopener noreferrer" : undefined}
+                        className={`transition-colors flex items-center space-x-1.5 ${
+                          link.highlight
+                            ? "text-amber-400 font-semibold hover:underline"
+                            : "hover:text-amber-400"
                         }`}
-                      />
-                      <span>{link.label}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                      >
+                        <ChevronRight
+                          className={`w-3 h-3 ${
+                            link.highlight ? "text-amber-400" : "text-slate-600"
+                          }`}
+                        />
+                        <span>{link.label}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
 
           {/* Contact Information Column */}
           <div className="space-y-4">

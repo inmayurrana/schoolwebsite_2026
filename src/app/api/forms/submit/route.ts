@@ -161,6 +161,22 @@ export async function POST(req: Request) {
       });
     } catch (_) {}
 
+    // 7. Non-blocking Background Email Dispatch
+    // Forms are permanently preserved in the DB first; email failure will never lose submissions
+    try {
+      const { emailService } = await import("@/lib/email/emailService");
+      emailService.handleFormSubmission({
+        formSlug,
+        formTitle: formDef.title || formSlug,
+        submissionNo,
+        formData,
+      }).catch((emailErr) => {
+        console.error("Background email notification error:", emailErr);
+      });
+    } catch (e) {
+      console.error("Email service invocation error:", e);
+    }
+
     return NextResponse.json({
       success: true,
       submissionNo,

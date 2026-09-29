@@ -16,7 +16,7 @@ export async function GET() {
 
     response.headers.set(
       "Cache-Control",
-      "public, s-maxage=30, stale-while-revalidate=60"
+      "public, max-age=15, stale-while-revalidate=120"
     );
     return response;
   } catch (error: any) {

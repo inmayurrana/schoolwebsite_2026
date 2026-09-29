@@ -92,27 +92,27 @@ export default function LeadershipMessages({
         {/* 2-Column Glass Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Chairman Card */}
-          <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group">
+          <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between hover:scale-[1.01] hover:bg-gradient-to-br hover:from-white hover:via-amber-50/30 hover:to-white dark:hover:from-slate-900 dark:hover:via-amber-950/25 dark:hover:to-slate-900 hover:border-amber-400/50 transition-all duration-500 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="space-y-6">
               {/* Leader Profile Header */}
-              <div className="flex items-center space-x-4 sm:space-x-5">
-                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-amber-400 shadow-xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
+              <div className="flex items-center space-x-5 sm:space-x-6">
+                <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-2xl sm:rounded-3xl overflow-hidden border-[3px] border-amber-400 shadow-2xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
                   <img
                     src={chairmanData.image}
                     alt={`Chairman ${chairmanData.name}`}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-center group-hover:scale-110 group-hover:brightness-105 transition-transform duration-700 ease-out"
                   />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-xl sm:text-2xl font-bold text-school-primary dark:text-white">
+                <div className="space-y-1.5 min-w-0">
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-school-primary dark:text-white leading-tight">
                     {chairmanData.name}
                   </h3>
                   <p className="text-xs sm:text-sm font-semibold text-school-secondary uppercase tracking-wider">
                     {chairmanData.title}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{chairmanData.org}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">{chairmanData.org}</p>
                 </div>
               </div>
 
@@ -159,27 +159,27 @@ export default function LeadershipMessages({
           </div>
 
           {/* Principal Card */}
-          <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between hover:scale-[1.01] transition-all duration-300 relative overflow-hidden group">
+          <div className="glass-panel rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col justify-between hover:scale-[1.01] hover:bg-gradient-to-br hover:from-white hover:via-blue-50/30 hover:to-white dark:hover:from-slate-900 dark:hover:via-blue-950/25 dark:hover:to-slate-900 hover:border-blue-400/50 transition-all duration-500 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="space-y-6">
               {/* Leader Profile Header */}
-              <div className="flex items-center space-x-4 sm:space-x-5">
-                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-school-secondary shadow-xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
+              <div className="flex items-center space-x-5 sm:space-x-6">
+                <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-2xl sm:rounded-3xl overflow-hidden border-[3px] border-school-secondary shadow-2xl flex-shrink-0 bg-slate-800 flex items-center justify-center">
                   <img
                     src={principalData.image}
                     alt={`Principal ${principalData.name}`}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-center group-hover:scale-110 group-hover:brightness-105 transition-transform duration-700 ease-out"
                   />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-xl sm:text-2xl font-bold text-school-primary dark:text-white">
+                <div className="space-y-1.5 min-w-0">
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-school-primary dark:text-white leading-tight">
                     {principalData.name}
                   </h3>
                   <p className="text-xs sm:text-sm font-semibold text-school-secondary uppercase tracking-wider">
                     {principalData.title}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{principalData.org}</p>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">{principalData.org}</p>
                 </div>
               </div>
 

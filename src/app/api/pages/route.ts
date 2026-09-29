@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { invalidatePageCache } from "@/lib/pageContentCache";
 
 export async function GET() {
   try {
@@ -54,6 +55,8 @@ export async function POST(req: Request) {
         updatedBy: auth.name || "Admin",
       },
     });
+
+    invalidatePageCache(data.slug);
 
     return NextResponse.json({ success: true, page });
   } catch (error: any) {

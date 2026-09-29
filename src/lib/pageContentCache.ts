@@ -6,8 +6,14 @@ interface CacheEntry<T> {
   expiry: number;
 }
 
-const memoryCache = new Map<string, CacheEntry<any>>();
+const globalForPageCache = global as unknown as { pageMemoryCache?: Map<string, CacheEntry<any>> };
+export const memoryCache = globalForPageCache.pageMemoryCache || new Map<string, CacheEntry<any>>();
+if (process.env.NODE_ENV !== "production") {
+  globalForPageCache.pageMemoryCache = memoryCache;
+}
+
 const DEFAULT_TTL_MS = 1000 * 60 * 15; // 15 minutes ultra-fast in-memory cache
+const VISIBILITY_TTL_MS = 1000 * 60 * 5; // 5 minutes in-memory cache with immediate push updates
 
 /**
  * High-performance cached query for Page Content
@@ -69,7 +75,7 @@ export async function getCachedVisibility() {
 
     memoryCache.set(cacheKey, {
       data: result,
-      expiry: now + DEFAULT_TTL_MS,
+      expiry: now + VISIBILITY_TTL_MS,
     });
 
     return result;
@@ -195,4 +201,73 @@ export function invalidatePageCache(slug?: string) {
     }
   }
   memoryCache.delete("pages:visibility");
+}
+
+export function invalidateVisibilityCache() {
+  memoryCache.delete("pages:visibility");
+}
+
+/**
+ * Direct in-memory save for Page Content (0ms latency, warm RAM cache)
+ */
+export function setCachedPageContent(slug: string, pageData: any) {
+  const now = Date.now();
+  memoryCache.set(`page:${slug}`, {
+    data: pageData,
+    expiry: now + DEFAULT_TTL_MS,
+  });
+}
+
+/**
+ * Direct in-memory save for Page Visibility (0ms latency)
+ * Saves all visibility states directly in RAM memory
+ */
+export function setCachedVisibility(visibilityMap: Record<string, boolean>, pages?: any[]) {
+  const now = Date.now();
+  const pagesList =
+    pages ||
+    Object.entries(visibilityMap).map(([slug, isPublished]) => ({
+      slug,
+      isPublished: Boolean(isPublished),
+    }));
+
+  memoryCache.set("pages:visibility", {
+    data: {
+      visibility: visibilityMap,
+      pages: pagesList,
+    },
+    expiry: now + DEFAULT_TTL_MS,
+  });
+
+  // Sync individual page entries in memory
+  for (const [slug, isPublished] of Object.entries(visibilityMap)) {
+    const existing = memoryCache.get(`page:${slug}`);
+    if (existing && existing.data) {
+      existing.data.isPublished = Boolean(isPublished);
+      existing.expiry = now + DEFAULT_TTL_MS;
+    }
+  }
+}
+
+/**
+ * Direct in-memory save for a single Page's Visibility
+ */
+export function setCachedPageVisibility(slug: string, isPublished: boolean) {
+  const now = Date.now();
+  const existingVisibility = memoryCache.get("pages:visibility");
+  if (existingVisibility && existingVisibility.data && existingVisibility.data.visibility) {
+    existingVisibility.data.visibility[slug] = Boolean(isPublished);
+    if (Array.isArray(existingVisibility.data.pages)) {
+      const p = existingVisibility.data.pages.find((item: any) => item.slug === slug);
+      if (p) p.isPublished = Boolean(isPublished);
+      else existingVisibility.data.pages.push({ slug, isPublished: Boolean(isPublished) });
+    }
+    existingVisibility.expiry = now + DEFAULT_TTL_MS;
+  }
+
+  const existingPage = memoryCache.get(`page:${slug}`);
+  if (existingPage && existingPage.data) {
+    existingPage.data.isPublished = Boolean(isPublished);
+    existingPage.expiry = now + DEFAULT_TTL_MS;
+  }
 }

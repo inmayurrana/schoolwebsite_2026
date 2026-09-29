@@ -7,22 +7,29 @@ import { writeFaviconToPublic } from "@/lib/faviconGenerator";
 
 export async function GET() {
   try {
-    const rawSettings = await prisma.siteSetting.findMany();
-    const settingsMap: Record<string, string> = {};
-    if (Array.isArray(rawSettings)) {
-      rawSettings.forEach((s) => {
-        settingsMap[s.key] = s.value;
-      });
-    }
+    const data = await appCache.getOrSet(
+      "site:settings_all",
+      async () => {
+        const rawSettings = await prisma.siteSetting.findMany();
+        const settingsMap: Record<string, string> = {};
+        if (Array.isArray(rawSettings)) {
+          rawSettings.forEach((s) => {
+            settingsMap[s.key] = s.value;
+          });
+        }
+        return { settings: rawSettings, settingsMap };
+      },
+      300
+    );
 
     const response = NextResponse.json({
       success: true,
-      settings: rawSettings,
-      settingsMap,
+      settings: data.settings,
+      settingsMap: data.settingsMap,
     });
     response.headers.set(
       "Cache-Control",
-      "no-cache, no-store, must-revalidate"
+      "public, max-age=60, stale-while-revalidate=300"
     );
     return response;
   } catch (error: any) {
@@ -98,6 +105,9 @@ export async function POST(req: Request) {
 
     // Invalidate settings in cache immediately
     appCache.invalidate("settings");
+    appCache.invalidate("site:settings_all");
+    appCache.invalidate("site:favicon_version");
+    appCache.invalidate("homepage:db_data");
 
     await logAuditAction({
       userId: user.id,

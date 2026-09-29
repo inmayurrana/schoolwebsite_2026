@@ -17,6 +17,7 @@ model User {
   permissionsJson String?    // JSON array of permission strings
   avatar          String?
   phone           String?
+  googleId        String?    @unique
   isActive        Boolean    @default(true)
   twoFactor       Boolean    @default(false)
   lastLogin       DateTime?
@@ -343,4 +344,102 @@ model FormSubmission {
   status       String   @default("SUBMITTED") // SUBMITTED, REVIEWED, PROCESSED, ARCHIVED
   submittedAt  DateTime @default(now())
 }
+
+model EmailConfiguration {
+  id                 String    @id @default(uuid())
+  provider           String    @default("GMAIL") // GMAIL, SMTP, MICROSOFT, SES, RESEND, BREVO, OTHER
+  isEnabled          Boolean   @default(true)
+  fromName           String    @default("Cambridge International School")
+  fromEmail          String    @default("admin@cismandi.edu.in")
+  replyToEmail       String?
+  smtpHost           String    @default("smtp.gmail.com")
+  smtpPort           Int       @default(587)
+  encryption         String    @default("STARTTLS") // STARTTLS, SSL_TLS, NONE
+  authRequired       Boolean   @default(true)
+  smtpUser           String    @default("")
+  smtpPassEncrypted  String    @default("")
+  defaultRecipients  String?   @default("admin@cismandi.edu.in")
+  defaultCc          String?
+  defaultBcc         String?
+  status             String    @default("NOT_CONFIGURED") // CONNECTED, NOT_CONFIGURED, CONNECTION_ERROR, AUTHENTICATION_ERROR, DISABLED
+  lastTestedAt       DateTime?
+  lastError          String?
+  updatedAt          DateTime  @updatedAt
+  createdAt          DateTime  @default(now())
+}
+
+model EmailTemplate {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  type          String   @default("FORM_NOTIFICATION") // SYSTEM, FORM_NOTIFICATION, FORM_CONFIRMATION, PASSWORD_RESET, USER_INVITATION, PUBLISH_NOTIFICATION, CUSTOM
+  subject       String
+  htmlBody      String
+  plainTextBody String?
+  fromName      String?
+  replyTo       String?
+  cc            String?
+  bcc           String?
+  isSystem      Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
+model FormNotificationConfig {
+  id                     String   @id @default(uuid())
+  formSlug               String   @unique
+  isEnabled              Boolean  @default(true)
+  recipientType          String   @default("FIXED") // FIXED, FORM_FIELD, BOTH
+  recipients             String   @default("admissions@cismandi.edu.in")
+  cc                     String?
+  bcc                    String?
+  replyToField           String?  @default("email")
+  subjectTemplate        String   @default("New {{form_name}} Submission - {{submission_id}}")
+  templateId             String?
+  includeAllFields       Boolean  @default(true)
+  includeSubmissionDate   Boolean  @default(true)
+  includeUploadedFiles   Boolean  @default(true)
+  sendVisitorConfirmation Boolean @default(false)
+  visitorEmailField      String?  @default("email")
+  confirmationTemplateId String?
+  updatedAt              DateTime @updatedAt
+}
+
+model EmailLog {
+  id           String    @id @default(uuid())
+  type         String    @default("FORM_NOTIFICATION") // TEST, FORM_NOTIFICATION, FORM_CONFIRMATION, SYSTEM
+  recipient    String
+  cc           String?
+  bcc          String?
+  subject      String
+  status       String    @default("QUEUED") // QUEUED, SENDING, SENT, FAILED, RETRYING, CANCELLED
+  provider     String    @default("Gmail")
+  formSlug     String?
+  submissionId String?
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  errorMessage String?
+  bodySnippet  String?
+  metadataJson String?
+  sentAt       DateTime?
+  nextRetryAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model EmailDesignSetting {
+  id              String   @id @default(uuid())
+  schoolLogo      String?
+  schoolName      String   @default("Cambridge International School, Mandi")
+  primaryColor    String   @default("#0A2540")
+  secondaryColor  String   @default("#0066FF")
+  headerText      String?  @default("Cambridge International School, Mandi")
+  footerText      String?  @default("This is an automated notification from Cambridge International School CMS.")
+  address         String?  @default("Lunapani, Tehsil Balh, Distt Mandi, H.P. - 175021")
+  phone           String?  @default("+91 98050 39389")
+  website         String?  @default("https://cismandi.edu.in")
+  socialLinksJson String?  @default("{}")
+  updatedAt       DateTime @updatedAt
+}
+
 

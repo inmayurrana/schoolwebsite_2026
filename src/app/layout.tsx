@@ -24,6 +24,7 @@ const inter = Inter({
 });
 
 import { prisma } from "@/lib/prisma";
+import { appCache } from "@/lib/cache";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -81,10 +82,16 @@ export default async function RootLayout({
 }>) {
   let faviconUrl = "/api/favicon";
   try {
-    const versionSetting = await prisma.siteSetting.findUnique({
-      where: { key: "favicon_version" },
-    });
-    const v = versionSetting?.value || "1";
+    const v = await appCache.getOrSet(
+      "site:favicon_version",
+      async () => {
+        const versionSetting = await prisma.siteSetting.findUnique({
+          where: { key: "favicon_version" },
+        });
+        return versionSetting?.value || "1";
+      },
+      1800
+    );
     faviconUrl = `/api/favicon?v=${v}`;
   } catch (e) {}
 

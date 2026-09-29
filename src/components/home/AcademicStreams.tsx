@@ -162,7 +162,7 @@ export default function AcademicStreams({ customStyles }: AcademicStreamsProps) 
             <OptimizedImage
               src={activeWing.image || "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800"}
               alt={activeWing.title}
-              className="w-full h-80 sm:h-96 group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-80 sm:h-96 group-hover:scale-110 group-hover:brightness-105 transition-transform duration-700 ease-out"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>

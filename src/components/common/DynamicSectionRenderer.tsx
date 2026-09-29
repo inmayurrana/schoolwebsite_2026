@@ -108,8 +108,10 @@ export default function DynamicSectionRenderer({
           <section
             key={sec.id || `section_${secIdx}`}
             style={bgStyle}
-            className={`relative transition-all duration-300 ${paddingClass} ${
-              sec.bgColor || sec.bgGradient ? `p-6 sm:p-10 ${sectionRounding} ${sectionShadow} border border-slate-200 dark:border-slate-800` : ""
+            className={`relative transition-all duration-500 rounded-3xl ${paddingClass} ${
+              sec.bgColor || sec.bgGradient
+                ? `p-6 sm:p-10 ${sectionRounding} ${sectionShadow} border border-slate-200 dark:border-slate-800`
+                : "p-4 sm:p-8 hover:bg-slate-50/70 dark:hover:bg-[#071933]/50 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-800/60 transition-colors duration-500"
             }`}
           >
             {/* Section Header */}
@@ -175,7 +177,7 @@ export default function DynamicSectionRenderer({
                       {item.title && (
                         <h3
                           style={item.titleColor ? { color: item.titleColor } : undefined}
-                          className={`font-bold text-school-primary dark:text-white leading-snug ${
+                          className={`font-bold text-school-primary dark:text-white leading-snug group-hover:text-blue-900 dark:group-hover:text-amber-300 transition-colors duration-300 ${
                             item.titleSize === "2xl"
                               ? "text-2xl"
                               : item.titleSize === "xl"
@@ -212,10 +214,10 @@ export default function DynamicSectionRenderer({
                         <div className="pt-2">
                           <Link
                             href={item.link || "#"}
-                            className="inline-flex items-center space-x-1.5 text-xs font-bold text-school-primary dark:text-amber-400 hover:text-amber-600 transition-colors group-hover:translate-x-1 duration-200"
+                            className="inline-flex items-center space-x-1.5 text-xs font-bold text-school-primary dark:text-amber-400 hover:text-amber-600 transition-colors group-hover:translate-x-1.5 duration-300"
                           >
                             <span>{item.buttonText || "Explore Details"}</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300" />
                           </Link>
                         </div>
                       )}
@@ -226,10 +228,13 @@ export default function DynamicSectionRenderer({
                     <div
                       key={item.id || `item_${itemIdx}`}
                       style={itemBgStyle}
-                      className={`group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 ${itemRounding} ${itemShadow} ${itemHover} flex flex-col justify-between overflow-hidden ${
+                      className={`group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-6 ${itemRounding} ${itemShadow} ${itemHover} flex flex-col justify-between overflow-hidden transition-all duration-500 hover:bg-gradient-to-b hover:from-white hover:to-amber-50/50 dark:hover:from-slate-900 dark:hover:to-[#081e3d] hover:border-amber-400/80 dark:hover:border-amber-400/60 hover:shadow-2xl hover:shadow-amber-500/10 dark:hover:shadow-blue-950/60 ${
                         isHorizontal ? "md:flex-row md:items-center md:space-x-6" : "space-y-4"
                       }`}
                     >
+                      {/* Top interactive highlight accent bar on hover */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left z-20 pointer-events-none" />
+
                       {/* Image Top / Left */}
                       {item.image && (item.imagePosition === "top" || item.imagePosition === "left" || !item.imagePosition) && (
                         <div
@@ -241,8 +246,11 @@ export default function DynamicSectionRenderer({
                           <img
                             src={item.image}
                             alt={item.title || "Section visual"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-110 group-hover:brightness-105 transition-transform duration-700 ease-out"
                           />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                         </div>
                       )}
 
@@ -260,8 +268,11 @@ export default function DynamicSectionRenderer({
                           <img
                             src={item.image}
                             alt={item.title || "Section visual"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-110 group-hover:brightness-105 transition-transform duration-700 ease-out"
                           />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                         </div>
                       )}
                     </div>

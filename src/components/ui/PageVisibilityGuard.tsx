@@ -5,54 +5,43 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ShieldAlert, Home, Phone, ArrowLeft, Building2 } from "lucide-react";
 
+import {
+  getInitialDisabledSlugs,
+  fetchClientDisabledSlugs,
+  updateClientVisibilityCache,
+} from "@/lib/clientVisibility";
+
 interface Props {
   children: React.ReactNode;
 }
 
-let cachedDisabledPaths: Set<string> | null = null;
-
 export default function PageVisibilityGuard({ children }: Props) {
   const pathname = usePathname();
-  const [disabledPaths, setDisabledPaths] = useState<Set<string>>(cachedDisabledPaths || new Set());
-  const [loaded, setLoaded] = useState(cachedDisabledPaths !== null);
+  const [disabledPaths, setDisabledPaths] = useState<Set<string>>(() => getInitialDisabledSlugs());
+  const [loaded, setLoaded] = useState(true);
 
   useEffect(() => {
-    async function checkVisibility() {
-      try {
-        const res = await fetch("/api/pages/visibility", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          const disabled = new Set<string>();
-          if (data.visibility) {
-            Object.entries(data.visibility).forEach(([slug, isPub]) => {
-              if (isPub === false) {
-                disabled.add(slug.toLowerCase().trim());
-                // also match with leading slash
-                disabled.add("/" + slug.toLowerCase().trim());
-              }
-            });
-          }
-          cachedDisabledPaths = disabled;
-          setDisabledPaths(disabled);
-        }
-      } catch (err) {
-        console.error("Failed to check page visibility:", err);
-      } finally {
-        setLoaded(true);
-      }
+    async function checkVisibility(force = false) {
+      const set = await fetchClientDisabledSlugs(force);
+      setDisabledPaths(new Set(set));
     }
 
     checkVisibility();
 
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "cis_page_visibility_updated") {
-        checkVisibility();
+      if (e.key === "cis_page_visibility_updated" || e.key === "cis_disabled_slugs") {
+        checkVisibility(true);
       }
     };
     window.addEventListener("storage", handleStorage);
 
-    const handleCustomVisibility = () => {
-      checkVisibility();
+    const handleCustomVisibility = (e?: any) => {
+      if (e?.detail?.disabledSlugs && Array.isArray(e.detail.disabledSlugs)) {
+        updateClientVisibilityCache(e.detail.disabledSlugs);
+        setDisabledPaths(new Set(e.detail.disabledSlugs));
+      } else {
+        checkVisibility(true);
+      }
     };
     window.addEventListener("cis_visibility_changed", handleCustomVisibility);
 
@@ -60,8 +49,13 @@ export default function PageVisibilityGuard({ children }: Props) {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       try {
         channel = new BroadcastChannel("cis_visibility_channel");
-        channel.onmessage = () => {
-          checkVisibility();
+        channel.onmessage = (event) => {
+          if (event?.data?.disabledSlugs && Array.isArray(event.data.disabledSlugs)) {
+            updateClientVisibilityCache(event.data.disabledSlugs);
+            setDisabledPaths(new Set(event.data.disabledSlugs));
+          } else {
+            checkVisibility(true);
+          }
         };
       } catch (_) {}
     }

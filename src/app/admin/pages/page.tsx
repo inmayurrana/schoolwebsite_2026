@@ -226,18 +226,47 @@ export default function AdminPageEditor() {
 
       if (res.ok) {
         if (typeof window !== "undefined") {
+          const currentDisabled = Object.entries({ ...visibilityMap, [slug]: newStatus })
+            .filter(([_, v]) => v === false)
+            .flatMap(([k]) => [k.toLowerCase().trim(), "/" + k.toLowerCase().trim()]);
+
+          // Save in browser in-memory global cache
+          (window as any).__CIS_VISIBILITY_MEMORY__ = {
+            visibilityMap: { ...visibilityMap, [slug]: newStatus },
+            disabledSlugs: currentDisabled,
+            updatedAt: Date.now(),
+          };
+
+          try {
+            localStorage.setItem("cis_disabled_slugs", JSON.stringify(currentDisabled));
+            localStorage.setItem("cis_visibility_map", JSON.stringify({ ...visibilityMap, [slug]: newStatus }));
+            sessionStorage.setItem("cis_visibility_memory", JSON.stringify({ ...visibilityMap, [slug]: newStatus }));
+          } catch (_) {}
           localStorage.setItem("cis_page_visibility_updated", Date.now().toString());
-          window.dispatchEvent(new CustomEvent("cis_visibility_changed"));
+
+          // Dispatch event with in-memory payload for 0ms instant UI update
+          window.dispatchEvent(
+            new CustomEvent("cis_visibility_changed", {
+              detail: { disabledSlugs: currentDisabled, slug, isPublished: newStatus },
+            })
+          );
+
           try {
             const ch = new BroadcastChannel("cis_visibility_channel");
-            ch.postMessage({ type: "VISIBILITY_UPDATED", slug, isPublished: newStatus });
+            ch.postMessage({
+              type: "VISIBILITY_UPDATED",
+              slug,
+              isPublished: newStatus,
+              disabledSlugs: currentDisabled,
+              timestamp: Date.now(),
+            });
             ch.close();
           } catch (_) {}
         }
         setToastMessage(
           newStatus
-            ? `Page "${pageName}" is now ENABLED. It is live and visible on the website.`
-            : `Page "${pageName}" is now DISABLED. It is hidden from menus and visitors.`
+            ? `Page "${pageName}" is now ENABLED. Saved in memory & live on website.`
+            : `Page "${pageName}" is now DISABLED. Saved in memory & hidden from website.`
         );
         setTimeout(() => setToastMessage(null), 4000);
       } else {
@@ -251,7 +280,7 @@ export default function AdminPageEditor() {
     }
   };
 
-  // 4. Batch Apply All Visibility Settings Live
+  // 4. Batch Apply All Visibility Settings Live (Saves directly to Server & Client Memory)
   const handleApplyAllLive = async () => {
     setApplyingAll(true);
     try {
@@ -266,15 +295,45 @@ export default function AdminPageEditor() {
 
       if (res.ok) {
         if (typeof window !== "undefined") {
+          const currentDisabled = Object.entries(visibilityMap)
+            .filter(([_, v]) => v === false)
+            .flatMap(([k]) => [k.toLowerCase().trim(), "/" + k.toLowerCase().trim()]);
+
+          // 1. Save directly into browser active memory
+          (window as any).__CIS_VISIBILITY_MEMORY__ = {
+            visibilityMap: { ...visibilityMap },
+            disabledSlugs: currentDisabled,
+            updatedAt: Date.now(),
+          };
+
+          // 2. Save in browser storage memory for persistence
+          try {
+            localStorage.setItem("cis_disabled_slugs", JSON.stringify(currentDisabled));
+            localStorage.setItem("cis_visibility_map", JSON.stringify(visibilityMap));
+            sessionStorage.setItem("cis_visibility_memory", JSON.stringify(visibilityMap));
+          } catch (_) {}
           localStorage.setItem("cis_page_visibility_updated", Date.now().toString());
-          window.dispatchEvent(new CustomEvent("cis_visibility_changed"));
+
+          // 3. Dispatch instant in-memory event across the application
+          window.dispatchEvent(
+            new CustomEvent("cis_visibility_changed", {
+              detail: { disabledSlugs: currentDisabled, visibilityMap },
+            })
+          );
+
+          // 4. Broadcast in-memory update to all open tabs and windows
           try {
             const ch = new BroadcastChannel("cis_visibility_channel");
-            ch.postMessage({ type: "VISIBILITY_UPDATED", timestamp: Date.now() });
+            ch.postMessage({
+              type: "VISIBILITY_UPDATED",
+              disabledSlugs: currentDisabled,
+              visibilityMap,
+              timestamp: Date.now(),
+            });
             ch.close();
           } catch (_) {}
         }
-        setToastMessage("✨ All page visibility changes have been applied immediately to the live website!");
+        setToastMessage("⚡ All changes applied live and saved in memory & database successfully!");
         setTimeout(() => setToastMessage(null), 5000);
       } else {
         setToastMessage("❌ Failed to apply changes. Please try again.");
@@ -436,6 +495,14 @@ export default function AdminPageEditor() {
               <span className="font-bold">{disabledCount} Hidden</span>
             </div>
           )}
+
+          <Link
+            href="/admin/testimonials"
+            className="bg-amber-500/10 border border-amber-500/40 hover:border-amber-400 text-amber-300 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors"
+            title="Manage Parent & Alumni Voices testimonials & UI effects"
+          >
+            <span>Parent & Alumni Voices</span>
+          </Link>
 
           {/* Quick Header Apply Button */}
           <button

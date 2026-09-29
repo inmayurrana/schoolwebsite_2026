@@ -47,6 +47,38 @@ export default function InstantNavigation() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // 1. Idle Background Route Prefetcher: Warm up critical pages during idle time
+  useEffect(() => {
+    let cancelled = false;
+    const prefetchIdle = () => {
+      if (cancelled) return;
+      CRITICAL_ROUTES.forEach((route, idx) => {
+        if (route !== pathname) {
+          // Stagger requests slightly so network is never saturated
+          setTimeout(() => {
+            if (!cancelled) {
+              try {
+                router.prefetch(route);
+              } catch (_) {}
+            }
+          }, 800 + idx * 100);
+        }
+      });
+    };
+
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        (window as any).requestIdleCallback(prefetchIdle, { timeout: 4000 });
+      } else {
+        setTimeout(prefetchIdle, 1200);
+      }
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, pathname]);
+
   // 2. High-Performance Pointer & Hover Preloader
   useEffect(() => {
     const handlePreload = (e: Event) => {

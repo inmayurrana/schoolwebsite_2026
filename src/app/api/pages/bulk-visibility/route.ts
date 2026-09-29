@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
+import { invalidatePageCache, setCachedVisibility } from "@/lib/pageContentCache";
 
 export async function POST(req: Request) {
   try {
@@ -35,8 +36,10 @@ export async function POST(req: Request) {
 
     await prisma.$transaction(operations);
 
-    // Invalidate all RAM caches immediately so changes are 100% live
-    appCache.invalidateAll();
+    // Save live changes directly into the server in-memory cache (0ms lookup)
+    setCachedVisibility(visibilityMap, pagesList);
+    appCache.set("pages:visibility", { visibility: visibilityMap, pages: pagesList }, 900);
+    appCache.invalidate("pages");
 
     // Log the bulk update action
     try {

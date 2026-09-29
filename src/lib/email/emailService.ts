@@ -1,0 +1,650 @@
+import { prisma } from "@/lib/prisma";
+import {
+  EmailConfigData,
+  EmailConnectionResult,
+  EmailSendOptions,
+  EmailSendResult,
+  EmailServiceStatus,
+} from "./types";
+import { createEmailProvider } from "./providers/factory";
+import { encryptSecret, decryptSecret, maskSecret } from "./crypto";
+import {
+  interpolateVariables,
+  generateSubmissionFieldsTable,
+  wrapWithEmailLayout,
+  TemplateVariables,
+} from "./templateRenderer";
+import { ensureDefaultTemplatesExist } from "./defaultTemplates";
+
+class EmailService {
+  /**
+   * Fetch current email configuration.
+   * Priority: Environment Variables > Database > Defaults.
+   */
+  async getConfig(includeDecryptedPassword = false): Promise<EmailConfigData> {
+    let dbConfig: any = null;
+    try {
+      dbConfig = await (prisma as any).emailConfiguration.findFirst();
+    } catch (_) {}
+
+    // 1. Check environment variables
+    const envHost = process.env.SMTP_HOST;
+    const envPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined;
+    const envUser = process.env.SMTP_USER;
+    const envPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+    const envFrom = process.env.EMAIL_FROM || process.env.SMTP_FROM;
+    const envFromName = process.env.EMAIL_FROM_NAME || process.env.SMTP_FROM_NAME;
+    const envProvider = process.env.EMAIL_PROVIDER;
+
+    const provider = envProvider || dbConfig?.provider || "GMAIL";
+    const smtpHost = envHost || dbConfig?.smtpHost || (provider === "GMAIL" ? "smtp.gmail.com" : "localhost");
+    const smtpPort = envPort || dbConfig?.smtpPort || (provider === "GMAIL" ? 587 : 587);
+    const encryption = dbConfig?.encryption || (smtpPort === 465 ? "SSL_TLS" : "STARTTLS");
+    const isEnabled = dbConfig ? dbConfig.isEnabled : true;
+    const fromName = envFromName || dbConfig?.fromName || "Cambridge International School";
+    const fromEmail = envFrom || dbConfig?.fromEmail || envUser || "admin@cismandi.edu.in";
+    const replyToEmail = dbConfig?.replyToEmail || "";
+    const authRequired = dbConfig ? dbConfig.authRequired : true;
+    const smtpUser = envUser || dbConfig?.smtpUser || "";
+    
+    // Decrypt password if requested
+    let plainPass = "";
+    if (envPass) {
+      plainPass = envPass;
+    } else if (dbConfig?.smtpPassEncrypted) {
+      plainPass = decryptSecret(dbConfig.smtpPassEncrypted);
+    }
+
+    const defaultRecipients = dbConfig?.defaultRecipients || fromEmail;
+    const defaultCc = dbConfig?.defaultCc || "";
+    const defaultBcc = dbConfig?.defaultBcc || "";
+    const status: EmailServiceStatus = !smtpUser
+      ? "NOT_CONFIGURED"
+      : !isEnabled
+      ? "DISABLED"
+      : dbConfig?.status || "NOT_CONFIGURED";
+
+    return {
+      id: dbConfig?.id,
+      provider,
+      isEnabled,
+      fromName,
+      fromEmail,
+      replyToEmail,
+      smtpHost,
+      smtpPort,
+      encryption,
+      authRequired,
+      smtpUser,
+      smtpPass: includeDecryptedPassword ? plainPass : (plainPass ? maskSecret(plainPass) : ""),
+      smtpPassEncrypted: dbConfig?.smtpPassEncrypted || "",
+      defaultRecipients,
+      defaultCc,
+      defaultBcc,
+      status,
+      lastTestedAt: dbConfig?.lastTestedAt,
+      lastError: dbConfig?.lastError,
+    };
+  }
+
+  /**
+   * Save or update email configuration in the database.
+   */
+  async saveConfig(data: Partial<EmailConfigData>, adminUserName = "Admin"): Promise<EmailConfigData> {
+    const existing = await (prisma as any).emailConfiguration.findFirst();
+
+    let encryptedPass = existing?.smtpPassEncrypted || "";
+
+    // If new password is provided and not masked
+    if (data.smtpPass && !data.smtpPass.includes("•")) {
+      let pass = data.smtpPass.trim();
+      if (data.provider === "GMAIL" || (data.smtpHost && data.smtpHost.includes("gmail"))) {
+        pass = pass.replace(/\s+/g, "");
+      }
+      encryptedPass = encryptSecret(pass);
+    }
+
+    const updatePayload: any = {
+      provider: data.provider || "GMAIL",
+      isEnabled: data.isEnabled !== undefined ? Boolean(data.isEnabled) : true,
+      fromName: data.fromName || "Cambridge International School",
+      fromEmail: data.fromEmail || "admin@cismandi.edu.in",
+      replyToEmail: data.replyToEmail || null,
+      smtpHost: data.smtpHost || (data.provider === "GMAIL" ? "smtp.gmail.com" : "localhost"),
+      smtpPort: data.smtpPort ? Number(data.smtpPort) : 587,
+      encryption: data.encryption || "STARTTLS",
+      authRequired: data.authRequired !== undefined ? Boolean(data.authRequired) : true,
+      smtpUser: data.smtpUser ? data.smtpUser.trim() : "",
+      smtpPassEncrypted: encryptedPass,
+      defaultRecipients: data.defaultRecipients || null,
+      defaultCc: data.defaultCc || null,
+      defaultBcc: data.defaultBcc || null,
+    };
+
+    let saved;
+    if (existing) {
+      saved = await (prisma as any).emailConfiguration.update({
+        where: { id: existing.id },
+        data: updatePayload,
+      });
+    } else {
+      saved = await (prisma as any).emailConfiguration.create({
+        data: {
+          ...updatePayload,
+          status: "NOT_CONFIGURED",
+        },
+      });
+    }
+
+    // Record audit log safely (NEVER log the actual password)
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userName: adminUserName,
+          action: "UPDATE_EMAIL_SETTINGS",
+          entity: "EmailConfiguration",
+          entityId: saved.id,
+          details: `Updated Email Settings. Provider: ${saved.provider}, Host: ${saved.smtpHost}:${saved.smtpPort}. Password changed: ${Boolean(data.smtpPass && !data.smtpPass.includes("•"))}`,
+        },
+      });
+    } catch (_) {}
+
+    return this.getConfig(false);
+  }
+
+  /**
+   * Test SMTP connection handshake and TLS configuration without sending an email.
+   */
+  async testConnection(customConfig?: Partial<EmailConfigData>): Promise<EmailConnectionResult> {
+    const activeConfig = await this.getConfig(true);
+
+    let resolvedPass = activeConfig.smtpPass || "";
+    if (customConfig?.smtpPass && !customConfig.smtpPass.includes("•")) {
+      resolvedPass = customConfig.smtpPass.trim();
+    }
+
+    const testConfig: EmailConfigData = {
+      ...activeConfig,
+      ...customConfig,
+      smtpPass: resolvedPass,
+    };
+
+    if (testConfig.provider === "GMAIL" || (testConfig.smtpHost && testConfig.smtpHost.includes("gmail"))) {
+      if (testConfig.smtpPass) {
+        testConfig.smtpPass = testConfig.smtpPass.replace(/\s+/g, "");
+      }
+    }
+
+    const provider = createEmailProvider(testConfig);
+    const result = await provider.testConnection();
+
+    // Persist test result status to DB
+    try {
+      const existing = await (prisma as any).emailConfiguration.findFirst();
+      if (existing) {
+        await (prisma as any).emailConfiguration.update({
+          where: { id: existing.id },
+          data: {
+            status: result.success
+              ? "CONNECTED"
+              : result.error?.includes("authentication") || result.error?.includes("login")
+              ? "AUTHENTICATION_ERROR"
+              : "CONNECTION_ERROR",
+            lastTestedAt: new Date(),
+            lastError: result.success ? null : result.error || result.message,
+          },
+        });
+      }
+    } catch (_) {}
+
+    return result;
+  }
+
+  /**
+   * Send a test email to verify end-to-end delivery.
+   */
+  async sendTestEmail(
+    to: string,
+    subject = "Website Email Delivery Test",
+    message = "This is a test email sent from the Cambridge International School CMS."
+  ): Promise<EmailSendResult> {
+    const config = await this.getConfig(true);
+
+    if (config.authRequired && (!config.smtpUser || !config.smtpPass)) {
+      return {
+        success: false,
+        provider: config.provider,
+        error: "Missing SMTP credentials: Username and Password / Google App Password are required. Please configure credentials in Communications > Email Settings first.",
+      };
+    }
+
+    const provider = createEmailProvider(config);
+
+    const testHtml = await wrapWithEmailLayout(`
+      <div style="background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <h3 style="margin: 0 0 6px 0; color: #065f46; font-size: 16px;">
+          ✓ Email Delivery Test Successful
+        </h3>
+        <p style="margin: 0; color: #047857; font-size: 13px;">
+          Your website email configuration is working properly with provider <strong>${provider.getProviderName()}</strong>.
+        </p>
+      </div>
+
+      <div style="font-size: 14px; color: #334155; line-height: 1.6;">
+        <p><strong>Recipient:</strong> ${to}</p>
+        <p><strong>SMTP Host:</strong> ${config.smtpHost}:${config.smtpPort} (${config.encryption})</p>
+        <p><strong>Authenticated Sender:</strong> ${config.smtpUser || config.fromEmail}</p>
+        <p><strong>Test Timestamp:</strong> ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+      </div>
+
+      <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 18px; font-size: 13px; color: #475569;">
+        <strong>Custom Test Message:</strong><br>
+        ${message}
+      </div>
+    `);
+
+    // Log the test attempt
+    let logRecord: any = null;
+    try {
+      logRecord = await (prisma as any).emailLog.create({
+        data: {
+          type: "TEST",
+          recipient: to,
+          subject,
+          status: "SENDING",
+          provider: provider.getProviderName(),
+          attempts: 1,
+          bodySnippet: message.substring(0, 150),
+        },
+      });
+    } catch (_) {}
+
+    const result = await provider.send({
+      to,
+      subject,
+      html: testHtml,
+      text: message,
+    });
+
+    if (logRecord) {
+      try {
+        await (prisma as any).emailLog.update({
+          where: { id: logRecord.id },
+          data: {
+            status: result.success ? "SENT" : "FAILED",
+            sentAt: result.success ? new Date() : null,
+            errorMessage: result.success ? null : result.error,
+          },
+        });
+      } catch (_) {}
+    }
+
+    return result;
+  }
+
+  /**
+   * Resend / retry a failed email log.
+   */
+  async retryEmail(logId: string): Promise<EmailSendResult> {
+    const log = await (prisma as any).emailLog.findUnique({
+      where: { id: logId },
+    });
+
+    if (!log) {
+      return { success: false, provider: "Unknown", error: "Log record not found" };
+    }
+
+    const config = await this.getConfig(true);
+    const provider = createEmailProvider(config);
+
+    await (prisma as any).emailLog.update({
+      where: { id: logId },
+      data: {
+        status: "RETRYING",
+        attempts: { increment: 1 },
+      },
+    });
+
+    // Reconstruct email from log metadata or template
+    let emailHtml = "";
+    try {
+      const meta = log.metadataJson ? JSON.parse(log.metadataJson) : null;
+      if (meta?.html) {
+        emailHtml = meta.html;
+      }
+    } catch (_) {}
+
+    if (!emailHtml) {
+      emailHtml = await wrapWithEmailLayout(`
+        <div style="font-size: 14px; color: #334155;">
+          <h2>Retried Notification: ${log.subject}</h2>
+          <p>${log.bodySnippet || "Form submission notification."}</p>
+        </div>
+      `);
+    }
+
+    const result = await provider.send({
+      to: log.recipient,
+      cc: log.cc ? log.cc.split(",").map((s: string) => s.trim()) : undefined,
+      bcc: log.bcc ? log.bcc.split(",").map((s: string) => s.trim()) : undefined,
+      subject: log.subject,
+      html: emailHtml,
+    });
+
+    await (prisma as any).emailLog.update({
+      where: { id: logId },
+      data: {
+        status: result.success ? "SENT" : "FAILED",
+        sentAt: result.success ? new Date() : null,
+        errorMessage: result.success ? null : result.error,
+      },
+    });
+
+    return result;
+  }
+
+  /**
+   * Core form submission handler.
+   * Runs asynchronously in background: saves email log, interpolates variables,
+   * dispatches admin notification and optional visitor confirmation.
+   * NEVER throws or disrupts the form submission response.
+   */
+  async handleFormSubmission({
+    formSlug,
+    formTitle,
+    submissionNo,
+    formData,
+    submissionId,
+  }: {
+    formSlug: string;
+    formTitle: string;
+    submissionNo: string;
+    formData: Record<string, any>;
+    submissionId?: string;
+  }): Promise<void> {
+    try {
+      const config = await this.getConfig(true);
+
+      // If email delivery is globally disabled, log and exit safely
+      if (!config.isEnabled) {
+        try {
+          await (prisma as any).emailLog.create({
+            data: {
+              type: "FORM_NOTIFICATION",
+              recipient: config.defaultRecipients || config.fromEmail,
+              subject: `Submission [${submissionNo}] - Email Disabled`,
+              status: "CANCELLED",
+              provider: config.provider,
+              formSlug,
+              submissionId: submissionNo,
+              errorMessage: "Email notifications are currently disabled in CMS Settings.",
+            },
+          });
+        } catch (_) {}
+        return;
+      }
+
+      // Ensure default templates are present
+      await ensureDefaultTemplatesExist();
+
+      // Fetch FormNotificationConfig for this form
+      let notifConfig: any = null;
+      try {
+        notifConfig = await (prisma as any).formNotificationConfig.findUnique({
+          where: { formSlug },
+        });
+      } catch (_) {}
+
+      // If form notifications are explicitly disabled for this form
+      if (notifConfig && !notifConfig.isEnabled) {
+        return;
+      }
+
+      // Build Template Variables
+      const nowStr = new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+
+      const variables: TemplateVariables = {
+        site_name: "Cambridge International School",
+        site_url: process.env.NEXTAUTH_URL || "https://cismandi.edu.in",
+        form_name: formTitle,
+        submission_id: submissionNo,
+        submission_date: nowStr,
+        view_submission_url: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/admin/forms`,
+        ...formData,
+      };
+
+      // 1. Send Admin Notification
+      await this.dispatchAdminNotification({
+        config,
+        notifConfig,
+        formSlug,
+        formTitle,
+        submissionNo,
+        formData,
+        variables,
+      });
+
+      // 2. Send Visitor Confirmation (if configured)
+      if (notifConfig?.sendVisitorConfirmation) {
+        await this.dispatchVisitorConfirmation({
+          config,
+          notifConfig,
+          formSlug,
+          formTitle,
+          submissionNo,
+          formData,
+          variables,
+        });
+      }
+    } catch (err) {
+      console.error("Critical error in handleFormSubmission email processing:", err);
+    }
+  }
+
+  private async dispatchAdminNotification({
+    config,
+    notifConfig,
+    formSlug,
+    formTitle,
+    submissionNo,
+    formData,
+    variables,
+  }: any) {
+    try {
+      // Determine recipients
+      let recipients = notifConfig?.recipients || config.defaultRecipients || config.fromEmail;
+      if (!recipients) recipients = config.fromEmail;
+
+      const recipientList = recipients
+        .split(",")
+        .map((e: string) => e.trim())
+        .filter((e: string) => e.includes("@"));
+
+      if (recipientList.length === 0) return;
+
+      // Determine Reply-To from form field if valid
+      let replyToEmail: string | undefined = undefined;
+      const replyField = notifConfig?.replyToField || "email";
+      if (formData[replyField] && typeof formData[replyField] === "string" && formData[replyField].includes("@")) {
+        replyToEmail = formData[replyField].trim();
+      }
+
+      // Fetch or assemble template
+      let subject = `New ${formTitle} Submission - ${submissionNo}`;
+      let bodyHtml = "";
+
+      let template = null;
+      if (notifConfig?.templateId) {
+        template = await (prisma as any).emailTemplate.findUnique({
+          where: { id: notifConfig.templateId },
+        });
+      } else {
+        // Fallback: match by form slug or general enquiry
+        const slugMatch =
+          formSlug.includes("admission")
+            ? "new-admission-enquiry"
+            : formSlug.includes("career")
+            ? "new-career-application"
+            : formSlug.includes("contact")
+            ? "new-contact-submission"
+            : "new-general-enquiry";
+
+        template = await (prisma as any).emailTemplate.findUnique({
+          where: { slug: slugMatch },
+        });
+      }
+
+      const fieldsTable = generateSubmissionFieldsTable(formData);
+      const enhancedVars = { ...variables, fields_table: fieldsTable };
+
+      if (template) {
+        subject = interpolateVariables(template.subject, enhancedVars, false);
+        bodyHtml = interpolateVariables(template.htmlBody, enhancedVars, false);
+      } else {
+        bodyHtml = `
+          <h2>New Submission Received for ${formTitle}</h2>
+          <p>A new entry was submitted on <strong>${variables.submission_date}</strong> (Ref: <strong>${submissionNo}</strong>).</p>
+          ${fieldsTable}
+        `;
+      }
+
+      const finalHtml = await wrapWithEmailLayout(bodyHtml, {
+        previewText: `New ${formTitle} submission: ${submissionNo}`,
+        actionUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/admin/forms`,
+        actionText: "View Submission in CMS",
+      });
+
+      const provider = createEmailProvider(config);
+
+      // Save Log as QUEUED/SENDING
+      const log = await (prisma as any).emailLog.create({
+        data: {
+          type: "FORM_NOTIFICATION",
+          recipient: recipientList.join(", "),
+          cc: notifConfig?.cc || null,
+          bcc: notifConfig?.bcc || null,
+          subject,
+          status: "SENDING",
+          provider: provider.getProviderName(),
+          formSlug,
+          submissionId: submissionNo,
+          attempts: 1,
+          bodySnippet: `Form ${formTitle} submission (${submissionNo})`,
+          metadataJson: JSON.stringify({ html: finalHtml }),
+        },
+      });
+
+      const sendResult = await provider.send({
+        to: recipientList,
+        cc: notifConfig?.cc ? notifConfig.cc.split(",").map((s: string) => s.trim()) : undefined,
+        bcc: notifConfig?.bcc ? notifConfig.bcc.split(",").map((s: string) => s.trim()) : undefined,
+        replyTo: replyToEmail,
+        subject,
+        html: finalHtml,
+      });
+
+      await (prisma as any).emailLog.update({
+        where: { id: log.id },
+        data: {
+          status: sendResult.success ? "SENT" : "FAILED",
+          sentAt: sendResult.success ? new Date() : null,
+          errorMessage: sendResult.success ? null : sendResult.error,
+        },
+      });
+    } catch (err) {
+      console.error("Error dispatching admin notification:", err);
+    }
+  }
+
+  private async dispatchVisitorConfirmation({
+    config,
+    notifConfig,
+    formSlug,
+    formTitle,
+    submissionNo,
+    formData,
+    variables,
+  }: any) {
+    try {
+      const visitorEmailKey = notifConfig.visitorEmailField || "email";
+      const visitorEmail = formData[visitorEmailKey];
+
+      if (!visitorEmail || typeof visitorEmail !== "string" || !visitorEmail.includes("@")) {
+        return;
+      }
+
+      let template = null;
+      if (notifConfig.confirmationTemplateId) {
+        template = await (prisma as any).emailTemplate.findUnique({
+          where: { id: notifConfig.confirmationTemplateId },
+        });
+      } else {
+        const slugMatch = formSlug.includes("admission")
+          ? "application-received"
+          : "form-submission-confirmation";
+
+        template = await (prisma as any).emailTemplate.findUnique({
+          where: { slug: slugMatch },
+        });
+      }
+
+      let subject = `Thank you for contacting Cambridge International School (${submissionNo})`;
+      let bodyHtml = "";
+
+      if (template) {
+        subject = interpolateVariables(template.subject, variables, false);
+        bodyHtml = interpolateVariables(template.htmlBody, variables, false);
+      } else {
+        bodyHtml = `
+          <h2>Thank You for Contacting Cambridge International School</h2>
+          <p>We have received your submission for <strong>${formTitle}</strong> (Ref: <strong>${submissionNo}</strong>).</p>
+          <p>Our team will review your enquiry and get back to you shortly.</p>
+        `;
+      }
+
+      const finalHtml = await wrapWithEmailLayout(bodyHtml, {
+        previewText: `Acknowledgment: ${submissionNo}`,
+      });
+
+      const provider = createEmailProvider(config);
+
+      const log = await (prisma as any).emailLog.create({
+        data: {
+          type: "FORM_CONFIRMATION",
+          recipient: visitorEmail.trim(),
+          subject,
+          status: "SENDING",
+          provider: provider.getProviderName(),
+          formSlug,
+          submissionId: submissionNo,
+          attempts: 1,
+          bodySnippet: `Visitor Confirmation for ${formTitle}`,
+          metadataJson: JSON.stringify({ html: finalHtml }),
+        },
+      });
+
+      const sendResult = await provider.send({
+        to: visitorEmail.trim(),
+        subject,
+        html: finalHtml,
+      });
+
+      await (prisma as any).emailLog.update({
+        where: { id: log.id },
+        data: {
+          status: sendResult.success ? "SENT" : "FAILED",
+          sentAt: sendResult.success ? new Date() : null,
+          errorMessage: sendResult.success ? null : sendResult.error,
+        },
+      });
+    } catch (err) {
+      console.error("Error dispatching visitor confirmation email:", err);
+    }
+  }
+}
+
+export const emailService = new EmailService();

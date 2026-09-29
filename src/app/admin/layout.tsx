@@ -29,6 +29,9 @@ import {
   LayoutTemplate,
   Share2,
   Sliders,
+  Quote,
+  Mail,
+  History,
 } from "lucide-react";
 import UiEffectsSelectorModal from "@/components/ui/UiEffectsSelectorModal";
 
@@ -95,12 +98,18 @@ export default function AdminLayout({
   const navItems = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Page & Content Studio", href: "/admin/pages", icon: Layers, badge: "Editor" },
+    { label: "Parent & Alumni Voices", href: "/admin/testimonials", icon: Quote, badge: "Voices" },
     { label: "Theme & Visual Effects", href: "/admin/theme", icon: Palette, badge: "Colors" },
     { label: "Modern UI Effects", href: "/admin/ui-effects", icon: Sparkles, badge: "Live FX" },
     { label: "Header & Footer Studio", href: "/admin/header-footer", icon: LayoutTemplate, badge: "Menu" },
     { label: "Social Media & Feeds", href: "/admin/social-media", icon: Share2, badge: "FB & YT" },
     { label: "Mandatory Disclosure", href: "/admin/mandatory-disclosure", icon: ShieldCheck, badge: "CBSE" },
     { label: "Form Builder & Forms", href: "/admin/forms", icon: FileText, badge: "Builder" },
+    { label: "Email Settings", href: "/admin/communications/email", icon: Mail, badge: "SMTP" },
+    { label: "Email Alerts & Triggers", href: "/admin/communications/alerts", icon: Bell, badge: "Alerts" },
+    { label: "Email Templates", href: "/admin/communications/templates", icon: Mail, badge: "Tpl" },
+    { label: "Form Notifications", href: "/admin/communications/notifications", icon: ShieldCheck },
+    { label: "Email Logs & Queue", href: "/admin/communications/logs", icon: History },
     { label: "Admissions Hub", href: "/admin/admissions", icon: Users, badge: "Live" },
     { label: "Visitor Inquiries", href: "/admin/inquiries", icon: MessageSquare },
     { label: "News & Bulletins", href: "/admin/news", icon: Bell },
@@ -117,22 +126,22 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row relative overflow-hidden">
+    <div className="dark min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row relative overflow-hidden">
       {/* Ambient Glass Glow Orbs */}
       <div className="glass-orb-blue -top-24 left-1/4 opacity-25" />
       <div className="glass-orb-purple bottom-10 right-1/4 opacity-20" />
 
       {/* Mobile Header */}
-      <div className="lg:hidden glass-nav p-4 flex items-center justify-between relative z-40">
+      <div className="lg:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between relative z-40">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-school-secondary to-blue-600 text-amber-400 flex items-center justify-center font-bold shadow">
             <GraduationCap className="w-5 h-5" />
           </div>
-          <span className="font-heading font-bold text-sm text-white">CIS Mandi CMS</span>
+          <span className="font-heading font-black text-sm text-white">CIS Mandi CMS</span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 glass-btn rounded-xl text-slate-300"
+          className="p-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-200"
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -140,28 +149,28 @@ export default function AdminLayout({
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 glass-panel bg-white/95 dark:bg-slate-950/95 border-r border-slate-200 dark:border-white/10 p-5 flex flex-col justify-between transition-transform duration-300 ${
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-slate-950 border-r border-slate-800 p-5 flex flex-col justify-between transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="space-y-6">
           {/* Logo */}
           <Link href="/admin" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-school-secondary to-blue-600 flex items-center justify-center text-amber-400 shadow-lg border border-white/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-school-secondary to-blue-600 flex items-center justify-center text-amber-400 shadow-lg border border-amber-400/30 group-hover:scale-105 transition-transform">
               <GraduationCap className="w-6 h-6" />
             </div>
             <div>
-              <span className="font-heading font-extrabold text-sm text-slate-900 dark:text-white block tracking-tight">
+              <span className="font-heading font-black text-sm text-white block tracking-tight">
                 CAMBRIDGE MANDI
               </span>
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block">
+              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
                 Admin Studio
               </span>
             </div>
           </Link>
 
           {/* Nav List */}
-          <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
+          <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -170,18 +179,22 @@ export default function AdminLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-school-secondary to-blue-600 text-white shadow-lg font-bold border border-blue-400/40 hover:text-black hover:bg-amber-400 hover:from-amber-400 hover:to-amber-400 hover:border-amber-400"
-                      : "text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-black hover:bg-slate-100 dark:hover:bg-amber-400/20 hover:font-bold"
+                      ? "bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/20 border border-amber-300"
+                      : "text-slate-200 font-bold hover:text-white hover:bg-slate-900 border border-transparent hover:border-slate-750"
                   }`}
                 >
-                  <div className="flex items-center space-x-2.5 transition-colors group-hover:text-black">
-                    <Icon className="w-4 h-4 transition-colors group-hover:text-black" />
-                    <span className="transition-colors group-hover:text-black">{item.label}</span>
+                  <div className="flex items-center space-x-2.5">
+                    <Icon className={`w-4 h-4 ${isActive ? "text-slate-950" : "text-amber-400"}`} />
+                    <span>{item.label}</span>
                   </div>
                   {item.badge && (
-                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow">
+                    <span
+                      className={`text-[9px] font-black px-2 py-0.5 rounded-full shadow ${
+                        isActive ? "bg-slate-950 text-amber-300" : "bg-amber-400 text-slate-950"
+                      }`}
+                    >
                       {item.badge}
                     </span>
                   )}
@@ -192,11 +205,11 @@ export default function AdminLayout({
         </div>
 
         {/* Modern UI Effects Studio Trigger in Admin Sidebar */}
-        <div className="pt-3 border-t border-white/10">
+        <div className="pt-3 border-t border-slate-800">
           <button
             type="button"
             onClick={() => setEffectsModalOpen(true)}
-            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-blue-500/15 to-indigo-500/15 hover:from-amber-500/25 hover:to-indigo-500/25 border border-amber-400/40 hover:border-amber-400 text-amber-300 hover:text-white transition-all duration-300 flex items-center justify-between group shadow-md shadow-amber-400/5 cursor-pointer text-xs font-bold"
+            className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-amber-400/40 hover:border-amber-400 text-amber-300 hover:text-white transition-all duration-300 flex items-center justify-between group shadow-md cursor-pointer text-xs font-bold"
           >
             <div className="flex items-center space-x-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
@@ -209,14 +222,14 @@ export default function AdminLayout({
         </div>
 
         {/* User Info & Logout Footer */}
-        <div className="pt-3 border-t border-white/10 space-y-3">
+        <div className="pt-3 border-t border-slate-800 space-y-3">
           <div className="flex items-center space-x-3 px-1">
-            <div className="w-9 h-9 rounded-full bg-slate-800 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold text-xs shadow">
+            <div className="w-9 h-9 rounded-full bg-slate-900 border border-amber-400/50 flex items-center justify-center text-amber-400 font-black text-xs shadow">
               {user?.name ? user.name[0] : "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user?.name || "Admin"}</p>
-              <span className="text-[10px] font-semibold text-emerald-400 block truncate">
+              <p className="text-xs font-black text-white truncate">{user?.name || "Admin"}</p>
+              <span className="text-[10px] font-bold text-emerald-400 block truncate">
                 {user?.role || "SUPER_ADMIN"}
               </span>
             </div>
@@ -226,15 +239,15 @@ export default function AdminLayout({
             <Link
               href="/"
               target="_blank"
-              className="flex-1 inline-flex items-center justify-center space-x-1.5 glass-btn text-slate-600 dark:text-slate-300 hover:text-black dark:hover:text-black hover:bg-slate-100 dark:hover:bg-white/10 text-[11px] font-medium py-2 rounded-xl transition-all"
+              className="flex-1 inline-flex items-center justify-center space-x-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 hover:text-white text-xs font-bold py-2 rounded-xl transition-all"
             >
               <span>View Site</span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3 h-3 text-amber-400" />
             </Link>
 
             <button
               onClick={handleLogout}
-              className="p-2 rounded-xl glass-btn text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition-colors"
+              className="p-2 rounded-xl bg-slate-900 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-500 text-slate-200 hover:text-rose-400 transition-colors"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />

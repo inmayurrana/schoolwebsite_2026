@@ -20,6 +20,36 @@ import {
   Fingerprint,
 } from "lucide-react";
 import Link from "next/link";
+import SpaceCosmosBackground from "@/components/ui/SpaceCosmosBackground";
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
+function GoogleIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
 
 function generateRandomCode(): string {
   const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // No ambiguous characters (0, O, 1, I)
@@ -43,6 +73,12 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // Google SSO State
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const [googleConfigured, setGoogleConfigured] = useState(false);
+  const [googleInstructionsOpen, setGoogleInstructionsOpen] = useState(false);
+
   // CAPTCHA State with immediate fallback code
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [captchaCode, setCaptchaCode] = useState<string>("8K4X9B");
@@ -50,11 +86,6 @@ function LoginForm() {
   const [isCaptchaValid, setIsCaptchaValid] = useState<boolean | null>(null);
   const [captchaSpinning, setCaptchaSpinning] = useState(false);
 
-  // 3D Parallax & Tactile State
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const [glarePos, setGlarePos] = useState({ x: 50, y: 50, opacity: 0 });
   const [capsLockActive, setCapsLockActive] = useState(false);
   const [shaking, setShaking] = useState(false);
 
@@ -179,8 +210,69 @@ function LoginForm() {
     }
   };
 
-  // Verify existing auth on mount
+  // Google SSO Credential Handler
+  const handleGoogleCredentialResponse = useCallback(
+    async (response: any) => {
+      if (!response?.credential) return;
+      setGoogleLoading(true);
+      setError("");
+
+      try {
+        const res = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            credential: response.credential,
+            rememberMe,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Google authentication failed.");
+        }
+
+        if (data.token) {
+          try {
+            localStorage.setItem("cis_jwt_token", data.token);
+          } catch (_) {}
+        }
+
+        router.push(callbackUrl);
+        router.refresh();
+      } catch (err: any) {
+        setError(err.message || "Failed to sign in with Google.");
+        triggerShake();
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    [callbackUrl, rememberMe, router]
+  );
+
+  const handleGoogleSignInClick = () => {
+    if (googleConfigured && googleClientId) {
+      if (typeof window !== "undefined" && window.google?.accounts?.id) {
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            window.location.href = "/api/auth/google";
+          }
+        });
+      } else {
+        window.location.href = "/api/auth/google";
+      }
+    } else {
+      setGoogleInstructionsOpen((prev) => !prev);
+    }
+  };
+
+  // Verify existing auth and setup Google SSO on mount
   useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError) {
+      setError(urlError);
+    }
+
     async function verifyExistingAuth() {
       try {
         const res = await fetch("/api/auth/me");
@@ -196,34 +288,36 @@ function LoginForm() {
       }
     }
     verifyExistingAuth();
-  }, [callbackUrl, router]);
 
-  // Mouse tilt parallax
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    // Check Google SSO public configuration
+    fetch("/api/auth/google/config")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.clientId) {
+          setGoogleClientId(data.clientId);
+          setGoogleConfigured(true);
 
-    const rX = ((y - centerY) / centerY) * -5;
-    const rY = ((x - centerX) / centerX) * 5;
+          if (!document.getElementById("google-gsi-client")) {
+            const script = document.createElement("script");
+            script.id = "google-gsi-client";
+            script.src = "https://accounts.google.com/gsi/client";
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+              if (window.google?.accounts?.id) {
+                window.google.accounts.id.initialize({
+                  client_id: data.clientId,
+                  callback: handleGoogleCredentialResponse,
+                });
+              }
+            };
+            document.body.appendChild(script);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [callbackUrl, router, searchParams, handleGoogleCredentialResponse]);
 
-    setRotateX(rX);
-    setRotateY(rY);
-    setGlarePos({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      opacity: 0.15,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-    setGlarePos((prev) => ({ ...prev, opacity: 0 }));
-  };
 
   const checkCapsLock = (e: React.KeyboardEvent) => {
     if (e.getModifierState) {
@@ -298,6 +392,12 @@ function LoginForm() {
         throw new Error(data.error || "Invalid administrator credentials. Access denied.");
       }
 
+      if (data.token) {
+        try {
+          localStorage.setItem("cis_jwt_token", data.token);
+        } catch (_) {}
+      }
+
       router.push(callbackUrl);
       router.refresh();
     } catch (err: any) {
@@ -324,7 +424,7 @@ function LoginForm() {
     /* ========================================================================= */
     /* LUMINOUS TRAVELING BORDER BEAM WRAPPER                                    */
     /* ========================================================================= */
-    <div className="relative p-[1.5px] rounded-[32px] overflow-hidden group shadow-2xl shadow-black/80 max-w-md w-full">
+    <div className="relative p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl shadow-black/80 max-w-md w-full">
       {/* 1. Razor-Thin Rotating Laser Beam strictly on the border track */}
       <div
         className="absolute inset-[-150%] animate-[spin_5s_linear_infinite] pointer-events-none"
@@ -334,26 +434,12 @@ function LoginForm() {
         }}
       />
 
-      {/* 2. Main Solid Card Container (0% light bleed inside) */}
+      {/* 2. Main Solid Card Container (0% light bleed inside, static & steady on hover) */}
       <div
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-          transition: rotateX === 0 && rotateY === 0 ? "transform 0.5s ease-out" : "none",
-        }}
-        className={`relative rounded-[30.5px] p-7 sm:p-9 bg-slate-950 text-white space-y-6 z-10 transition-shadow duration-300 overflow-hidden border border-white/5 ${
+        className={`relative rounded-[30.5px] p-7 sm:p-9 bg-slate-950 text-white space-y-6 z-10 overflow-hidden border border-white/5 ${
           shaking ? "animate-[shake_0.5s_ease-in-out]" : ""
         }`}
       >
-        {/* Dynamic 3D Glare */}
-        <div
-          className="pointer-events-none absolute -inset-px rounded-[30px] transition-opacity duration-300"
-          style={{
-            background: `radial-gradient(circle 350px at ${glarePos.x}% ${glarePos.y}%, rgba(255,255,255,${glarePos.opacity}), transparent 80%)`,
-          }}
-        />
 
         {/* School Emblem & Header */}
         <div className="text-center space-y-3 relative">
@@ -387,6 +473,63 @@ function LoginForm() {
             <span className="leading-relaxed font-medium">{error}</span>
           </div>
         )}
+
+        {/* Google Single Sign-On (SSO) */}
+        <div className="space-y-3 pt-1">
+          <button
+            type="button"
+            onClick={handleGoogleSignInClick}
+            disabled={googleLoading || loading}
+            className="w-full relative group overflow-hidden flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs shadow-lg shadow-black/20 hover:shadow-xl transition-all duration-200 border border-slate-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
+          >
+            {googleLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
+                <span className="tracking-wide text-slate-800">Verifying Google Account...</span>
+              </>
+            ) : (
+              <>
+                <GoogleIcon className="w-4 h-4 shrink-0" />
+                <span className="tracking-wide">Sign in with Google</span>
+              </>
+            )}
+          </button>
+
+          {/* Quick Setup Hint if not configured yet */}
+          {googleInstructionsOpen && !googleConfigured && (
+            <div className="p-3.5 rounded-xl bg-slate-900 border border-amber-400/40 text-[11px] text-slate-300 space-y-2 animate-in fade-in slide-in-from-top-1 shadow-lg">
+              <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Google Single Sign-On Ready</span>
+              </div>
+              <p className="text-slate-300 leading-relaxed">
+                To connect your Google Workspace or Gmail OAuth, add your Client ID to your project{" "}
+                <code className="bg-slate-950 px-1 py-0.5 rounded text-amber-300 font-mono text-[10px] border border-slate-800">
+                  .env
+                </code>{" "}
+                file:
+              </p>
+              <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800 font-mono text-[10px] text-amber-200 overflow-x-auto select-all leading-normal">
+                GOOGLE_CLIENT_ID=&quot;your-id.apps.googleusercontent.com&quot;
+                <br />
+                GOOGLE_CLIENT_SECRET=&quot;your-secret&quot;
+              </div>
+              <p className="text-[10px] text-slate-400 flex items-center justify-between">
+                <span>Authorized redirect URI:</span>
+                <code className="text-amber-300 font-mono">/api/auth/google/callback</code>
+              </p>
+            </div>
+          )}
+
+          {/* Clean Modern Divider */}
+          <div className="relative flex items-center justify-center pt-1">
+            <div className="border-t border-slate-800 w-full" />
+            <span className="bg-slate-950 px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">
+              or continue with credentials
+            </span>
+            <div className="border-t border-slate-800 w-full" />
+          </div>
+        </div>
 
         {/* Secure Login Form */}
         <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
@@ -641,272 +784,9 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen bg-[#030914] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-      {/* Authentic Deep Space Canvas: Real Stars, Real Celestial Planets & Real Orbital Satellite */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#020512]">
-        {/* Layer 0: Photorealistic Real Space Cosmos with Earth, Saturn, Jupiter, Starfield & Orbital Satellite */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 ease-out"
-          style={{
-            backgroundImage: "url('/images/real-space-satellite.jpg')",
-            filter: "brightness(0.92) contrast(1.08)",
-            animation: "spaceDrift 30s ease-in-out infinite alternate",
-          }}
-        />
-
-        {/* Layer 1: Real Satellite Orbital Telemetry Indicators (Pulsing Nav Beacon LEDs on Satellite Array) */}
-        {/* Top-Right Satellite Nav Beacon - Emerald Green Telemetry */}
-        <div className="absolute top-[24%] right-[22%] sm:right-[26%] pointer-events-none z-10">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-300 shadow-[0_0_8px_#34d399]" />
-          </span>
-        </div>
-        {/* Top-Right Satellite Solar Truss Strobe - Crimson Red Beacon */}
-        <div className="absolute top-[28%] right-[19%] sm:right-[23%] pointer-events-none z-10">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80" style={{ animationDuration: "1.8s" }} />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-400 shadow-[0_0_6px_#f43f5e]" />
-          </span>
-        </div>
-        {/* Top-Right Satellite Communication Dish - Cyan Pulse */}
-        <div className="absolute top-[21%] right-[28%] sm:right-[31%] pointer-events-none z-10">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-70" style={{ animationDuration: "2.4s" }} />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300 shadow-[0_0_8px_#38bdf8]" />
-          </span>
-        </div>
-
-        {/* Layer 2: Cosmic Space Aura & Interstellar Light Sheen */}
-        {/* Earth Atmospheric Limb Aura (Bottom-Left / Center Glow) */}
-        <div
-          className="absolute -bottom-20 -left-20 w-[800px] h-[800px] rounded-full blur-[140px] opacity-35 pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, rgba(14,165,233,0.55) 0%, rgba(59,130,246,0.3) 45%, rgba(15,23,42,0.1) 75%, transparent 85%)",
-            animation: "spaceAuraDrift1 22s ease-in-out infinite alternate",
-          }}
-        />
-
-        {/* Ringed Saturn & Deep Galaxy Violet Aura (Top-Right) */}
-        <div
-          className="absolute -top-20 -right-20 w-[850px] h-[850px] rounded-full blur-[150px] opacity-30 pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, rgba(168,85,247,0.45) 0%, rgba(245,158,11,0.2) 40%, rgba(99,102,241,0.15) 70%, transparent 85%)",
-            animation: "spaceAuraDrift2 26s ease-in-out infinite alternate",
-          }}
-        />
-
-        {/* Layer 3: Brilliant Star Flares with 4-Point Diffraction Crosses */}
-        {/* Real Star Flare 1 (Top Left Deep Space) */}
-        <div
-          className="absolute top-[12%] left-[16%] pointer-events-none"
-          style={{ animation: "starShine 3.4s ease-in-out infinite alternate" }}
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_12px_#ffffff]" />
-            <div className="absolute w-8 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent" />
-            <div className="absolute h-8 w-[1.5px] bg-gradient-to-b from-transparent via-white to-transparent" />
-            <div className="absolute w-4 h-[1px] bg-cyan-200 transform rotate-45" />
-            <div className="absolute w-4 h-[1px] bg-cyan-200 transform -rotate-45" />
-          </div>
-        </div>
-
-        {/* Real Star Flare 2 (Top Center Cosmic Void) */}
-        <div
-          className="absolute top-[7%] left-[48%] pointer-events-none"
-          style={{ animation: "starShine 4.2s ease-in-out 1s infinite alternate" }}
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-cyan-100 shadow-[0_0_14px_#38bdf8]" />
-            <div className="absolute w-9 h-[1.5px] bg-gradient-to-r from-transparent via-cyan-100 to-transparent" />
-            <div className="absolute h-9 w-[1.5px] bg-gradient-to-b from-transparent via-cyan-100 to-transparent" />
-          </div>
-        </div>
-
-        {/* Real Star Flare 3 (Right Edge Deep Nebula) */}
-        <div
-          className="absolute top-[44%] right-[8%] pointer-events-none"
-          style={{ animation: "starShine 3.8s ease-in-out 0.6s infinite alternate" }}
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-100 shadow-[0_0_12px_#fbbf24]" />
-            <div className="absolute w-7 h-[1.5px] bg-gradient-to-r from-transparent via-amber-100 to-transparent" />
-            <div className="absolute h-7 w-[1.5px] bg-gradient-to-b from-transparent via-amber-100 to-transparent" />
-          </div>
-        </div>
-
-        {/* Real Star Flare 4 (Bottom-Right Deep Cosmos) */}
-        <div
-          className="absolute bottom-[18%] right-[18%] pointer-events-none"
-          style={{ animation: "starShine 4.6s ease-in-out 1.4s infinite alternate" }}
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-purple-100 shadow-[0_0_14px_#c084fc]" />
-            <div className="absolute w-8 h-[1.5px] bg-gradient-to-r from-transparent via-purple-100 to-transparent" />
-            <div className="absolute h-8 w-[1.5px] bg-gradient-to-b from-transparent via-purple-100 to-transparent" />
-          </div>
-        </div>
-
-        {/* Real Star Flare 5 (Mid-Left Horizon) */}
-        <div
-          className="absolute top-[52%] left-[8%] pointer-events-none"
-          style={{ animation: "starShine 3.6s ease-in-out 0.8s infinite alternate" }}
-        >
-          <div className="relative flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_#ffffff]" />
-            <div className="absolute w-6 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent" />
-            <div className="absolute h-6 w-[1.5px] bg-gradient-to-b from-transparent via-white to-transparent" />
-          </div>
-        </div>
-
-        {/* Layer 4: High-Velocity Meteor / Shooting Star Streaks */}
-        <div
-          className="absolute top-[14%] right-[32%] pointer-events-none"
-          style={{ animation: "meteorStreak1 10s ease-in-out infinite" }}
-        >
-          <div className="w-36 h-[2px] bg-gradient-to-r from-white via-cyan-400 to-transparent rounded-full shadow-[0_0_8px_#38bdf8] transform -rotate-[35deg]" />
-        </div>
-
-        <div
-          className="absolute top-[36%] left-[24%] pointer-events-none"
-          style={{ animation: "meteorStreak2 14s ease-in-out 6s infinite" }}
-        >
-          <div className="w-28 h-[1.5px] bg-gradient-to-r from-white via-amber-300 to-transparent rounded-full shadow-[0_0_8px_#fde047] transform -rotate-[35deg]" />
-        </div>
-
-        {/* Layer 5: Deep Space Vignette (Preserves maximum contrast for admin login card) */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse at 50% 50%, rgba(2,5,18,0.3) 0%, rgba(2,5,18,0.65) 60%, rgba(2,5,18,0.92) 100%)",
-          }}
-        />
-
-        {/* Keyframes for Deep Space Phenomena */}
-        <style jsx global>{`
-          @keyframes starShine {
-            0% {
-              transform: scale(0.8) rotate(0deg);
-              opacity: 0.45;
-            }
-            50% {
-              transform: scale(1.3) rotate(45deg);
-              opacity: 1;
-            }
-            100% {
-              transform: scale(0.85) rotate(90deg);
-              opacity: 0.55;
-            }
-          }
-
-          @keyframes planetFloat {
-            0% {
-              transform: translate3d(0, 0, 0) rotate(0deg);
-            }
-            50% {
-              transform: translate3d(4px, -12px, 0) rotate(1.5deg);
-            }
-            100% {
-              transform: translate3d(-3px, 6px, 0) rotate(-1deg);
-            }
-          }
-
-          @keyframes planetFloatRev {
-            0% {
-              transform: translate3d(0, 0, 0) rotate(0deg);
-            }
-            50% {
-              transform: translate3d(-6px, 10px, 0) rotate(-1.5deg);
-            }
-            100% {
-              transform: translate3d(5px, -5px, 0) rotate(1deg);
-            }
-          }
-
-          @keyframes spaceDrift {
-            0% {
-              transform: scale(1) translate3d(0, 0, 0);
-            }
-            50% {
-              transform: scale(1.04) translate3d(-10px, -8px, 0);
-            }
-            100% {
-              transform: scale(1.02) translate3d(8px, 6px, 0);
-            }
-          }
-
-          @keyframes spaceAuraDrift1 {
-            0% {
-              transform: translate3d(0, 0, 0) scale(1);
-            }
-            50% {
-              transform: translate3d(30px, 20px, 0) scale(1.08);
-            }
-            100% {
-              transform: translate3d(-20px, 15px, 0) scale(0.95);
-            }
-          }
-
-          @keyframes spaceAuraDrift2 {
-            0% {
-              transform: translate3d(0, 0, 0) scale(1);
-            }
-            50% {
-              transform: translate3d(-25px, -20px, 0) scale(1.1);
-            }
-            100% {
-              transform: translate3d(20px, -10px, 0) scale(0.96);
-            }
-          }
-
-          @keyframes spaceCoreGlow {
-            0%, 100% {
-              opacity: 0.25;
-              transform: translate(-50%, -50%) scale(0.95);
-            }
-            50% {
-              opacity: 0.4;
-              transform: translate(-50%, -50%) scale(1.06);
-            }
-          }
-
-          @keyframes meteorStreak1 {
-            0% {
-              transform: translate3d(120px, -60px, 0);
-              opacity: 0;
-            }
-            8% {
-              opacity: 1;
-            }
-            18% {
-              transform: translate3d(-280px, 140px, 0);
-              opacity: 0;
-            }
-            100% {
-              transform: translate3d(-280px, 140px, 0);
-              opacity: 0;
-            }
-          }
-
-          @keyframes meteorStreak2 {
-            0% {
-              transform: translate3d(100px, -50px, 0);
-              opacity: 0;
-            }
-            8% {
-              opacity: 0.95;
-            }
-            16% {
-              transform: translate3d(-240px, 120px, 0);
-              opacity: 0;
-            }
-            100% {
-              transform: translate3d(-240px, 120px, 0);
-              opacity: 0;
-            }
-          }
-        `}</style>
-      </div>
+    <div className="min-h-screen bg-[#020512] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      {/* Living Celestial Cosmos: Moving Earth, Twinkling Starfield & Meteors, Floating Saturn & Jupiter, and Cruising Satellites */}
+      <SpaceCosmosBackground />
 
 
       {/* Main Suspended Form with Luminous Border */}

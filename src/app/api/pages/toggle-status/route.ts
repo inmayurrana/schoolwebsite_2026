@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
+import { invalidatePageCache, setCachedPageVisibility, setCachedPageContent } from "@/lib/pageContentCache";
 
 export async function POST(req: Request) {
   try {
@@ -27,8 +28,10 @@ export async function POST(req: Request) {
       },
     });
 
-    // Invalidate all page caches immediately
-    appCache.invalidateAll();
+    // Save live changes directly into memory cache (0ms lookup)
+    setCachedPageVisibility(slug, Boolean(isPublished));
+    setCachedPageContent(slug, updated);
+    appCache.invalidate("pages");
 
     // Record audit log
     try {

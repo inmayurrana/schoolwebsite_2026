@@ -17,6 +17,8 @@ import {
   Eye,
   Share2,
   Tv,
+  Quote,
+  Mail,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -50,6 +52,38 @@ export default async function AdminDashboardPage() {
   } catch (err) {
     console.error("Dashboard query error:", err);
   }
+
+  // Email System Metrics
+  let emailConfig: any = null;
+  let emailSentToday = 0;
+  let emailFailed = 0;
+  let emailQueued = 0;
+  let lastEmailTime = "None";
+
+  try {
+    emailConfig = await (prisma as any).emailConfiguration.findFirst();
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    emailSentToday = await (prisma as any).emailLog.count({
+      where: { status: "SENT", createdAt: { gte: startOfToday } },
+    });
+    emailFailed = await (prisma as any).emailLog.count({
+      where: { status: "FAILED" },
+    });
+    emailQueued = await (prisma as any).emailLog.count({
+      where: { status: { in: ["QUEUED", "SENDING", "RETRYING"] } },
+    });
+
+    const lastLog = await (prisma as any).emailLog.findFirst({
+      orderBy: { createdAt: "desc" },
+    });
+    if (lastLog) {
+      const diffMs = Date.now() - new Date(lastLog.createdAt).getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      lastEmailTime = diffMins < 1 ? "Just now" : `${diffMins} min ago`;
+    }
+  } catch (_) {}
 
   const statCards = [
     {
@@ -129,6 +163,14 @@ export default async function AdminDashboardPage() {
           </Link>
 
           <Link
+            href="/admin/testimonials"
+            className="inline-flex items-center space-x-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-amber-500/30 transition-colors"
+          >
+            <Quote className="w-3.5 h-3.5" />
+            <span>Parent & Alumni Voices</span>
+          </Link>
+
+          <Link
             href="/admin/header-footer"
             className="inline-flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-700 transition-colors"
           >
@@ -188,6 +230,73 @@ export default async function AdminDashboardPage() {
             </Link>
           );
         })}
+      </div>
+
+      {/* SECTION 35: EMAIL SERVICE DASHBOARD CARD */}
+      <div className="bg-slate-950/80 rounded-3xl p-6 border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-start sm:items-center space-x-4">
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-inner ${
+              emailConfig?.status === "CONNECTED"
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                : "bg-amber-500/20 text-amber-400 border border-amber-500/40"
+            }`}
+          >
+            <Mail className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                EMAIL SERVICE
+              </span>
+              <span
+                className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                  emailConfig?.status === "CONNECTED"
+                    ? "bg-emerald-400 text-slate-950"
+                    : "bg-amber-400 text-slate-950"
+                }`}
+              >
+                ● {emailConfig?.status || "NOT CONFIGURED"}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300 mt-1">
+              <span>
+                Provider: <strong className="text-white">{emailConfig?.provider || "Gmail"}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Emails Sent Today: <strong className="text-emerald-400">{emailSentToday}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Failed: <strong className="text-rose-400">{emailFailed}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Queued: <strong className="text-amber-400">{emailQueued}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Last Email: <strong className="text-slate-300">{lastEmailTime}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/communications/email"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-md transition-all hover:scale-105"
+          >
+            MANAGE EMAIL
+          </Link>
+          <Link
+            href="/admin/communications/logs"
+            className="px-4 py-2.5 rounded-xl glass-btn text-slate-300 hover:text-white text-xs font-bold border border-white/10"
+          >
+            View Logs
+          </Link>
+        </div>
       </div>
 
       {/* 2-Column Split: Recent Admissions & Recent Activity */}
@@ -285,7 +394,25 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Quick Access Management Hubs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Link
+          href="/admin/testimonials"
+          className="bg-gradient-to-br from-amber-950/40 via-slate-950 to-slate-900/90 p-6 rounded-3xl border border-amber-500/30 hover:border-amber-500/60 shadow-xl group transition-all"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 mb-4 group-hover:scale-110 transition-transform">
+            <Quote className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+            Parent & Alumni Voices
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Add, edit, remove testimonials, upload parent avatars, and configure interactive UI effects.
+          </p>
+          <span className="inline-flex items-center space-x-1 text-xs font-bold text-amber-400 mt-4 group-hover:translate-x-1 transition-transform">
+            <span>Manage Voices Studio →</span>
+          </span>
+        </Link>
+
         <Link
           href="/admin/social-media"
           className="bg-gradient-to-br from-rose-950/40 via-slate-950 to-slate-900/90 p-6 rounded-3xl border border-rose-500/30 hover:border-rose-500/60 shadow-xl group transition-all"

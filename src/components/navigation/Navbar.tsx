@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
+import { getInitialDisabledSlugs, fetchClientDisabledSlugs, updateClientVisibilityCache } from "@/lib/clientVisibility";
 
 const DEFAULT_NAV_LINKS = [
   {
@@ -157,50 +158,45 @@ export default function Navbar() {
   });
 
   const [navLinks, setNavLinks] = useState<any[]>(cachedNavLinks || DEFAULT_NAV_LINKS);
-  const [disabledSlugs, setDisabledSlugs] = useState<Set<string>>(new Set());
+  const [disabledSlugs, setDisabledSlugs] = useState<Set<string>>(() => getInitialDisabledSlugs());
 
   useEffect(() => {
-    async function loadVisibility() {
-      try {
-        const res = await fetch("/api/pages/visibility", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.visibility) {
-            const set = new Set<string>();
-            Object.entries(data.visibility).forEach(([k, v]) => {
-              if (v === false) {
-                const cleanKey = k.toLowerCase().trim();
-                set.add(cleanKey);
-                set.add("/" + cleanKey);
-              }
-            });
-            setDisabledSlugs(set);
-          }
-        }
-      } catch (_) {}
+    async function loadVisibility(force = false) {
+      const set = await fetchClientDisabledSlugs(force);
+      setDisabledSlugs(new Set(set));
     }
     loadVisibility();
 
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "cis_page_visibility_updated") {
-        loadVisibility();
+      if (e.key === "cis_page_visibility_updated" || e.key === "cis_disabled_slugs") {
+        loadVisibility(true);
       }
     };
     window.addEventListener("storage", handleStorage);
 
-    // Custom local event listener for instant single-page sync
-    const handleCustomVisibility = () => {
-      loadVisibility();
+    // Custom local event listener for instant in-memory sync (0ms)
+    const handleCustomVisibility = (e?: any) => {
+      if (e?.detail?.disabledSlugs && Array.isArray(e.detail.disabledSlugs)) {
+        updateClientVisibilityCache(e.detail.disabledSlugs);
+        setDisabledSlugs(new Set(e.detail.disabledSlugs));
+      } else {
+        loadVisibility(true);
+      }
     };
     window.addEventListener("cis_visibility_changed", handleCustomVisibility);
 
-    // BroadcastChannel support
+    // BroadcastChannel support for multi-tab in-memory sync
     let channel: BroadcastChannel | null = null;
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       try {
         channel = new BroadcastChannel("cis_visibility_channel");
-        channel.onmessage = () => {
-          loadVisibility();
+        channel.onmessage = (event) => {
+          if (event?.data?.disabledSlugs && Array.isArray(event.data.disabledSlugs)) {
+            updateClientVisibilityCache(event.data.disabledSlugs);
+            setDisabledSlugs(new Set(event.data.disabledSlugs));
+          } else {
+            loadVisibility(true);
+          }
         };
       } catch (_) {}
     }
@@ -405,14 +401,7 @@ export default function Navbar() {
               </Link>
               )}
 
-              {!isPathDisabled("/downloads") && (
-              <Link prefetch={true}
-                href="/downloads"
-                className="hover:text-amber-400 transition-colors hidden sm:inline"
-              >
-                Downloads
-              </Link>
-              )}
+
 
               {/* Theme Toggle */}
               {siteSettings.header_show_theme_toggle !== "false" && (

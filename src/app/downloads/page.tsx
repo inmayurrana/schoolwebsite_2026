@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import PageHeader from "@/components/ui/PageHeader";
-import { Download, FileText, Search, Filter, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Download, FileText, Search, Filter, ShieldCheck, CheckCircle2, AlertTriangle, ArrowLeft } from "lucide-react";
 
 interface DocItem {
   id: string;
@@ -21,22 +22,51 @@ export default function DownloadsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCat, setSelectedCat] = useState("ALL");
+  const [isDisabled, setIsDisabled] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("cis_disabled_slugs");
+        if (saved) {
+          const arr = JSON.parse(saved);
+          if (Array.isArray(arr) && (arr.includes("downloads") || arr.includes("/downloads"))) {
+            return true;
+          }
+        }
+      } catch (_) {}
+    }
+    return false;
+  });
 
   useEffect(() => {
-    async function loadDocs() {
+    async function checkVisibilityAndDocs() {
       try {
-        const res = await fetch("/api/documents");
-        const data = await res.json();
-        if (data.documents) {
-          setDocs(data.documents);
+        const [visRes, docsRes] = await Promise.all([
+          fetch(`/api/pages/visibility?t=${Date.now()}`, { cache: "no-store" }),
+          fetch("/api/documents"),
+        ]);
+
+        if (visRes.ok) {
+          const visData = await visRes.json();
+          if (visData.visibility && visData.visibility["downloads"] === false) {
+            setIsDisabled(true);
+          } else if (visData.visibility && visData.visibility["downloads"] === true) {
+            setIsDisabled(false);
+          }
+        }
+
+        if (docsRes.ok) {
+          const data = await docsRes.json();
+          if (data.documents) {
+            setDocs(data.documents);
+          }
         }
       } catch (err) {
-        console.error("Failed to load documents:", err);
+        console.error("Failed to load downloads data:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadDocs();
+    checkVisibilityAndDocs();
   }, []);
 
   const categories = [
@@ -56,6 +86,50 @@ export default function DownloadsPage() {
       (d.docNumber && d.docNumber.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchCat && matchSearch;
   });
+
+  if (isDisabled) {
+    return (
+      <div>
+        <PageHeader
+          badge="Notice"
+          title="Downloads & Documents"
+          description="Official resources for students, parents, and visitors."
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "Downloads" },
+          ]}
+        />
+        <div className="w-full max-w-4xl mx-auto px-4 py-20">
+          <div className="text-center space-y-6 bg-slate-900/60 backdrop-blur-md p-10 sm:p-14 rounded-3xl border border-slate-800 shadow-2xl">
+            <div className="w-20 h-20 mx-auto rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <AlertTriangle className="w-10 h-10" />
+            </div>
+            <div className="space-y-3 max-w-lg mx-auto">
+              <h2 className="text-2xl font-bold text-white tracking-tight">Section Temporarily Unavailable</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                The Downloads, Forms & Syllabus section is currently offline or undergoing scheduled updates by the administration. Please check back shortly or contact the school office.
+              </p>
+            </div>
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                href="/"
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-lg hover:shadow-amber-500/25"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Return to Homepage</span>
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition-all border border-slate-700"
+              >
+                <span>Contact Administration</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

@@ -22,13 +22,25 @@ import LeadershipMessages from "@/components/home/LeadershipMessages";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
 import AcademicStreams from "@/components/home/AcademicStreams";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
-import Campus3DViewer from "@/components/3d/Campus3DViewer";
 import OptimizedImage from "@/components/ui/OptimizedImage";
-import SocialFeedsEmbed from "@/components/home/SocialFeedsEmbed";
 import DynamicSectionRenderer from "@/components/common/DynamicSectionRenderer";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { getCachedPageContent } from "@/lib/pageContentCache";
+import { appCache } from "@/lib/cache";
+
+const Campus3DViewer = dynamic(() => import("@/components/3d/Campus3DViewer"), {
+  ssr: true,
+  loading: () => (
+    <div className="w-full h-96 rounded-3xl bg-slate-100 dark:bg-slate-900/60 animate-pulse flex items-center justify-center">
+      <div className="text-sm font-semibold text-slate-400">Loading Campus Explorer...</div>
+    </div>
+  ),
+});
+
+const SocialFeedsEmbed = dynamic(() => import("@/components/home/SocialFeedsEmbed"), {
+  ssr: true,
+});
 
 // Server component fetching live news, events, achievements, and gallery
 export default async function HomePage() {
@@ -42,37 +54,50 @@ export default async function HomePage() {
   let homeCustom: any = {};
   let homeSections: any[] = [];
   let homePageData: any = null;
+  let initialTestimonials: any[] | undefined = undefined;
+  let initialTestimonialsConfig: any | undefined = undefined;
 
   try {
-    const [news, events, achievements, albums, homePage, pPage, cPage, rawSettings] = await Promise.all([
-      prisma.news.findMany({
-        where: { isPublished: true },
-        orderBy: { publishedAt: "desc" },
-        take: 3,
-      }),
-      prisma.event.findMany({
-        where: { isPublished: true },
-        orderBy: { startDate: "asc" },
-        take: 3,
-      }),
-      prisma.achievement.findMany({
-        where: { isFeatured: true },
-        take: 3,
-      }),
-      prisma.galleryAlbum.findMany({
-        include: { items: true },
-        take: 4,
-        orderBy: { createdAt: "desc" },
-      }),
+    const [homeDbData, homePage, pPage, cPage] = await Promise.all([
+      appCache.getOrSet(
+        "homepage:db_data",
+        async () => {
+          const [news, events, achievements, albums, rawSettings] = await Promise.all([
+            prisma.news.findMany({
+              where: { isPublished: true },
+              orderBy: { publishedAt: "desc" },
+              take: 3,
+            }),
+            prisma.event.findMany({
+              where: { isPublished: true },
+              orderBy: { startDate: "asc" },
+              take: 3,
+            }),
+            prisma.achievement.findMany({
+              where: { isFeatured: true },
+              take: 3,
+            }),
+            prisma.galleryAlbum.findMany({
+              include: { items: true },
+              take: 4,
+              orderBy: { createdAt: "desc" },
+            }),
+            prisma.siteSetting.findMany(),
+          ]);
+          return { news, events, achievements, albums, rawSettings };
+        },
+        180 // 3 minutes warm RAM cache
+      ),
       getCachedPageContent("home"),
       getCachedPageContent("principal-message"),
       getCachedPageContent("chairman-message"),
-      prisma.siteSetting.findMany(),
     ]);
-    newsList = news;
-    eventsList = events;
-    achievementsList = achievements;
-    galleryAlbums = albums;
+
+    newsList = homeDbData.news;
+    eventsList = homeDbData.events;
+    achievementsList = homeDbData.achievements;
+    galleryAlbums = homeDbData.albums;
+    const rawSettings = homeDbData.rawSettings;
     homePageData = homePage;
 
     if (Array.isArray(rawSettings)) {
@@ -85,6 +110,24 @@ export default async function HomePage() {
     homeSections = homePage?.sectionsJson ? JSON.parse(homePage.sectionsJson) : [];
     const pCustom = pPage?.customStylesJson ? JSON.parse(pPage.customStylesJson) : {};
     const cCustom = cPage?.customStylesJson ? JSON.parse(cPage.customStylesJson) : {};
+
+    if (settingsMap.testimonials_json) {
+      try {
+        const parsed = JSON.parse(settingsMap.testimonials_json);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialTestimonials = parsed;
+        }
+      } catch (_) {}
+    }
+
+    if (settingsMap.testimonials_config_json) {
+      try {
+        const parsedCfg = JSON.parse(settingsMap.testimonials_config_json);
+        if (parsedCfg && typeof parsedCfg === "object") {
+          initialTestimonialsConfig = parsedCfg;
+        }
+      } catch (_) {}
+    }
 
     principalData = {
       name: homeCustom.principalName || pCustom.authorName || "Mrs. Priyanka Jamwal",
@@ -432,15 +475,18 @@ export default async function HomePage() {
 
       {/* Dynamic Modular Canvas Sections (Elementor Pro Built) */}
       {homeSections && homeSections.length > 0 && (
-        <section className="py-12 bg-white dark:bg-[#071326]">
+        <section className="py-12 bg-white dark:bg-[#071326] transition-colors duration-500 hover:bg-slate-50/60 dark:hover:bg-[#081830]">
           <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16">
             <DynamicSectionRenderer sections={homeSections} customStyles={homeCustom} />
           </div>
         </section>
       )}
 
-      {/* 11. Testimonials */}
-      <TestimonialsSection />
+      {/* 11. Testimonials (Parent & Alumni Voices) */}
+      <TestimonialsSection
+        initialTestimonials={initialTestimonials}
+        initialConfig={initialTestimonialsConfig}
+      />
 
       {/* 12. Grand Call to Action Banner */}
       <section className="py-20 bg-gradient-to-r from-school-primary via-blue-950 to-school-primary text-white relative overflow-hidden">

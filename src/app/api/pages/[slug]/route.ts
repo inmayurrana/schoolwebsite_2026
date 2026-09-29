@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
-import { invalidatePageCache, getCachedPageContent } from "@/lib/pageContentCache";
+import { invalidatePageCache, getCachedPageContent, setCachedPageContent, invalidateVisibilityCache } from "@/lib/pageContentCache";
 import { getPageDefault } from "@/lib/pageRegistry";
 
 export async function GET(
@@ -191,9 +191,10 @@ export async function PUT(
       }
     }
 
-    // Invalidate all RAM caches immediately so changes are 100% live
-    appCache.invalidateAll();
-    invalidatePageCache();
+    // Save directly into server in-memory cache (0ms lookup)
+    setCachedPageContent(slug, page);
+    appCache.set(`page:${slug}`, page, 900);
+    invalidateVisibilityCache();
 
     return NextResponse.json({ success: true, page });
   } catch (error: any) {

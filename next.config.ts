@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  productionBrowserSourceMaps: false,
   experimental: {
     staleTimes: {
       dynamic: 300,
@@ -62,6 +63,9 @@ const nextConfig: NextConfig = {
       "three",
       "clsx",
       "tailwind-merge",
+      "date-fns",
+      "canvas-confetti",
+      "next-themes",
     ],
     serverActions: {
       bodySizeLimit: "25mb",

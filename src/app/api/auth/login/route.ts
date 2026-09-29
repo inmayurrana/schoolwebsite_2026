@@ -47,7 +47,8 @@ export async function POST(req: Request) {
       avatar: user.avatar,
     };
 
-    const token = signToken(sessionUser);
+    const expiresIn = rememberMe ? "7d" : "24h";
+    const token = signToken(sessionUser, expiresIn);
 
     await logAuditAction({
       userId: user.id,
@@ -60,10 +61,12 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       success: true,
+      token, // Explicitly return JWT token for API & client-side integration
+      tokenType: "Bearer",
+      expiresIn,
       user: sessionUser,
     });
 
-    // If rememberMe is checked, cookie lasts 7 days; otherwise it's a browser session cookie
     const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
