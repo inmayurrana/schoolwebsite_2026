@@ -73,6 +73,34 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // 5-Attempt Security Lockout State
+  const [lockoutRemaining, setLockoutRemaining] = useState<number | null>(null);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+
+  // Active countdown timer for temporary account lockout
+  useEffect(() => {
+    if (lockoutRemaining === null || lockoutRemaining <= 0) return;
+
+    const interval = setInterval(() => {
+      setLockoutRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          setError("Lockout duration has elapsed. You may now attempt to sign in.");
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lockoutRemaining]);
+
+  const formatLockoutTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
   // Google SSO State
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
@@ -389,8 +417,17 @@ function LoginForm() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (data.isLocked && data.remainingSeconds) {
+          setLockoutRemaining(data.remainingSeconds);
+        } else if (data.attemptsRemaining !== undefined) {
+          setAttemptsRemaining(data.attemptsRemaining);
+        }
         throw new Error(data.error || "Invalid administrator credentials. Access denied.");
       }
+
+      // Reset lockout/attempts on success
+      setLockoutRemaining(null);
+      setAttemptsRemaining(null);
 
       if (data.token) {
         try {
@@ -466,13 +503,40 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="p-3.5 bg-rose-950/85 border border-rose-700 text-rose-200 text-xs rounded-2xl flex items-start space-x-2.5 animate-in fade-in slide-in-from-top-2 duration-200 shadow-lg shadow-rose-950/50">
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed font-medium">{error}</span>
+        {/* Security Lockout Alert Banner or Standard Error */}
+        {lockoutRemaining !== null ? (
+          <div className="p-4 bg-gradient-to-br from-rose-950/95 via-red-950/85 to-rose-900/90 border-2 border-rose-500/80 text-rose-100 rounded-2xl space-y-3 shadow-2xl shadow-rose-950/90 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-rose-200 font-black text-xs uppercase tracking-wider">
+                <ShieldAlert className="w-4 h-4 text-rose-400 animate-pulse shrink-0" />
+                <span>Account Blocked • 5 Min Lockout</span>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-rose-500/30 text-rose-200 font-mono text-xs font-black border border-rose-400/40">
+                {formatLockoutTimer(lockoutRemaining)}
+              </span>
+            </div>
+            <p className="text-xs text-rose-100 leading-relaxed font-medium">
+              5 consecutive incorrect password/credential attempts were entered for this user ID. For security, access is temporarily locked.
+            </p>
+            <div className="flex items-center space-x-2 text-[11px] text-amber-200 bg-black/60 px-3 py-2 rounded-xl border border-amber-500/30">
+              <Mail className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+              <span>A security alert notification email has been dispatched.</span>
+            </div>
           </div>
-        )}
+        ) : error ? (
+          <div className="p-3.5 bg-rose-950/85 border border-rose-700 text-rose-200 text-xs rounded-2xl space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200 shadow-lg shadow-rose-950/50">
+            <div className="flex items-start space-x-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span className="leading-relaxed font-medium">{error}</span>
+            </div>
+            {attemptsRemaining !== null && attemptsRemaining > 0 && attemptsRemaining < 5 && (
+              <div className="pl-6.5 text-[11px] text-amber-300 font-semibold flex items-center gap-1.5 pt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-ping" />
+                <span>Security Notice: 5 wrong attempts will lock this account for 5 minutes.</span>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         {/* Google Single Sign-On (SSO) */}
         <div className="space-y-3 pt-1">
@@ -545,11 +609,12 @@ function LoginForm() {
                 <input
                   type="email"
                   required
+                  disabled={loading || lockoutRemaining !== null}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@cambridgemandi.com"
                   autoComplete="off"
-                  className="w-full bg-transparent text-white pl-3 pr-4 py-3 text-xs focus:outline-none placeholder:text-slate-600 font-medium"
+                  className="w-full bg-transparent text-white pl-3 pr-4 py-3 text-xs focus:outline-none placeholder:text-slate-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -572,13 +637,14 @@ function LoginForm() {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  disabled={loading || lockoutRemaining !== null}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={checkCapsLock}
                   onKeyUp={checkCapsLock}
                   placeholder="••••••••••••"
                   autoComplete="new-password"
-                  className="w-full bg-transparent text-white pl-3 pr-10 py-3 text-xs focus:outline-none placeholder:text-slate-600 font-medium"
+                  className="w-full bg-transparent text-white pl-3 pr-10 py-3 text-xs focus:outline-none placeholder:text-slate-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <button
                   type="button"
@@ -685,11 +751,12 @@ function LoginForm() {
                 <input
                   type="text"
                   required
+                  disabled={loading || lockoutRemaining !== null}
                   maxLength={6}
                   value={captchaInput}
                   onChange={handleCaptchaChange}
                   placeholder="Enter 6 chars"
-                  className={`w-full bg-slate-950 text-white px-3 py-3 text-xs rounded-xl border font-mono uppercase tracking-widest focus:outline-none transition-all ${
+                  className={`w-full bg-slate-950 text-white px-3 py-3 text-xs rounded-xl border font-mono uppercase tracking-widest focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     isCaptchaValid === true
                       ? "border-emerald-500 ring-2 ring-emerald-500/20 text-emerald-300"
                       : isCaptchaValid === false
@@ -713,9 +780,10 @@ function LoginForm() {
             <label className="flex items-center space-x-2 text-slate-300 cursor-pointer select-none group">
               <input
                 type="checkbox"
+                disabled={loading || lockoutRemaining !== null}
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-400 focus:ring-amber-400/40 focus:ring-offset-slate-950 cursor-pointer accent-amber-400 transition-transform group-hover:scale-110"
+                className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-amber-400 focus:ring-amber-400/40 focus:ring-offset-slate-950 cursor-pointer accent-amber-400 transition-transform group-hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <span className="text-[11px] font-medium group-hover:text-white transition-colors">
                 Keep me signed in (7 days)
@@ -729,13 +797,24 @@ function LoginForm() {
           {/* Glowing Luminous Submit Button */}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full relative group overflow-hidden inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-school-secondary via-blue-600 to-indigo-600 hover:from-blue-500 hover:to-school-secondary text-white font-bold py-3.5 rounded-xl text-xs shadow-[0_0_25px_rgba(0,102,255,0.45)] hover:shadow-[0_0_35px_rgba(245,158,11,0.45)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] cursor-pointer border border-blue-400/30"
+            disabled={loading || lockoutRemaining !== null}
+            className={`w-full relative group overflow-hidden inline-flex items-center justify-center space-x-2 font-bold py-3.5 rounded-xl text-xs transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99] border ${
+              lockoutRemaining !== null
+                ? "bg-rose-950/80 text-rose-300 border-rose-500/40 cursor-not-allowed shadow-[0_0_20px_rgba(244,63,94,0.25)]"
+                : "bg-gradient-to-r from-school-secondary via-blue-600 to-indigo-600 hover:from-blue-500 hover:to-school-secondary text-white cursor-pointer border-blue-400/30 shadow-[0_0_25px_rgba(0,102,255,0.45)] hover:shadow-[0_0_35px_rgba(245,158,11,0.45)]"
+            }`}
           >
             {/* Shimmer sweep */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            {lockoutRemaining === null && (
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            )}
 
-            {loading ? (
+            {lockoutRemaining !== null ? (
+              <>
+                <ShieldAlert className="w-4 h-4 text-rose-400 animate-pulse" />
+                <span className="tracking-wide">Account Blocked ({formatLockoutTimer(lockoutRemaining)})</span>
+              </>
+            ) : loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-white" />
                 <span>Verifying Cryptographic Tokens...</span>

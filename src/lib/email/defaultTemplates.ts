@@ -252,6 +252,51 @@ export const DEFAULT_TEMPLATES: DefaultTemplateDef[] = [
     plainTextBody: "Password reset request for Cambridge International School CMS.",
     isSystem: true,
   },
+  {
+    name: "Account Lockout Security Alert",
+    slug: "account-lockout-alert",
+    type: "SECURITY_ALERT",
+    subject: "Security Alert: Account Temporarily Locked ({{user_email}})",
+    htmlBody: `
+      <div style="margin-bottom: 24px;">
+        <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+          Security Alert • Account Locked
+        </span>
+        <h2 style="margin: 14px 0 8px 0; color: #0f172a; font-size: 20px; font-weight: 700;">
+          Account Temporarily Blocked
+        </h2>
+        <p style="margin: 0 0 14px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+          Hello <strong>{{user_name}}</strong>,
+        </p>
+        <p style="margin: 0 0 14px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+          Your account was temporarily blocked for <strong>{{lock_minutes}} minutes</strong> because <strong>5 consecutive incorrect password/credential attempts</strong> were entered for your user ID on the Cambridge International School portal.
+        </p>
+      </div>
+
+      <div style="background-color: #fff1f2; border-left: 4px solid #e11d48; padding: 14px 18px; margin: 18px 0; border-radius: 6px;">
+        <p style="margin: 0; font-size: 13px; color: #881337; line-height: 1.7;">
+          <strong>User ID / Email:</strong> {{user_email}}<br>
+          <strong>Lockout Duration:</strong> {{lock_minutes}} Minutes<br>
+          <strong>Automatic Unlock At:</strong> {{unlock_time}}<br>
+          <strong>Attempt Time:</strong> {{timestamp}}<br>
+          <strong>IP Address:</strong> {{ip_address}}<br>
+          <strong>Device / Browser:</strong> {{user_agent}}
+        </p>
+      </div>
+
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 14px; font-weight: 600;">
+          Was this not you?
+        </h4>
+        <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.6;">
+          If you did not attempt to sign in, someone else may be attempting unauthorized access to your account. As a precaution, we recommend changing your password immediately once your account is unlocked, or contact your IT Administrator immediately.
+        </p>
+      </div>
+    `,
+    plainTextBody:
+      "SECURITY ALERT: Your Cambridge International School CMS account ({{user_email}}) has been temporarily locked for {{lock_minutes}} minutes due to 5 consecutive failed login attempts.\n\nTime: {{timestamp}}\nIP: {{ip_address}}\nDevice: {{user_agent}}\n\nIf you did not make this attempt, contact your IT administrator.",
+    isSystem: true,
+  },
 ];
 
 /**

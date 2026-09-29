@@ -23,6 +23,8 @@ export async function GET(req: Request) {
         phone: true,
         isActive: true,
         twoFactor: true,
+        failedLoginAttempts: true,
+        lockoutUntil: true,
         lastLogin: true,
         createdAt: true,
         updatedAt: true,

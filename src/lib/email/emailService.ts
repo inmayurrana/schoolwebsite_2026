@@ -645,6 +645,205 @@ class EmailService {
       console.error("Error dispatching visitor confirmation email:", err);
     }
   }
+
+  /**
+   * General purpose email sender with logging.
+   */
+  async sendEmail(options: EmailSendOptions): Promise<EmailSendResult> {
+    try {
+      const config = await this.getConfig(true);
+      const provider = createEmailProvider(config);
+
+      const recipientStr = Array.isArray(options.to) ? options.to.join(", ") : options.to;
+      const ccStr = options.cc ? (Array.isArray(options.cc) ? options.cc.join(", ") : options.cc) : undefined;
+      const bccStr = options.bcc ? (Array.isArray(options.bcc) ? options.bcc.join(", ") : options.bcc) : undefined;
+
+      let logRecord: any = null;
+      try {
+        logRecord = await (prisma as any).emailLog.create({
+          data: {
+            type: options.type || "SYSTEM",
+            recipient: recipientStr,
+            cc: ccStr,
+            bcc: bccStr,
+            subject: options.subject,
+            status: "SENDING",
+            provider: provider.getProviderName(),
+            formSlug: options.formSlug,
+            submissionId: options.submissionId,
+            attempts: 1,
+            bodySnippet: (options.text || options.html || "").substring(0, 150),
+            metadataJson: options.metadata ? JSON.stringify(options.metadata) : null,
+          },
+        });
+      } catch (_) {}
+
+      const result = await provider.send({
+        to: options.to,
+        fromName: options.fromName,
+        fromEmail: options.fromEmail,
+        cc: options.cc,
+        bcc: options.bcc,
+        replyTo: options.replyTo,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+        attachments: options.attachments,
+      });
+
+      if (logRecord) {
+        try {
+          await (prisma as any).emailLog.update({
+            where: { id: logRecord.id },
+            data: {
+              status: result.success ? "SENT" : "FAILED",
+              sentAt: result.success ? new Date() : null,
+              errorMessage: result.success ? null : result.error,
+            },
+          });
+        } catch (_) {}
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error("Error sending email via sendEmail:", error);
+      return {
+        success: false,
+        provider: "Unknown",
+        error: error.message || "Failed to send email",
+      };
+    }
+  }
+
+  /**
+   * Dispatches an urgent security alert email when an account is temporarily
+   * locked after 5 consecutive failed login attempts.
+   */
+  async sendAccountLockoutAlert({
+    userId,
+    userEmail,
+    userName,
+    lockMinutes = 5,
+    ipAddress = "Unknown",
+    userAgent = "Unknown",
+  }: {
+    userId: string;
+    userEmail: string;
+    userName: string;
+    lockMinutes?: number;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<EmailSendResult> {
+    try {
+      const now = new Date();
+      const unlockDate = new Date(now.getTime() + lockMinutes * 60 * 1000);
+
+      const timestampStr = now.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "medium",
+      });
+
+      const unlockTimeStr = unlockDate.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "medium",
+      });
+
+      const variables: TemplateVariables = {
+        user_name: userName || "Administrator",
+        user_email: userEmail,
+        lock_minutes: String(lockMinutes),
+        timestamp: timestampStr,
+        unlock_time: unlockTimeStr,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        site_name: "Cambridge International School",
+      };
+
+      // Check if custom template exists in database
+      let template: any = null;
+      try {
+        template = await (prisma as any).emailTemplate.findUnique({
+          where: { slug: "account-lockout-alert" },
+        });
+      } catch (_) {}
+
+      let subject = `Security Alert: Account Temporarily Locked (${userEmail})`;
+      let bodyHtml = "";
+
+      if (template?.htmlBody) {
+        subject = interpolateVariables(template.subject || subject, variables, false);
+        bodyHtml = interpolateVariables(template.htmlBody, variables, false);
+      } else {
+        bodyHtml = `
+          <div style="margin-bottom: 24px;">
+            <span style="background-color: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">
+              ⚠️ Security Alert • Account Locked
+            </span>
+            <h2 style="margin: 16px 0 8px 0; color: #0f172a; font-size: 20px; font-weight: 700;">
+              Account Temporarily Blocked for 5 Minutes
+            </h2>
+            <p style="margin: 0 0 14px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+              Hello <strong>${userName || "User"}</strong>,
+            </p>
+            <p style="margin: 0 0 14px 0; color: #475569; font-size: 14px; line-height: 1.6;">
+              This is an urgent automated security alert from <strong>Cambridge International School</strong>. Your account has been temporarily blocked for <strong>${lockMinutes} minutes</strong> due to <strong>5 consecutive failed login attempts</strong>.
+            </p>
+          </div>
+
+          <div style="background-color: #fff1f2; border-left: 4px solid #e11d48; border-radius: 6px; padding: 14px 18px; margin: 18px 0;">
+            <p style="margin: 0; font-size: 13px; color: #881337; line-height: 1.8;">
+              <strong>Target Account / User ID:</strong> ${userEmail}<br>
+              <strong>Status:</strong> Temporarily Locked (5 Minutes)<br>
+              <strong>Lockout Initiated:</strong> ${timestampStr} (IST)<br>
+              <strong>Automatic Unlock Time:</strong> ${unlockTimeStr} (IST)<br>
+              <strong>Origin IP Address:</strong> ${ipAddress}<br>
+              <strong>Device / Browser:</strong> ${userAgent}
+            </p>
+          </div>
+
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 14px; font-weight: 600;">
+              Did you try to sign in?
+            </h4>
+            <p style="margin: 0 0 10px 0; color: #64748b; font-size: 13px; line-height: 1.6;">
+              If this was you, please wait <strong>${lockMinutes} minutes</strong>. Your account will automatically unlock at <strong>${unlockTimeStr}</strong>, and you can re-enter your correct password.
+            </p>
+            <p style="margin: 0; color: #dc2626; font-size: 13px; line-height: 1.6; font-weight: 500;">
+              If you did NOT attempt to sign in, an unauthorized party may be attempting to guess your password. We strongly recommend resetting your password immediately once your account unlocks, or contacting the school IT administrator.
+            </p>
+          </div>
+        `;
+      }
+
+      const finalHtml = await wrapWithEmailLayout(bodyHtml, {
+        previewText: `Security Alert: Account ${userEmail} locked for 5 minutes after 5 failed login attempts.`,
+      });
+
+      return await this.sendEmail({
+        to: userEmail,
+        subject,
+        html: finalHtml,
+        text: `Security Alert: Your account ${userEmail} has been temporarily locked for ${lockMinutes} minutes due to 5 consecutive failed login attempts.\n\nTime: ${timestampStr}\nIP: ${ipAddress}\nBrowser: ${userAgent}\n\nIf you did not make this attempt, contact your IT administrator.`,
+        type: "SECURITY_ALERT",
+        metadata: {
+          userId,
+          ipAddress,
+          userAgent,
+          lockMinutes,
+          lockedAt: now.toISOString(),
+        },
+      });
+    } catch (err: any) {
+      console.error("Error in sendAccountLockoutAlert:", err);
+      return {
+        success: false,
+        provider: "Unknown",
+        error: err.message || "Failed to dispatch lockout alert email",
+      };
+    }
+  }
 }
 
 export const emailService = new EmailService();

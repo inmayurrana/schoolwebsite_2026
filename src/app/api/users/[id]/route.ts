@@ -79,6 +79,11 @@ export async function PUT(
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : existing.isActive,
     };
 
+    if (data.unlockAccount || data.resetLockout) {
+      updateData.failedLoginAttempts = 0;
+      updateData.lockoutUntil = null;
+    }
+
     if (data.password && data.password.trim().length >= 6) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
@@ -96,6 +101,8 @@ export async function PUT(
         avatar: true,
         phone: true,
         isActive: true,
+        failedLoginAttempts: true,
+        lockoutUntil: true,
         updatedAt: true,
       },
     });
