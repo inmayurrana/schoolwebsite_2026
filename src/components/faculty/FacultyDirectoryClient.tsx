@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GraduationCap,
@@ -19,8 +19,6 @@ import {
   X,
   Mail,
   ArrowRight,
-  ExternalLink,
-  Briefcase,
   Star,
   RotateCcw,
   Copy,
@@ -49,7 +47,7 @@ interface Props {
 }
 
 /**
- * Modern High-Impact Faculty List Card with smooth mouse-over zoom
+ * Modern High-Impact Faculty List Card with smooth mouse-over zoom & live profile preview
  */
 function FacultyListRow({
   member,
@@ -65,38 +63,27 @@ function FacultyListRow({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      whileHover={{ scale: 1.02, y: -4 }}
+      whileHover={{ y: -2 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className="relative z-10 hover:z-20 group cursor-pointer"
+      className="relative z-10 hover:z-20 group cursor-pointer transition-all duration-300"
       onClick={() => onOpenZoom(member)}
     >
-      <div className="relative rounded-3xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-2xl hover:border-amber-400/80 bg-white/95 dark:bg-slate-900/95 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden backdrop-blur-xl transition-all duration-300 group-hover:bg-gradient-to-r group-hover:from-white group-hover:via-amber-50/20 group-hover:to-white dark:group-hover:from-slate-900 dark:group-hover:via-amber-950/10 dark:group-hover:to-slate-900">
-        
-        {/* Subtle hover gradient glow border line at top */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400/0 to-transparent group-hover:via-amber-400 transition-all duration-500" />
-
-        {/* Left & Middle Block: Avatar with Hover Zoom + Academic Details */}
+      <div className="relative rounded-3xl p-5 sm:p-6 border transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden backdrop-blur-xl border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-xl hover:border-amber-400/80 bg-white/95 dark:bg-slate-900/95">
+        {/* Left & Middle Block: Avatar + Academic Details */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 flex-1 min-w-0">
-          {/* Avatar Container with smooth hover zoom */}
+          {/* Avatar Container */}
           <div className="relative shrink-0">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 shadow-lg group-hover:border-amber-400 group-hover:shadow-[0_0_25px_rgba(245,158,11,0.35)] transition-all duration-300 bg-slate-100 dark:bg-slate-950">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 transition-all duration-300 bg-slate-100 dark:bg-slate-950 shadow-md border-slate-200 dark:border-slate-700 group-hover:border-amber-400/80">
               <OptimizedImage
                 src={
                   member.photoUrl ||
                   "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=75"
                 }
                 alt={member.name}
-                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-115"
+                style={{ objectPosition: "50% 38%" }}
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent pointer-events-none" />
-
-              {/* Hover Zoom Prompt Badge */}
-              <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                <div className="bg-amber-400 text-slate-950 px-2 py-1 rounded-full text-[10px] font-black flex items-center space-x-1 shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
-                  <ZoomIn className="w-3 h-3" />
-                  <span>HD Zoom</span>
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
             </div>
 
             {/* Leadership Star / Sparkle Badge */}
@@ -113,7 +100,7 @@ function FacultyListRow({
           {/* Academic Profile Details */}
           <div className="space-y-2 flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg sm:text-xl font-black font-heading text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors tracking-tight">
+              <h3 className="text-lg sm:text-xl font-black font-heading transition-colors tracking-tight text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400">
                 {member.name}
               </h3>
 
@@ -185,7 +172,7 @@ function FacultyListRow({
                 e.stopPropagation();
                 onOpenZoom(member);
               }}
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
               <ZoomIn className="w-3.5 h-3.5" />
               <span>View HD Profile</span>
@@ -214,13 +201,12 @@ function FacultyGridCard({
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -6 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3), ease: "easeOut" }}
-      className="relative z-10 hover:z-20 cursor-pointer group flex flex-col h-full"
+      className="relative z-10 hover:z-20 cursor-pointer group flex flex-col h-full transition-all duration-300"
       onClick={() => onOpenZoom(member)}
     >
-      <div className="spotlight-card sqsp-spotlight rounded-[28px] overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-lg hover:shadow-[0_25px_60px_-12px_rgba(15,23,42,0.18),0_0_35px_rgba(245,158,11,0.2)] dark:hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_40px_rgba(245,158,11,0.25)] bg-white/95 dark:bg-[#0c1424]/95 flex flex-col flex-1 hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all duration-500 relative backdrop-blur-2xl">
-        
+      <div className="spotlight-card sqsp-spotlight rounded-[28px] overflow-hidden border border-slate-200/90 dark:border-white/10 shadow-lg hover:shadow-2xl bg-white/95 dark:bg-[#0c1424]/95 flex flex-col flex-1 hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all duration-500 relative backdrop-blur-2xl">
         {/* Ambient Ring Inset for Refined Glass Depth */}
         <div className="absolute inset-0 rounded-[28px] pointer-events-none ring-1 ring-inset ring-black/5 dark:ring-white/10 group-hover:ring-amber-400/30 transition-all duration-300 z-20" />
 
@@ -232,7 +218,8 @@ function FacultyGridCard({
               "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80"
             }
             alt={member.name}
-            className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+            style={{ objectPosition: "50% 38%" }}
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
 
           {/* Cinematic Vignette Overlays: Top Ambient Shade & Bottom Contrast */}
@@ -283,8 +270,12 @@ function FacultyGridCard({
                     <GraduationCap className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">Education</p>
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{member.qualification}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
+                      Education
+                    </p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {member.qualification}
+                    </p>
                   </div>
                 </div>
               )}
@@ -294,8 +285,12 @@ function FacultyGridCard({
                     <Award className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">Experience</p>
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{member.experience}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 leading-none mb-0.5">
+                      Experience
+                    </p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {member.experience}
+                    </p>
                   </div>
                 </div>
               )}
@@ -420,20 +415,19 @@ function FacultyHDProfileModal({
         {/* Modal Main Body */}
         <div className="p-6 sm:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            
             {/* Left 5 Cols: Interactive HD Zoom Visual Inspector with Multi-Light Frame */}
             <div className="md:col-span-5 space-y-4">
-              
               {/* Multi-Light Photo Frame Chassis: Light effect confined strictly to the border of the photo */}
               <div className="relative rounded-[30px] p-[2.5px] overflow-hidden flex items-center justify-center shadow-2xl bg-slate-900 border border-slate-800">
-                
                 {/* Sharp Rotating Multi-Light Laser Beam Border (Confined strictly to photo border perimeter) */}
                 {lightBorderActive && (
                   <div className="absolute inset-0 rounded-[30px] overflow-hidden pointer-events-none">
-                    <div 
+                    <div
                       className="w-[200%] h-[200%] absolute -top-1/2 -left-1/2 animate-[spin_5s_linear_infinite]"
                       style={{
-                        background: lightGradients[activeLightMode] || lightGradients.spectrum,
+                        background:
+                          lightGradients[activeLightMode as keyof typeof lightGradients] ||
+                          lightGradients.spectrum,
                       }}
                     />
                   </div>
@@ -441,12 +435,11 @@ function FacultyHDProfileModal({
 
                 {/* Core Obsidian Frame Body */}
                 <div className="relative w-full aspect-[4/5] rounded-[27.5px] overflow-hidden bg-slate-950 z-10 flex items-center justify-center">
-
                   {/* Multi-Color Neon Viewfinder Brackets */}
                   <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400 shadow-[0_0_10px_#00F0FF] rounded-tl pointer-events-none z-20" />
                   <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t-2 border-r-2 border-amber-400 shadow-[0_0_10px_#F59E0B] rounded-tr pointer-events-none z-20" />
-                  <div className="absolute bottom-16 left-3.5 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400 shadow-[0_0_10px_#10B981] rounded-bl pointer-events-none z-20" />
-                  <div className="absolute bottom-16 right-3.5 w-3.5 h-3.5 border-b-2 border-r-2 border-fuchsia-400 shadow-[0_0_10px_#EC4899] rounded-br pointer-events-none z-20" />
+                  <div className="absolute bottom-3.5 left-3.5 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400 shadow-[0_0_10px_#10B981] rounded-bl pointer-events-none z-20" />
+                  <div className="absolute bottom-3.5 right-3.5 w-3.5 h-3.5 border-b-2 border-r-2 border-fuchsia-400 shadow-[0_0_10px_#EC4899] rounded-br pointer-events-none z-20" />
 
                   {/* 1080p HD Badge on Photo */}
                   <div className="absolute top-3 left-3 z-20 flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md border border-emerald-400/50 text-[10px] font-black text-emerald-400 shadow-md">
@@ -461,7 +454,7 @@ function FacultyHDProfileModal({
                     </div>
                   )}
 
-                  {/* Magnified Image Container */}
+                  {/* Magnified Image Container with Centered Face (object-cover object-center) */}
                   <div
                     className="w-full h-full transition-transform duration-300 ease-out overflow-hidden flex items-center justify-center"
                     style={{
@@ -477,50 +470,56 @@ function FacultyHDProfileModal({
                       }
                       alt={member.name}
                       style={{
+                        objectPosition: "50% 38%",
+                        transformOrigin: "50% 38%",
                         transform: `scale(${zoomLevel})`,
-                        transition: "transform 0.25s ease-out",
+                        transition: "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
                       }}
-                      className="w-full h-full object-cover select-none will-change-transform"
+                      className="w-full h-full object-cover select-none pointer-events-none"
                     />
                   </div>
+                </div>
+              </div>
 
-                  {/* Floating Zoom Controls Bar */}
-                  <div className="absolute bottom-3 inset-x-3 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/20 z-20 shadow-xl">
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => setZoomLevel((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
-                        disabled={zoomLevel <= 1}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 cursor-pointer transition-colors"
-                        title="Zoom Out"
-                      >
-                        <ZoomOut className="w-4 h-4" />
-                      </button>
+              {/* Dynamic Zoom Indicator HUD Bar below photo frame */}
+              <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-slate-700/80 text-xs">
+                <div className="flex items-center space-x-1.5 text-slate-300 font-bold">
+                  <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Zoom: {zoomLevel.toFixed(1)}x</span>
+                </div>
 
-                      <span className="text-[11px] font-black text-amber-400 min-w-[50px] text-center font-mono">
-                        {Math.round(zoomLevel * 100)}%
-                      </span>
-
-                      <button
-                        onClick={() => setZoomLevel((z) => Math.min(2.5, +(z + 0.25).toFixed(2)))}
-                        disabled={zoomLevel >= 2.5}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-30 cursor-pointer transition-colors"
-                        title="Zoom In"
-                      >
-                        <ZoomIn className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center space-x-1 border-l border-white/20 pl-2">
-                      <button
-                        onClick={() => setZoomLevel(1)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 cursor-pointer transition-colors text-[10px] font-bold flex items-center space-x-1"
-                        title="Reset Zoom (100%)"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Reset</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomLevel((prev) => Math.max(1, prev - 0.5));
+                    }}
+                    className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomLevel((prev) => Math.min(2.5, prev + 0.5));
+                    }}
+                    className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomLevel(1);
+                    }}
+                    className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold transition-colors cursor-pointer flex items-center space-x-1"
+                    title="Reset Zoom"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
                 </div>
               </div>
 
@@ -532,14 +531,13 @@ function FacultyHDProfileModal({
 
             {/* Right 7 Cols: Full Profile Information & Interactive Tabs */}
             <div className="md:col-span-7 space-y-6">
-              
               {/* Name & Academic Rank Headline */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="bg-amber-400 text-slate-950 text-xs font-black uppercase px-3 py-1 rounded-full shadow-md">
                     {member.department}
                   </span>
-                  
+
                   <span className="bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase px-3 py-1 rounded-full border border-emerald-500/30 flex items-center space-x-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Verified Cambridge Faculty</span>
@@ -549,7 +547,7 @@ function FacultyHDProfileModal({
                 <h2 className="text-2xl sm:text-4xl font-black font-heading text-white tracking-tight">
                   {member.name}
                 </h2>
-                
+
                 <p className="text-base sm:text-lg font-bold text-sky-400">
                   {member.designation}
                 </p>
@@ -738,8 +736,19 @@ function FacultyHDProfileModal({
 export default function FacultyDirectoryClient({ initialFaculty }: Props) {
   const [selectedDept, setSelectedDept] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [zoomMember, setZoomMember] = useState<FacultyMember | null>(null);
+
+  // Keyboard shortcut: Esc closes modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setZoomMember(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Calculate department list with counts
   const departmentsWithCounts = useMemo(() => {
@@ -770,7 +779,7 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
 
   return (
     <div className="relative space-y-8">
-      {/* Clean Modern Ambient Background Glow (3D Wireframe Removed) */}
+      {/* Clean Modern Ambient Background Glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-amber-400/5 dark:bg-amber-400/10 rounded-full blur-3xl" />
         <div className="absolute top-2/3 -right-32 w-96 h-96 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl" />
@@ -805,12 +814,13 @@ export default function FacultyDirectoryClient({ initialFaculty }: Props) {
           </div>
 
           {/* Controls: Educator Counter + View Switcher */}
-          <div className="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-end flex-wrap gap-y-2">
+
             <div className="flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
               <Users className="w-4 h-4 text-amber-500" />
               <span>
-                Showing <strong>{filteredFaculty.length}</strong> of{" "}
-                <strong>{initialFaculty.length}</strong> Educators
+                <strong>{filteredFaculty.length}</strong> /{" "}
+                <strong>{initialFaculty.length}</strong>
               </span>
             </div>
 

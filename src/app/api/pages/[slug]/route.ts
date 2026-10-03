@@ -202,3 +202,56 @@ export async function PUT(
     return NextResponse.json({ error: error.message || "Failed to update page" }, { status: 500 });
   }
 }
+
+const CORE_PROTECTED_SLUGS = new Set([
+  "home", "about", "mission-vision", "chairman-message", "principal-message", "faculty",
+  "academics", "pre-primary", "primary", "middle-school", "senior-secondary",
+  "admissions", "procedure", "fees-structure", "scholarships", "apply",
+  "facilities", "smart-classrooms", "science-labs", "robotics-lab", "library", "sports-complex", "hostel", "transport",
+  "student-life", "achievements", "results", "gallery", "virtual-tour",
+  "news", "events", "downloads", "mandatory-disclosure", "cbse-information", "privacy-policy", "careers", "contact"
+]);
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const user = await getSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { slug } = await params;
+
+    if (CORE_PROTECTED_SLUGS.has(slug)) {
+      return NextResponse.json(
+        { error: "Core system pages cannot be deleted. You can hide them using the toggle instead." },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.pageContent.findUnique({
+      where: { slug },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
+
+    await prisma.pageContent.delete({
+      where: { slug },
+    });
+
+    invalidatePageCache(slug);
+    invalidateVisibilityCache();
+
+    return NextResponse.json({
+      success: true,
+      message: `Page "${existing.pageName}" (${slug}) deleted successfully`,
+    });
+  } catch (error: any) {
+    console.error("Page DELETE error:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete page" }, { status: 500 });
+  }
+}

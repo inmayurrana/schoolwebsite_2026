@@ -677,7 +677,38 @@ export default function VisualCanvasEditor({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  const livePagePath = PAGE_PATHS[page.slug] || `/${page.slug}`;
+  // PDF direct upload & embed state
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const pdfFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleUploadPdfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPdf(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: data });
+      const json = await res.json();
+      if (json.url) {
+        onChange({
+          ...page,
+          customStyles: {
+            ...page.customStyles,
+            embeddedPdfUrl: json.url,
+            embeddedPdfTitle: page.customStyles?.embeddedPdfTitle || file.name.replace(/\.[^/.]+$/, ""),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("PDF upload failed:", err);
+    } finally {
+      setIsUploadingPdf(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  const livePagePath = PAGE_PATHS[page.slug] || page.customStyles?.path || `/${page.slug}`;
 
   const isHomePage = page.slug === "home";
   const isChairmanPage = page.slug === "chairman-message";
@@ -8125,6 +8156,98 @@ export default function VisualCanvasEditor({
 
 
                 {/* ========================================================================= */}
+                {/* 21B. INTERACTIVE EMBEDDED PDF DOCUMENT PREVIEW (IF CONFIGURED) */}
+                {/* ========================================================================= */}
+                {page.customStyles?.embeddedPdfUrl && (
+                  <div className="p-6 sm:p-10 bg-slate-900/90 border-t border-slate-800 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-400">
+                            Embedded Document Showcase
+                          </span>
+                          <h4 className="text-base font-bold text-white">
+                            {page.customStyles.embeddedPdfTitle || "Interactive PDF Document Preview"}
+                          </h4>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <a
+                          href={page.customStyles.embeddedPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open Fullscreen</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveInspectorTab("embeds");
+                          }}
+                          className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer"
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                          <span>PDF Settings</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      className="w-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl relative"
+                      style={{ height: `${page.customStyles.embeddedPdfHeight || 650}px` }}
+                    >
+                      <iframe
+                        src={`${page.customStyles.embeddedPdfUrl}#toolbar=1&navpanes=0`}
+                        title={page.customStyles.embeddedPdfTitle || "PDF Preview"}
+                        className="w-full h-full border-0"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* 21C. INTERACTIVE EMBEDDED FORM (IF CONFIGURED) */}
+                {/* ========================================================================= */}
+                {page.customStyles?.embeddedFormSlug &&
+                  page.customStyles.embeddedFormSlug !== "none" &&
+                  !isApplyPage && (
+                    <div className="p-6 sm:p-10 bg-slate-950/80 border-t border-slate-800 space-y-4">
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                            <Zap className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
+                              Live Interactive Form Embed
+                            </span>
+                            <h4 className="text-base font-bold text-white capitalize">
+                              {page.customStyles.embeddedFormSlug.replace(/-/g, " ")} Form
+                            </h4>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveInspectorTab("embeds")}
+                          className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer"
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                          <span>Form Settings</span>
+                        </button>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-800 p-6 bg-slate-900/60 shadow-xl">
+                        <DynamicFormRenderer formSlug={page.customStyles.embeddedFormSlug} />
+                      </div>
+                    </div>
+                  )}
+
+                {/* ========================================================================= */}
                 {/* 22. MODULAR DYNAMIC SECTIONS (AVAILABLE ON ANY PAGE) */}
                 {/* ========================================================================= */}
                 {page.sections && page.sections.length > 0 && (
@@ -9094,6 +9217,16 @@ export default function VisualCanvasEditor({
               }`}
             >
               Sections
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveInspectorTab("embeds")}
+              className={`flex-1 py-1.5 rounded-lg font-bold text-center transition-all ${
+                activeInspectorTab === "embeds" ? "bg-amber-400 text-slate-950" : "text-slate-400 hover:text-white"
+              }`}
+            >
+              📄 Embeds & Menu
             </button>
           </div>
 
@@ -11644,6 +11777,337 @@ export default function VisualCanvasEditor({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: EMBEDS, PDF DOCUMENT PREVIEW, FORM & MENU LOCATION */}
+          {activeInspectorTab === "embeds" && (
+            <div className="space-y-5 text-xs">
+              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl">
+                <span className="font-extrabold text-indigo-400 uppercase tracking-wider block flex items-center space-x-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Interactive Embeds & Menu Placement</span>
+                </span>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Upload an interactive PDF preview, embed dynamic forms, and configure website navigation placement.
+                </p>
+              </div>
+
+              {/* 1. PDF DOCUMENT EMBED SECTION */}
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">Interactive PDF Preview</h4>
+                      <p className="text-[10px] text-slate-400">Embed document directly on canvas & page</p>
+                    </div>
+                  </div>
+                  {page.customStyles?.embeddedPdfUrl && (
+                    <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 font-extrabold text-[10px] rounded-full border border-rose-500/30">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => pdfFileInputRef.current?.click()}
+                      disabled={isUploadingPdf}
+                      className="flex-1 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isUploadingPdf ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload PDF Document</span>
+                        </>
+                      )}
+                    </button>
+
+                    {page.customStyles?.embeddedPdfUrl && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onChange({
+                            ...page,
+                            customStyles: {
+                              ...page.customStyles,
+                              embeddedPdfUrl: undefined,
+                            },
+                          })
+                        }
+                        className="px-3 py-2 bg-slate-900 hover:bg-rose-950/60 border border-slate-700 hover:border-rose-700 text-slate-400 hover:text-rose-300 font-bold rounded-xl cursor-pointer"
+                        title="Remove embedded PDF"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-300">Or Direct PDF URL</label>
+                    <input
+                      type="text"
+                      value={page.customStyles?.embeddedPdfUrl || ""}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            embeddedPdfUrl: e.target.value || undefined,
+                          },
+                        })
+                      }
+                      placeholder="e.g. /uploads/prospectus.pdf or https://..."
+                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
+
+                  {page.customStyles?.embeddedPdfUrl && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-300">Document Title</label>
+                        <input
+                          type="text"
+                          value={page.customStyles?.embeddedPdfTitle || ""}
+                          onChange={(e) =>
+                            onChange({
+                              ...page,
+                              customStyles: {
+                                ...page.customStyles,
+                                embeddedPdfTitle: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="e.g. Cambridge Mandi Academic Prospectus 2026-27"
+                          className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold text-slate-300">Viewer Height</span>
+                          <span className="text-amber-400 font-mono font-bold">
+                            {page.customStyles?.embeddedPdfHeight || 650}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={400}
+                          max={1100}
+                          step={50}
+                          value={page.customStyles?.embeddedPdfHeight || 650}
+                          onChange={(e) =>
+                            onChange({
+                              ...page,
+                              customStyles: {
+                                ...page.customStyles,
+                                embeddedPdfHeight: Number(e.target.value),
+                              },
+                            })
+                          }
+                          className="w-full accent-amber-400 cursor-pointer"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. DYNAMIC FORM EMBED SECTION */}
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">Interactive Dynamic Form</h4>
+                      <p className="text-[10px] text-slate-400">Embed registration or inquiry form</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-300">Select Form to Embed</label>
+                    <select
+                      value={page.customStyles?.embeddedFormSlug || "none"}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            embeddedFormSlug: e.target.value === "none" ? undefined : e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="none">None (No Form Embedded)</option>
+                      <option value="admissions-apply">⚡ Online Admissions & Registration Form</option>
+                      <option value="contact">📍 General Campus Inquiry & Visitor Form</option>
+                      <option value="careers">💼 Careers & Faculty Application Form</option>
+                      <option value="custom">⚙️ Custom Form Identifier...</option>
+                    </select>
+                  </div>
+
+                  {page.customStyles?.embeddedFormSlug &&
+                    !["none", "admissions-apply", "contact", "careers"].includes(
+                      page.customStyles.embeddedFormSlug
+                    ) && (
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-slate-300">Custom Form Slug</label>
+                        <input
+                          type="text"
+                          value={page.customStyles?.embeddedFormSlug || ""}
+                          onChange={(e) =>
+                            onChange({
+                              ...page,
+                              customStyles: {
+                                ...page.customStyles,
+                                embeddedFormSlug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
+                              },
+                            })
+                          }
+                          placeholder="e.g. scholarship-application"
+                          className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 font-mono"
+                        />
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              {/* 3. MENU PLACEMENT & LOCATION SETTINGS */}
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xs">Website Menu Placement</h4>
+                    <p className="text-[10px] text-slate-400">Position in header navigation or footer</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-300">Menu Dropdown Location</label>
+                    <select
+                      value={page.customStyles?.menuLocation || "none"}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            menuLocation: e.target.value as any,
+                          },
+                        })
+                      }
+                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="none">Unlisted (Standalone URL only)</option>
+                      <option value="about">📖 "About Us" Navigation Dropdown</option>
+                      <option value="academics">📚 "Academics" Navigation Dropdown</option>
+                      <option value="admissions">📝 "Admissions" Navigation Dropdown</option>
+                      <option value="facilities">🏛️ "Campus Facilities" Dropdown</option>
+                      <option value="student-life">🎨 "Student Life" Dropdown</option>
+                      <option value="compliance">⚖️ "Statutory Disclosures" Dropdown</option>
+                      <option value="footer">⚓ Footer Quick Links</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-300">Navigation Menu Label</label>
+                    <input
+                      type="text"
+                      value={page.customStyles?.menuLabel || page.pageName}
+                      onChange={(e) =>
+                        onChange({
+                          ...page,
+                          customStyles: {
+                            ...page.customStyles,
+                            menuLabel: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder={page.pageName}
+                      className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-300">Sort Priority Order</label>
+                      <input
+                        type="number"
+                        value={page.customStyles?.menuOrder ?? 10}
+                        onChange={(e) =>
+                          onChange({
+                            ...page,
+                            customStyles: {
+                              ...page.customStyles,
+                              menuOrder: Number(e.target.value),
+                            },
+                          })
+                        }
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-300">Category Tag</label>
+                      <select
+                        value={page.customStyles?.category || "Custom"}
+                        onChange={(e) =>
+                          onChange({
+                            ...page,
+                            customStyles: {
+                              ...page.customStyles,
+                              category: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full bg-slate-900 border border-slate-700 text-white text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                      >
+                        <option value="Custom">Custom</option>
+                        <option value="Core">Core</option>
+                        <option value="About Us">About Us</option>
+                        <option value="Academics">Academics</option>
+                        <option value="Admissions">Admissions</option>
+                        <option value="Facilities">Facilities</option>
+                        <option value="Student Life">Student Life</option>
+                        <option value="Connect">Connect</option>
+                        <option value="Compliance">Compliance</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span>Public Live Path:</span>
+                      <a
+                        href={livePagePath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-400 font-mono hover:underline flex items-center space-x-1"
+                      >
+                        <span>{livePagePath}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

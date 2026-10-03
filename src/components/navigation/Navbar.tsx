@@ -275,6 +275,36 @@ export default function Navbar() {
             }
           }
         }
+
+        // Fetch custom pages configured with menu locations
+        try {
+          const menuRes = await fetch("/api/pages/menu-items", { cache: "no-store" });
+          if (menuRes.ok) {
+            const menuData = await menuRes.json();
+            if (menuData.menuItems && Array.isArray(menuData.menuItems) && menuData.menuItems.length > 0) {
+              setNavLinks((prevLinks) => {
+                return prevLinks.map((cat: any) => {
+                  const itemsForCat = menuData.menuItems.filter((mi: any) => mi.menuLocation === cat.key);
+                  if (itemsForCat.length === 0) return cat;
+
+                  const existingHrefs = new Set((cat.children || []).map((c: any) => c.href));
+                  const newChildren = [...(cat.children || [])];
+
+                  for (const mi of itemsForCat) {
+                    if (!existingHrefs.has(mi.href)) {
+                      newChildren.push({
+                        title: mi.title,
+                        href: mi.href,
+                        desc: mi.desc,
+                      });
+                    }
+                  }
+                  return { ...cat, children: newChildren };
+                });
+              });
+            }
+          }
+        } catch (_) {}
       } catch (e) {}
     }
     loadSettings();

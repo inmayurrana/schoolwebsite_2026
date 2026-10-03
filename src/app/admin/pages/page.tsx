@@ -6,6 +6,7 @@ import {
   Save,
   Plus,
   Trash2,
+  X,
   Image as ImageIcon,
   Upload,
   Eye,
@@ -57,6 +58,7 @@ interface SitePageMeta {
   name: string;
   category: string;
   description: string;
+  isCustom?: boolean;
 }
 
 const ALL_SITE_PAGES: SitePageMeta[] = [
@@ -107,6 +109,7 @@ const ALL_SITE_PAGES: SitePageMeta[] = [
 ];
 
 export default function AdminPageEditor() {
+  const [sitePages, setSitePages] = useState<SitePageMeta[]>(ALL_SITE_PAGES);
   const [activeTab, setActiveTab] = useState<"directory" | "editor">("directory");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -120,6 +123,20 @@ export default function AdminPageEditor() {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [applyingAll, setApplyingAll] = useState(false);
+
+  // Add Page Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPageData, setNewPageData] = useState({
+    pageName: "",
+    slug: "",
+    category: "Custom",
+    preset: "blank" as "blank" | "story" | "form" | "pdf" | "media",
+    menuLocation: "none",
+    menuLabel: "",
+    description: "",
+  });
+  const [creatingPage, setCreatingPage] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // 1. Fetch visibility map for all pages
   const fetchVisibility = async () => {
@@ -136,14 +153,47 @@ export default function AdminPageEditor() {
     }
   };
 
+  // 1B. Fetch custom pages from API to merge with ALL_SITE_PAGES
+  const fetchAllPages = async () => {
+    try {
+      const res = await fetch("/api/pages", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.pages)) {
+          const customPagesList: SitePageMeta[] = data.pages
+            .filter((p: any) => p.isCustom || !ALL_SITE_PAGES.some((sp) => sp.slug === p.slug))
+            .map((p: any) => ({
+              slug: p.slug,
+              path: p.path || `/${p.slug}`,
+              name: p.pageName || p.title || p.slug,
+              category: p.category || "Custom",
+              description: p.isCustom
+                ? `Custom Page • Menu: ${p.menuLocation && p.menuLocation !== "none" ? p.menuLocation : "Standalone"}`
+                : "Custom Created Page",
+              isCustom: true,
+            }));
+
+          const combined = [
+            ...ALL_SITE_PAGES,
+            ...customPagesList.filter((cp) => !ALL_SITE_PAGES.some((sp) => sp.slug === cp.slug)),
+          ];
+          setSitePages(combined);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load custom pages:", err);
+    }
+  };
+
   useEffect(() => {
     fetchVisibility();
+    fetchAllPages();
   }, []);
 
   // Immediate synchronous page switch handler to ensure instant UI update
   const handleSelectPage = (slug: string) => {
     setSelectedSlug(slug);
-    const meta = ALL_SITE_PAGES.find((p) => p.slug === slug);
+    const meta = sitePages.find((p) => p.slug === slug);
     const defaultPage = getPageDefault(slug, meta?.name, meta?.description);
     setCurrentPage({
       ...defaultPage,
@@ -161,7 +211,7 @@ export default function AdminPageEditor() {
         if (res.ok) {
           const data = await res.json();
           if (data.page && isCurrent) {
-            const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+            const meta = sitePages.find((p) => p.slug === selectedSlug);
             const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
             setCurrentPage({
               ...defaultPage,
@@ -181,7 +231,7 @@ export default function AdminPageEditor() {
 
         // Fallback to exact rich page structure from registry
         if (isCurrent) {
-          const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+          const meta = sitePages.find((p) => p.slug === selectedSlug);
           const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
           setCurrentPage({
             ...defaultPage,
@@ -191,7 +241,7 @@ export default function AdminPageEditor() {
       } catch (err) {
         console.error("Failed to load page:", err);
         if (isCurrent) {
-          const meta = ALL_SITE_PAGES.find((p) => p.slug === selectedSlug);
+          const meta = sitePages.find((p) => p.slug === selectedSlug);
           const defaultPage = getPageDefault(selectedSlug, meta?.name, meta?.description);
           setCurrentPage({
             ...defaultPage,
@@ -290,7 +340,7 @@ export default function AdminPageEditor() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           visibilityMap,
-          pagesList: ALL_SITE_PAGES,
+          pagesList: sitePages,
         }),
       });
 
@@ -349,7 +399,7 @@ export default function AdminPageEditor() {
 
   const handleBulkSetAll = (status: boolean) => {
     const updated: Record<string, boolean> = {};
-    ALL_SITE_PAGES.forEach((p) => {
+    sitePages.forEach((p) => {
       updated[p.slug] = status;
     });
     setVisibilityMap(updated);
@@ -431,15 +481,128 @@ export default function AdminPageEditor() {
     }
   };
 
+  // 7. Auto-slugify & Page Form Input Handler
+  const handlePageNameChange = (name: string) => {
+    const slugified = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    setNewPageData((prev) => ({
+      ...prev,
+      pageName: name,
+      slug:
+        prev.slug === "" ||
+        prev.slug === prev.pageName.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+          ? slugified
+          : prev.slug,
+      menuLabel: prev.menuLabel === "" || prev.menuLabel === prev.pageName ? name : prev.menuLabel,
+    }));
+  };
+
+  // 8. Create Page & Launch Canvas Studio
+  const handleCreatePage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPageData.pageName.trim() || !newPageData.slug.trim()) {
+      setCreateError("Please provide both page name and URL slug");
+      return;
+    }
+    setCreatingPage(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isNewPage: true,
+          ...newPageData,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setCreateError(data.error || "Failed to create page");
+        setCreatingPage(false);
+        return;
+      }
+
+      // Add to sitePages
+      const createdMeta: SitePageMeta = {
+        slug: data.page.slug,
+        path: data.page.customStyles?.path || `/${data.page.slug}`,
+        name: data.page.pageName || newPageData.pageName,
+        category: newPageData.category,
+        description: newPageData.description || `Custom Page • Menu: ${newPageData.menuLocation}`,
+        isCustom: true,
+      };
+
+      setSitePages((prev) => [...prev, createdMeta]);
+      setVisibilityMap((prev) => ({ ...prev, [data.page.slug]: true }));
+
+      // Reset form
+      setNewPageData({
+        pageName: "",
+        slug: "",
+        category: "Custom",
+        preset: "blank",
+        menuLocation: "none",
+        menuLabel: "",
+        description: "",
+      });
+      setShowCreateModal(false);
+
+      // Select new page & open editor immediately
+      setSelectedSlug(data.page.slug);
+      setCurrentPage({
+        ...data.page,
+        isPublished: true,
+      });
+      setActiveTab("editor");
+
+      setToastMessage(`✨ Page "${data.page.pageName}" created! Canvas Editor is now open.`);
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (err: any) {
+      setCreateError(err.message || "Network error creating page");
+    } finally {
+      setCreatingPage(false);
+    }
+  };
+
+  // 9. Delete Custom Page
+  const handleDeleteCustomPage = async (slug: string, pageName: string) => {
+    if (!confirm(`Are you sure you want to permanently delete custom page "${pageName}" (${slug})?`)) return;
+    try {
+      const res = await fetch(`/api/pages/${slug}`, { method: "DELETE" });
+      if (res.ok) {
+        setSitePages((prev) => prev.filter((p) => p.slug !== slug));
+        setVisibilityMap((prev) => {
+          const updated = { ...prev };
+          delete updated[slug];
+          return updated;
+        });
+        setToastMessage(`Custom page "${pageName}" deleted successfully.`);
+        setTimeout(() => setToastMessage(null), 4000);
+        if (selectedSlug === slug) {
+          handleSelectPage("home");
+        }
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to delete page");
+      }
+    } catch (err) {
+      alert("Network error deleting page");
+    }
+  };
+
   // Filtered pages for directory
   const categories = useMemo(() => {
     const cats = new Set<string>();
-    ALL_SITE_PAGES.forEach((p) => cats.add(p.category));
+    sitePages.forEach((p) => cats.add(p.category));
     return ["ALL", ...Array.from(cats)];
-  }, []);
+  }, [sitePages]);
 
   const filteredDirectoryPages = useMemo(() => {
-    return ALL_SITE_PAGES.filter((p) => {
+    return sitePages.filter((p) => {
       const matchCat = selectedCategory === "ALL" || p.category === selectedCategory;
       const matchSearch =
         searchTerm === "" ||
@@ -449,9 +612,9 @@ export default function AdminPageEditor() {
         p.description.toLowerCase().includes(searchTerm.toLowerCase());
       return matchCat && matchSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [sitePages, searchTerm, selectedCategory]);
 
-  const totalPages = ALL_SITE_PAGES.length;
+  const totalPages = sitePages.length;
   const disabledCount = Object.values(visibilityMap).filter((v) => v === false).length;
   const activeCount = totalPages - disabledCount;
 
@@ -504,6 +667,16 @@ export default function AdminPageEditor() {
           >
             <span>Parent & Alumni Voices</span>
           </Link>
+
+          {/* + Add New Page Header Button */}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center space-x-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Create a new custom page and open Visual Canvas Editor"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Add New Page</span>
+          </button>
 
           {/* Quick Header Apply Button */}
           <button
@@ -580,6 +753,13 @@ export default function AdminPageEditor() {
                 <EyeOff className="w-3.5 h-3.5 text-slate-400" />
                 <span>Disable All</span>
               </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Page</span>
+              </button>
             </div>
 
             <button
@@ -651,9 +831,17 @@ export default function AdminPageEditor() {
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800 inline-block mb-1">
-                          {page.category}
-                        </span>
+                        <div className="flex items-center space-x-1.5 mb-1">
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800 inline-block">
+                            {page.category}
+                          </span>
+                          {page.isCustom && (
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center space-x-1">
+                              <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                              <span>Custom</span>
+                            </span>
+                          )}
+                        </div>
                         <h3 className="font-bold text-sm text-white flex items-center space-x-1.5">
                           <span>{page.name}</span>
                         </h3>
@@ -715,6 +903,20 @@ export default function AdminPageEditor() {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Link>
 
+                      {page.isCustom && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomPage(page.slug, page.name);
+                          }}
+                          className="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-800/80 cursor-pointer"
+                          title="Delete Custom Page"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => {
                           handleSelectPage(page.slug);
@@ -741,7 +943,7 @@ export default function AdminPageEditor() {
         <div className="space-y-4">
           {/* Quick Page Selector Bar */}
           <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
                 <Globe className="w-3.5 h-3.5" />
                 <span>Switch Page Canvas:</span>
@@ -753,7 +955,7 @@ export default function AdminPageEditor() {
               >
                 {categories.filter((c) => c !== "ALL").map((cat) => (
                   <optgroup key={cat} label={cat.toUpperCase()} className="bg-slate-950 text-amber-400 font-bold">
-                    {ALL_SITE_PAGES.filter((p) => p.category === cat).map((p) => (
+                    {sitePages.filter((p) => p.category === cat).map((p) => (
                       <option key={p.slug} value={p.slug} className="bg-slate-900 text-white font-normal">
                         {p.name} ({p.path})
                       </option>
@@ -761,6 +963,16 @@ export default function AdminPageEditor() {
                   </optgroup>
                 ))}
               </select>
+
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow flex items-center space-x-1 cursor-pointer transition-all"
+                title="Create a new website page"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Page</span>
+              </button>
             </div>
 
             <div className="flex items-center space-x-2 text-xs">
@@ -800,6 +1012,213 @@ export default function AdminPageEditor() {
               onUploadImage={handleUploadImageFile}
             />
           )}
+        </div>
+      )}
+
+      {/* CREATE NEW PAGE MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 animate-in zoom-in-95 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 font-bold shadow-lg">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Create New Website Page</h3>
+                  <p className="text-xs text-slate-400">
+                    Instantly launches the Visual WYSIWYG Canvas Editor upon creation
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {createError && (
+              <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs rounded-xl flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                <span>{createError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreatePage} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-200">
+                    Page Name / Title <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newPageData.pageName}
+                    onChange={(e) => handlePageNameChange(e.target.value)}
+                    placeholder="e.g., Astronomy & Stargazing Club"
+                    className="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-200">
+                    URL Slug / Path <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl px-3 py-1 focus-within:border-amber-400">
+                    <span className="text-xs text-slate-500 font-mono">/</span>
+                    <input
+                      type="text"
+                      required
+                      value={newPageData.slug}
+                      onChange={(e) =>
+                        setNewPageData((prev) => ({
+                          ...prev,
+                          slug: e.target.value.toLowerCase().replace(/[^a-z0-9-/]/g, ""),
+                        }))
+                      }
+                      placeholder="astronomy-club"
+                      className="w-full bg-transparent text-white text-xs py-1.5 focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Template Presets */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-200">
+                  Select Starting Template Preset
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { id: "blank", name: "Blank Canvas", desc: "Hero header & empty modular sections", icon: Layout },
+                    { id: "story", name: "Story & Features", desc: "Rich narrative, history & 3-card features", icon: BookOpen },
+                    { id: "form", name: "Dynamic Form", desc: "Live embedded registration/inquiry form", icon: Zap },
+                    { id: "pdf", name: "PDF Showcase", desc: "Interactive PDF document viewer embed", icon: FileText },
+                    { id: "media", name: "Media & Video", desc: "Featured video player & campus media", icon: Video },
+                  ].map((preset) => {
+                    const Icon = preset.icon;
+                    const isSelected = newPageData.preset === preset.id;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setNewPageData((prev) => ({ ...prev, preset: preset.id as any }))}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-amber-500/10 border-amber-400 text-white shadow-lg"
+                            : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-white"
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 mb-1.5 ${isSelected ? "text-amber-400" : "text-slate-400"}`} />
+                        <h4 className="font-bold text-xs">{preset.name}</h4>
+                        <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-1">{preset.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Placement & Menu Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-200">Category</label>
+                  <select
+                    value={newPageData.category}
+                    onChange={(e) => setNewPageData((prev) => ({ ...prev, category: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                  >
+                    <option value="Custom">Custom</option>
+                    <option value="About Us">About Us</option>
+                    <option value="Academics">Academics</option>
+                    <option value="Admissions">Admissions</option>
+                    <option value="Facilities">Facilities</option>
+                    <option value="Student Life">Student Life</option>
+                    <option value="Connect">Connect</option>
+                    <option value="Compliance">Compliance</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-200">
+                    Add to Navigation Menu
+                  </label>
+                  <select
+                    value={newPageData.menuLocation}
+                    onChange={(e) =>
+                      setNewPageData((prev) => ({
+                        ...prev,
+                        menuLocation: e.target.value,
+                      }))
+                    }
+                    className="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 cursor-pointer"
+                  >
+                    <option value="none">None (Unlisted / Standalone URL)</option>
+                    <option value="about">📖 "About Us" Dropdown</option>
+                    <option value="academics">📚 "Academics" Dropdown</option>
+                    <option value="admissions">📝 "Admissions" Dropdown</option>
+                    <option value="facilities">🏛️ "Campus Facilities" Dropdown</option>
+                    <option value="student-life">🎨 "Student Life" Dropdown</option>
+                    <option value="compliance">⚖️ "Statutory Disclosures" Dropdown</option>
+                    <option value="footer">⚓ Footer Quick Links</option>
+                  </select>
+                </div>
+              </div>
+
+              {newPageData.menuLocation !== "none" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-200">Menu Label</label>
+                  <input
+                    type="text"
+                    value={newPageData.menuLabel}
+                    onChange={(e) => setNewPageData((prev) => ({ ...prev, menuLabel: e.target.value }))}
+                    placeholder={newPageData.pageName || "Menu Link Text"}
+                    className="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-200">Description / Subtitle</label>
+                <textarea
+                  rows={2}
+                  value={newPageData.description}
+                  onChange={(e) => setNewPageData((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief summary or introductory narrative for this page..."
+                  className="w-full bg-slate-950 border border-slate-700 text-white text-xs px-3.5 py-2 rounded-xl focus:outline-none focus:border-amber-400 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingPage}
+                  className="px-6 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center space-x-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {creatingPage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Creating & Launching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 fill-slate-950" />
+                      <span>Create Page & Open Canvas</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

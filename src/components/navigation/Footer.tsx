@@ -174,6 +174,37 @@ export default function Footer() {
             }
           }
         }
+
+        // Fetch custom pages configured for footer placement
+        try {
+          const menuRes = await fetch("/api/pages/menu-items", { cache: "no-store" });
+          if (menuRes.ok) {
+            const menuData = await menuRes.json();
+            if (menuData.menuItems && Array.isArray(menuData.menuItems)) {
+              const footerItems = menuData.menuItems.filter((mi: any) => mi.menuLocation === "footer");
+              if (footerItems.length > 0) {
+                setFooterColumns((prevCols) => {
+                  if (prevCols.length === 0) return prevCols;
+                  const updated = prevCols.map((col, idx) => {
+                    if (idx !== 1) return col;
+                    const existingHrefs = new Set(col.links.map((l: any) => l.href));
+                    const newLinks = [...col.links];
+                    for (const fi of footerItems) {
+                      if (!existingHrefs.has(fi.href)) {
+                        newLinks.push({
+                          label: fi.title,
+                          href: fi.href,
+                        });
+                      }
+                    }
+                    return { ...col, links: newLinks };
+                  });
+                  return updated;
+                });
+              }
+            }
+          }
+        } catch (_) {}
       } catch (e) {}
     }
     loadSettings();
