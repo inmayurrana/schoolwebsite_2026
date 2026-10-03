@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -19,7 +19,9 @@ import {
   Mail,
   GraduationCap,
   Briefcase,
+  Camera,
 } from "lucide-react";
+import { LiveCameraStudioModal } from "@/components/common/PhotoCaptureModal";
 
 interface FacultyMember {
   id: string;
@@ -44,6 +46,7 @@ export default function AdminFacultyPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("ALL");
 
@@ -108,10 +111,7 @@ export default function AdminFacultyPage() {
     setViewMode("EDITOR");
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadPhotoFile = async (file: File) => {
     setUploadingPhoto(true);
     try {
       const fd = new FormData();
@@ -127,6 +127,13 @@ export default function AdminFacultyPage() {
     } finally {
       setUploadingPhoto(false);
     }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadPhotoFile(file);
+    e.target.value = "";
   };
 
   const handleSaveFaculty = async (e: React.FormEvent) => {
@@ -424,16 +431,27 @@ export default function AdminFacultyPage() {
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <label className="font-semibold text-slate-300">Upload Portrait</label>
-                    <label className="cursor-pointer inline-flex items-center space-x-1.5 bg-school-secondary hover:bg-blue-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition-colors">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{uploadingPhoto ? "Uploading..." : "Upload Photo"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowCameraModal(true)}
+                        className="inline-flex items-center space-x-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-xl shadow transition-colors cursor-pointer"
+                        title="Take live photo using camera"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>Take Photo</span>
+                      </button>
+                      <label className="cursor-pointer inline-flex items-center space-x-1.5 bg-school-secondary hover:bg-blue-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition-colors">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{uploadingPhoto ? "Uploading..." : "Upload Photo"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -592,6 +610,22 @@ export default function AdminFacultyPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Live Camera Studio Modal */}
+      {showCameraModal && (
+        <LiveCameraStudioModal
+          isOpen={showCameraModal}
+          fieldLabel="Teacher Portrait Headshot"
+          onClose={() => setShowCameraModal(false)}
+          onCapture={(file) => {
+            setShowCameraModal(false);
+            uploadPhotoFile(file);
+          }}
+          onFallbackToFile={() => {
+            setShowCameraModal(false);
+          }}
+        />
       )}
     </div>
   );

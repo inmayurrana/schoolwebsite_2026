@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { FormDefinitionRecord, FormField, FormStep } from "@/lib/formRegistry";
+import { PhotoSourceChooserModal, LiveCameraStudioModal } from "./PhotoCaptureModal";
 
 interface DynamicFormRendererProps {
   initialForm?: FormDefinitionRecord;
@@ -90,6 +91,23 @@ export default function DynamicFormRenderer({
   const [uploadedFileMeta, setUploadedFileMeta] = useState<Record<string, { originalName: string; size?: string }>>({});
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [uploadCurrentFileName, setUploadCurrentFileName] = useState<Record<string, string>>({});
+  const [activePhotoSourceModal, setActivePhotoSourceModal] = useState<{
+    fieldName: string;
+    fieldLabel: string;
+    maxSizeMB: number;
+  } | null>(null);
+  const [activeCameraModal, setActiveCameraModal] = useState<{
+    fieldName: string;
+    fieldLabel: string;
+    maxSizeMB: number;
+  } | null>(null);
+
+  const triggerFileInput = (fieldName: string) => {
+    const input = document.getElementById(`file-${fieldName}`) as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  };
 
   const getCleanDisplayName = (urlOrPath: string, fieldName?: string, defaultFallback: string = "Document"): string => {
     if (fieldName && uploadedFileMeta[fieldName]?.originalName) {
@@ -839,20 +857,21 @@ export default function DynamicFormRenderer({
                             <ExternalLink className="w-3 h-3" />
                             <span>View</span>
                           </a>
-                          <label className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold flex items-center space-x-1 cursor-pointer transition-all shadow">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActivePhotoSourceModal({
+                                fieldName: field.name,
+                                fieldLabel: field.label,
+                                maxSizeMB: field.maxSizeMB || 5,
+                              })
+                            }
+                            className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold flex items-center space-x-1 cursor-pointer transition-all shadow"
+                            title="Replace photo with camera or file"
+                          >
                             <RefreshCw className="w-3 h-3" />
                             <span>Replace</span>
-                            <input
-                              type="file"
-                              accept={field.accept || "image/*,.jpg,.jpeg,.png,.webp"}
-                              disabled={uploadingField === field.name}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
-                              }}
-                              className="hidden"
-                            />
-                          </label>
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleInputChange(field.name, "")}
@@ -891,7 +910,29 @@ export default function DynamicFormRenderer({
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <label
+                        {/* Hidden Native File Input for Direct Gallery Selection */}
+                        <input
+                          id={`file-${field.name}`}
+                          type="file"
+                          accept={field.accept || "image/*,.jpg,.jpeg,.png,.webp"}
+                          disabled={uploadingField === field.name}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
+                            e.target.value = "";
+                          }}
+                          className="hidden"
+                        />
+
+                        {/* Interactive Dropzone: Clicking opens Photo Choice Dialog */}
+                        <div
+                          onClick={() => {
+                            setActivePhotoSourceModal({
+                              fieldName: field.name,
+                              fieldLabel: field.label,
+                              maxSizeMB: field.maxSizeMB || 5,
+                            });
+                          }}
                           onDragOver={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -922,17 +963,6 @@ export default function DynamicFormRenderer({
                               : "border-slate-300 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-400 bg-slate-50/70 dark:bg-slate-950/40 hover:bg-amber-400/5 hover:scale-[1.005] hover:shadow-md"
                           }`}
                         >
-                          <input
-                            id={`file-${field.name}`}
-                            type="file"
-                            accept={field.accept || "image/*,.jpg,.jpeg,.png,.webp"}
-                            disabled={uploadingField === field.name}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleFileUpload(field.name, file, field.maxSizeMB || 5);
-                            }}
-                            className="hidden"
-                          />
                           {uploadingField === field.name ? (
                             renderUploadProgressBar(field.name, true)
                           ) : dragOverField === field.name ? (
@@ -948,7 +978,7 @@ export default function DynamicFormRenderer({
                               </p>
                             </div>
                           ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3 w-full max-w-sm">
                               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-500 flex items-center justify-center mx-auto transition-transform group-hover:scale-110 shadow-sm border border-amber-500/20">
                                 <Camera className="w-6 h-6" />
                               </div>
@@ -957,25 +987,53 @@ export default function DynamicFormRenderer({
                                   {field.uploadButtonText || "Click to browse or drag & drop photo"}
                                 </p>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                  {field.helperText || `Upload student's recent color passport size photo (JPG, PNG up to ${field.maxSizeMB || 5}MB)`}
+                                  {field.helperText || `Upload recent formal passport color photo (JPG, PNG up to ${field.maxSizeMB || 5}MB)`}
                                 </p>
                               </div>
-                              <div className="inline-flex items-center space-x-2 pt-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                                <span className="flex items-center space-x-1">
-                                  <Camera className="w-3 h-3 text-blue-500" />
+
+                              {/* Interactive Dual Action Chips */}
+                              <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCameraModal({
+                                      fieldName: field.name,
+                                      fieldLabel: field.label,
+                                      maxSizeMB: field.maxSizeMB || 5,
+                                    });
+                                  }}
+                                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 hover:scale-105 transition-all shadow-xs cursor-pointer"
+                                  title="Open live camera"
+                                >
+                                  <Camera className="w-3.5 h-3.5 text-blue-500" />
                                   <span>Take Photo</span>
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center space-x-1">
-                                  <ImageIcon className="w-3 h-3 text-emerald-500" />
+                                </button>
+
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    triggerFileInput(field.name);
+                                  }}
+                                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:scale-105 transition-all shadow-xs cursor-pointer"
+                                  title="Upload from device gallery"
+                                >
+                                  <ImageIcon className="w-3.5 h-3.5 text-emerald-500" />
                                   <span>Choose from Gallery</span>
+                                </button>
+
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+
+                                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                                  Drag & Drop
                                 </span>
-                                <span>•</span>
-                                <span>Drag & Drop</span>
                               </div>
                             </div>
                           )}
-                        </label>
+                        </div>
 
                         <div className="flex items-center justify-end text-[11px] text-slate-400 px-1">
                           <button
@@ -1240,6 +1298,52 @@ export default function DynamicFormRenderer({
           )}
         </div>
       </form>
+
+      {/* Photo Source Chooser Dialog (Camera vs Gallery vs Link) */}
+      {activePhotoSourceModal && (
+        <PhotoSourceChooserModal
+          isOpen={Boolean(activePhotoSourceModal)}
+          fieldLabel={activePhotoSourceModal.fieldLabel}
+          maxSizeMB={activePhotoSourceModal.maxSizeMB}
+          onClose={() => setActivePhotoSourceModal(null)}
+          onSelectCamera={() => {
+            const modal = activePhotoSourceModal;
+            setActivePhotoSourceModal(null);
+            setActiveCameraModal(modal);
+          }}
+          onSelectUpload={() => {
+            const fieldName = activePhotoSourceModal.fieldName;
+            setActivePhotoSourceModal(null);
+            triggerFileInput(fieldName);
+          }}
+          onSelectUrl={() => {
+            const fieldName = activePhotoSourceModal.fieldName;
+            setActivePhotoSourceModal(null);
+            setManualUrlFields((prev) => ({ ...prev, [fieldName]: true }));
+          }}
+        />
+      )}
+
+      {/* Live Camera Viewfinder Studio Modal */}
+      {activeCameraModal && (
+        <LiveCameraStudioModal
+          isOpen={Boolean(activeCameraModal)}
+          fieldLabel={activeCameraModal.fieldLabel}
+          maxSizeMB={activeCameraModal.maxSizeMB}
+          onClose={() => setActiveCameraModal(null)}
+          onCapture={(file) => {
+            const fieldName = activeCameraModal.fieldName;
+            const maxSizeMB = activeCameraModal.maxSizeMB;
+            setActiveCameraModal(null);
+            handleFileUpload(fieldName, file, maxSizeMB);
+          }}
+          onFallbackToFile={() => {
+            const fieldName = activeCameraModal.fieldName;
+            setActiveCameraModal(null);
+            triggerFileInput(fieldName);
+          }}
+        />
+      )}
     </div>
   );
 }

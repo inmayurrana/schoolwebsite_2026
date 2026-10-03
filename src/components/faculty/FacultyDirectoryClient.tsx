@@ -71,28 +71,28 @@ function FacultyListRow({
       <div className="relative rounded-3xl p-5 sm:p-6 border transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 overflow-hidden backdrop-blur-xl border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-xl hover:border-amber-400/80 bg-white/95 dark:bg-slate-900/95">
         {/* Left & Middle Block: Avatar + Academic Details */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 flex-1 min-w-0">
-          {/* Avatar Container */}
+          {/* Avatar Container - Grand Executive Portrait */}
           <div className="relative shrink-0">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 transition-all duration-300 bg-slate-100 dark:bg-slate-950 shadow-md border-slate-200 dark:border-slate-700 group-hover:border-amber-400/80">
+            <div className="relative w-36 h-44 sm:w-44 sm:h-52 md:w-48 md:h-56 rounded-2xl sm:rounded-3xl overflow-hidden border-2 transition-all duration-300 bg-slate-100 dark:bg-slate-950 shadow-lg border-slate-200 dark:border-slate-700 group-hover:border-amber-400/80 group-hover:shadow-xl group-hover:shadow-amber-500/10">
               <OptimizedImage
                 src={
                   member.photoUrl ||
-                  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=75"
+                  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80"
                 }
                 alt={member.name}
                 style={{ objectPosition: "50% 38%" }}
                 className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent pointer-events-none" />
             </div>
 
             {/* Leadership Star / Sparkle Badge */}
             {member.isLeadership && (
               <span
-                className="absolute -top-2 -right-2 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 p-1.5 rounded-full shadow-lg border border-white/80 animate-pulse"
+                className="absolute -top-2.5 -right-2.5 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 p-2 rounded-full shadow-xl border-2 border-white dark:border-slate-900 animate-pulse z-10"
                 title="Leadership Pillar"
               >
-                <Star className="w-3.5 h-3.5 fill-slate-950" />
+                <Star className="w-4 h-4 fill-slate-950" />
               </span>
             )}
           </div>
@@ -210,12 +210,12 @@ function FacultyGridCard({
         {/* Ambient Ring Inset for Refined Glass Depth */}
         <div className="absolute inset-0 rounded-[28px] pointer-events-none ring-1 ring-inset ring-black/5 dark:ring-white/10 group-hover:ring-amber-400/30 transition-all duration-300 z-20" />
 
-        {/* Photo Viewport */}
-        <div className="relative h-72 sm:h-76 w-full bg-slate-950 overflow-hidden">
+        {/* Photo Viewport - Expanded Majestic Portrait Display */}
+        <div className="relative h-96 sm:h-[420px] md:h-[450px] w-full bg-slate-950 overflow-hidden">
           <OptimizedImage
             src={
               member.photoUrl ||
-              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80"
+              "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=85"
             }
             alt={member.name}
             style={{ objectPosition: "50% 38%" }}
@@ -388,7 +388,7 @@ function FacultyHDProfileModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 25 }}
         transition={{ type: "spring", damping: 28, stiffness: 320 }}
-        className="relative z-10 w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-slate-900 border border-slate-700/80 shadow-[0_25px_80px_rgba(0,0,0,0.9)] text-white backdrop-blur-3xl overflow-hidden"
+        className="relative z-10 w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl max-h-[94vh] overflow-y-auto rounded-3xl bg-slate-900 border border-slate-700/80 shadow-[0_25px_80px_rgba(0,0,0,0.9)] text-white backdrop-blur-3xl overflow-hidden"
       >
         {/* Top Header Bar */}
         <div className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
@@ -414,9 +414,9 @@ function FacultyHDProfileModal({
 
         {/* Modal Main Body */}
         <div className="p-6 sm:p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            {/* Left 5 Cols: Interactive HD Zoom Visual Inspector with Multi-Light Frame */}
-            <div className="md:col-span-5 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left 6 Cols: Interactive HD Zoom Visual Inspector with Multi-Light Frame */}
+            <div className="lg:col-span-6 space-y-4">
               {/* Multi-Light Photo Frame Chassis: Light effect confined strictly to the border of the photo */}
               <div className="relative rounded-[30px] p-[2.5px] overflow-hidden flex items-center justify-center shadow-2xl bg-slate-900 border border-slate-800">
                 {/* Sharp Rotating Multi-Light Laser Beam Border (Confined strictly to photo border perimeter) */}
@@ -433,8 +433,8 @@ function FacultyHDProfileModal({
                   </div>
                 )}
 
-                {/* Core Obsidian Frame Body */}
-                <div className="relative w-full aspect-[4/5] rounded-[27.5px] overflow-hidden bg-slate-950 z-10 flex items-center justify-center">
+                {/* Core Obsidian Frame Body - Sized for Ultra-Clear Portrait HD Presentation */}
+                <div className="relative w-full aspect-[4/5] min-h-[420px] sm:min-h-[500px] md:min-h-[560px] rounded-[27.5px] overflow-hidden bg-slate-950 z-10 flex items-center justify-center">
                   {/* Multi-Color Neon Viewfinder Brackets */}
                   <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400 shadow-[0_0_10px_#00F0FF] rounded-tl pointer-events-none z-20" />
                   <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t-2 border-r-2 border-amber-400 shadow-[0_0_10px_#F59E0B] rounded-tr pointer-events-none z-20" />
@@ -456,7 +456,7 @@ function FacultyHDProfileModal({
 
                   {/* Magnified Image Container with Centered Face (object-cover object-center) */}
                   <div
-                    className="w-full h-full transition-transform duration-300 ease-out overflow-hidden flex items-center justify-center"
+                    className="w-full h-full min-h-[420px] sm:min-h-[500px] md:min-h-[560px] transition-transform duration-300 ease-out overflow-hidden flex items-center justify-center"
                     style={{
                       cursor: zoomLevel > 1 ? "grab" : "zoom-in",
                     }}
@@ -466,7 +466,7 @@ function FacultyHDProfileModal({
                     <img
                       src={
                         member.photoUrl ||
-                        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=85"
+                        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1400&auto=format&fit=crop&q=90"
                       }
                       alt={member.name}
                       style={{
@@ -529,8 +529,8 @@ function FacultyHDProfileModal({
               </p>
             </div>
 
-            {/* Right 7 Cols: Full Profile Information & Interactive Tabs */}
-            <div className="md:col-span-7 space-y-6">
+            {/* Right 6 Cols: Full Profile Information & Interactive Tabs */}
+            <div className="lg:col-span-6 space-y-6">
               {/* Name & Academic Rank Headline */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
