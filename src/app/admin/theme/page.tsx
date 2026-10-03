@@ -95,6 +95,13 @@ const DEFAULT_HEADER_BUTTONS: HeaderButtonConfig[] = [
     isVisible: true,
   },
   {
+    id: "careers-link",
+    label: "Careers",
+    url: "/careers",
+    variant: "secondary",
+    isVisible: true,
+  },
+  {
     id: "pay-fee",
     label: "Pay Fee Online",
     url: "/admissions/fees-structure",
@@ -905,6 +912,8 @@ export default function AdminThemeStudio() {
                         ? "bg-amber-400 text-slate-950 font-black"
                         : btn.variant === "outline"
                         ? "bg-transparent text-white border border-slate-700"
+                        : btn.variant === "secondary"
+                        ? "bg-slate-800 text-slate-200 border border-slate-700"
                         : "bg-blue-600 text-white"
                     }`}
                   >

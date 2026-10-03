@@ -24,6 +24,20 @@ export async function POST(req: Request) {
       },
     });
 
+    // Background email alert with attachments
+    try {
+      const { emailService } = await import("@/lib/email/emailService");
+      const appRef = `CAR-${Date.now().toString().slice(-4)}`;
+      emailService
+        .handleFormSubmission({
+          formSlug: "careers-apply",
+          formTitle: "Career Application",
+          submissionNo: appRef,
+          formData: data,
+        })
+        .catch((e) => console.error("Careers direct apply email error:", e));
+    } catch (_) {}
+
     return NextResponse.json({ success: true, application });
   } catch (error: any) {
     return NextResponse.json({ error: "Failed to submit job application" }, { status: 500 });

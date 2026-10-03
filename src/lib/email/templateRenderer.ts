@@ -46,6 +46,25 @@ export function interpolateVariables(
 }
 
 /**
+ * Strips storage paths, technical directories, and unique random hashes,
+ * converting an uploaded file path or URL into a clean, friendly document name.
+ * e.g., "/uploads/birth_certificate_866bc89cf18d.pdf" -> "Birth Certificate.pdf"
+ */
+export function getCleanFileName(urlOrPath: string): string {
+  if (!urlOrPath) return "Document";
+  const raw = String(urlOrPath).split("/").pop() || urlOrPath;
+  const withoutHash = raw.replace(/_[a-f0-9]{8,16}(\.[a-zA-Z0-9]+)$/i, "$1");
+  const ext = withoutHash.includes(".") ? withoutHash.slice(withoutHash.lastIndexOf(".")) : "";
+  const base = withoutHash.slice(0, withoutHash.length - ext.length);
+  const cleanBase = base.replace(/[_-]+/g, " ").trim();
+  const formatted = cleanBase
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+  return (formatted || "Document") + ext.toLowerCase();
+}
+
+/**
  * Generate a responsive HTML table of submitted form key-values
  */
 export function generateSubmissionFieldsTable(formData: Record<string, any>): string {
@@ -67,7 +86,26 @@ export function generateSubmissionFieldsTable(formData: Record<string, any>): st
       if (typeof value === "object" && value !== null) {
         displayVal = `<pre style="margin:0;font-size:12px;">${escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
       } else {
-        displayVal = escapeHtml(String(value ?? ""));
+        const strVal = String(value ?? "");
+        const isUpload = strVal.startsWith("/uploads/") || strVal.includes("/uploads/");
+        const isImage = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif"].some((ext) => strVal.toLowerCase().endsWith(ext));
+        const isDoc = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt"].some((ext) => strVal.toLowerCase().endsWith(ext));
+
+        if (isUpload || ((isImage || isDoc) && strVal.length > 4)) {
+          const cleanName = getCleanFileName(strVal);
+          const icon = isImage ? "🖼️" : "📄";
+          displayVal = `
+            <div style="display: inline-block; padding: 6px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <span style="font-size: 15px; margin-right: 6px;">${icon}</span>
+              <strong style="color: #166534; font-size: 13px;">${escapeHtml(cleanName)}</strong>
+              <span style="display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; background-color: #22c55e; color: #ffffff; padding: 2px 7px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                📎 Attached
+              </span>
+            </div>
+          `;
+        } else {
+          displayVal = escapeHtml(strVal);
+        }
       }
 
       return `

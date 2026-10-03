@@ -73,7 +73,7 @@ model Inquiry {
   inquiryType   String   @default("GENERAL") // GENERAL, ADMISSION, VISIT, TRANSPORT, HOSTEL, FEE
   subject       String
   message       String
-  status        String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED, CLOSED
+  status        String   @default("NEW") // NEW, IN_PROGRESS, RESOLVED, CLOSED, DELETED
   responseNotes String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

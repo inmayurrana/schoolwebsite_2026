@@ -113,7 +113,7 @@ export default function TestimonialsSection({
   const renderCardWrapper = (content: React.ReactNode) => {
     if (config.cardStyle === "aurora") {
       return (
-        <div className="relative p-[2px] rounded-3xl bg-gradient-to-r from-amber-400/40 via-sky-400/40 to-indigo-500/40 shadow-2xl transition-all duration-300">
+        <div className="relative p-[2px] rounded-3xl bg-gradient-to-r from-amber-400/40 via-sky-400/40 to-indigo-500/40 shadow-2xl hover:shadow-[0_25px_60px_-15px_rgba(245,158,11,0.3)] transition-all duration-500">
           <div className="bg-slate-900/90 dark:bg-[#07172f]/95 backdrop-blur-xl rounded-3xl p-8 sm:p-12 relative overflow-hidden">
             {content}
           </div>
@@ -123,7 +123,7 @@ export default function TestimonialsSection({
 
     if (config.cardStyle === "navy") {
       return (
-        <div className="bg-gradient-to-br from-slate-900 via-[#0a2347] to-slate-950 border border-amber-400/35 rounded-3xl p-8 sm:p-12 shadow-2xl shadow-blue-950/60 relative overflow-hidden transition-all duration-300">
+        <div className="bg-gradient-to-br from-slate-900 via-[#0a2347] to-slate-950 hover:from-[#0c2448] hover:via-[#16335e] hover:to-[#0f2444] border border-amber-400/35 hover:border-amber-400 rounded-3xl p-8 sm:p-12 shadow-2xl shadow-blue-950/60 hover:shadow-[0_25px_60px_-15px_rgba(245,158,11,0.25)] relative overflow-hidden transition-all duration-500">
           {content}
         </div>
       );
@@ -131,7 +131,7 @@ export default function TestimonialsSection({
 
     if (config.cardStyle === "clean") {
       return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden transition-all duration-300">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-gradient-to-br hover:from-white hover:via-amber-50/40 hover:to-white dark:hover:from-slate-900 dark:hover:via-amber-950/25 dark:hover:to-slate-900 hover:border-amber-400 hover:shadow-[0_25px_60px_-15px_rgba(245,158,11,0.22)] rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden transition-all duration-500">
           {content}
         </div>
       );
@@ -139,7 +139,7 @@ export default function TestimonialsSection({
 
     // Default: Glass
     return (
-      <div className="glass-panel border border-slate-200/60 dark:border-white/10 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden transition-all duration-300">
+      <div className="glass-panel border border-slate-200/60 dark:border-white/10 hover:bg-gradient-to-br hover:from-white hover:via-amber-50/40 hover:to-white dark:hover:from-slate-900 dark:hover:via-amber-950/25 dark:hover:to-slate-900 hover:border-amber-400 hover:shadow-[0_25px_60px_-15px_rgba(245,158,11,0.22)] rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden transition-all duration-500">
         {content}
       </div>
     );
@@ -147,7 +147,7 @@ export default function TestimonialsSection({
 
   return (
     <section
-      className="py-20 lg:py-28 bg-[#f0f7ff]/40 dark:bg-[#051329] relative w-full overflow-hidden"
+      className="py-20 lg:py-28 bg-[#f0f7ff]/40 dark:bg-[#051329] hover:bg-[#fffdf7] dark:hover:bg-[#071c38] transition-colors duration-500 relative w-full overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

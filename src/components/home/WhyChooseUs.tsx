@@ -78,7 +78,7 @@ export default function WhyChooseUs({ customStyles }: WhyChooseUsProps) {
   const subtitleText = customStyles?.why_choose_us_subtitle || "Discover what sets Cambridge International School Mandi apart as the finest CBSE day & residential institution in Himachal Pradesh.";
 
   return (
-    <section className="py-20 lg:py-28 relative overflow-hidden bg-white dark:bg-[#071933] w-full">
+    <section className="py-20 lg:py-28 relative overflow-hidden bg-white dark:bg-[#071933] hover:bg-[#fffdf7] dark:hover:bg-[#081e3d] transition-colors duration-500 w-full">
       {/* Ambient Glass Glow Orbs */}
       <div className="glass-orb-gold -top-20 left-10 opacity-30" />
       <div className="glass-orb-blue bottom-10 right-10 opacity-35" />

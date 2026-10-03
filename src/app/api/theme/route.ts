@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
+import { logAuditAction } from "@/lib/audit";
 
 export async function GET() {
   try {
@@ -108,16 +109,20 @@ export async function POST(req: Request) {
     // Invalidate theme cache immediately
     appCache.invalidate("theme");
 
-    // Record audit log entry in database
-    await prisma.auditLog.create({
-      data: {
-        userId: auth.id,
-        userName: auth.name || "Administrator",
-        action: "THEME_UPDATE",
-        entity: "ThemeConfig",
-        entityId: theme.id,
-        details: `Saved theme and visual configuration "${theme.name}" in database. Primary: ${theme.primaryColor}, Logo: ${theme.logoMode}.`,
+    // Record audit log entry in database with real public IP and activity intelligence
+    await logAuditAction({
+      userId: auth.id,
+      userName: auth.name || "Administrator",
+      action: "THEME_UPDATE",
+      entity: "ThemeConfig",
+      entityId: theme.id,
+      details: `Saved theme and visual configuration "${theme.name}" in database. Primary: ${theme.primaryColor}, Logo: ${theme.logoMode}.`,
+      metadata: {
+        themeName: theme.name,
+        primaryColor: theme.primaryColor,
+        logoMode: theme.logoMode,
       },
+      req,
     });
 
     return NextResponse.json({ success: true, theme });

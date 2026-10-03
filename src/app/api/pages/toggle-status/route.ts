@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
 import { invalidatePageCache, setCachedPageVisibility, setCachedPageContent } from "@/lib/pageContentCache";
+import { logAuditAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -33,17 +34,21 @@ export async function POST(req: Request) {
     setCachedPageContent(slug, updated);
     appCache.invalidate("pages");
 
-    // Record audit log
+    // Record audit log with real public IP and activity intelligence
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: user?.id || null,
-          userName: user?.name || "Administrator",
-          action: isPublished ? "PAGE_ENABLED" : "PAGE_DISABLED",
-          entity: "PageContent",
-          entityId: updated.id,
-          details: `Page "${updated.pageName}" (${slug}) was ${isPublished ? "ENABLED (Visible)" : "DISABLED (Hidden)"} by admin.`,
+      await logAuditAction({
+        userId: user?.id || null,
+        userName: user?.name || "Administrator",
+        action: isPublished ? "PAGE_ENABLED" : "PAGE_DISABLED",
+        entity: "PageContent",
+        entityId: updated.id,
+        details: `Page "${updated.pageName}" (${slug}) was ${isPublished ? "ENABLED (Visible)" : "DISABLED (Hidden)"} by admin.`,
+        metadata: {
+          slug,
+          pageName: updated.pageName,
+          isPublished: Boolean(isPublished),
         },
+        req,
       });
     } catch (_) {}
 

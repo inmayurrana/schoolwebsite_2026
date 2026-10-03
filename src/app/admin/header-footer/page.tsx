@@ -190,6 +190,7 @@ const DEFAULT_NAV_LINKS: NavItem[] = [
 
 const DEFAULT_HEADER_BUTTONS: HeaderButton[] = [
   { id: "btn-apply", label: "Apply for Admission", url: "/admissions/apply", variant: "primary", isVisible: true },
+  { id: "btn-careers", label: "Careers", url: "/careers", variant: "secondary", isVisible: true },
   { id: "btn-fees", label: "Pay Fee Online", url: "/admissions/fees-structure", variant: "accent", isVisible: true },
 ];
 
@@ -2593,6 +2594,7 @@ export default function AdminHeaderFooterStudio() {
                         className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700"
                       >
                         <option value="primary">Primary Gradient</option>
+                        <option value="secondary">Secondary / Careers</option>
                         <option value="accent">Gold Accent</option>
                         <option value="outline">Glass Outline</option>
                         <option value="login">Lock Login Button</option>

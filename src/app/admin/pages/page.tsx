@@ -101,6 +101,7 @@ const ALL_SITE_PAGES: SitePageMeta[] = [
   { slug: "downloads", path: "/downloads", name: "📥 Downloads & Documents", category: "Connect", description: "Syllabus, book lists, datesheets & forms" },
   { slug: "mandatory-disclosure", path: "/mandatory-disclosure", name: "⚖️ CBSE Mandatory Disclosure", category: "Compliance", description: "OASIS / SARAS compliance documents" },
   { slug: "cbse-information", path: "/cbse-information", name: "🏫 CBSE School Information", category: "Compliance", description: "Affiliation status, committee & faculty list" },
+  { slug: "privacy-policy", path: "/privacy-policy", name: "🛡️ Privacy Policy & Terms of Service", category: "Compliance", description: "Data protection standards, student confidentiality & terms" },
   { slug: "careers", path: "/careers", name: "💼 Careers at CIS Mandi", category: "Connect", description: "Teaching vacancies & online application" },
   { slug: "contact", path: "/contact", name: "📍 Contact & Campus Location", category: "Connect", description: "Inquiries, helpline numbers & Google Maps" },
 ];

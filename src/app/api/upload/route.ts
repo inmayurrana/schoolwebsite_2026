@@ -5,6 +5,7 @@ import crypto from "crypto";
 import sharp from "sharp";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAuditAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -94,17 +95,25 @@ export async function POST(req: Request) {
       },
     });
 
-    // 4. Save audit trail record in database
+    // 4. Save audit trail record in database with real public IP and activity intelligence
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: user?.id || null,
-          userName: user?.name || "Administrator",
-          action: "FILE_UPLOAD",
-          entity: "StorageDocument",
-          entityId: docRecord.id,
-          details: `Saved & compressed file "${file.name}" to WebP/storage (${formattedSize}). URL: ${publicUrl}`,
+      await logAuditAction({
+        userId: user?.id || null,
+        userName: user?.name || "Administrator",
+        action: "FILE_UPLOAD",
+        entity: "StorageDocument",
+        entityId: docRecord.id,
+        details: `Saved & compressed file "${file.name}" to WebP/storage (${formattedSize}). URL: ${publicUrl}`,
+        metadata: {
+          fileName: file.name,
+          savedFilename,
+          originalSize: `${(file.size / 1024).toFixed(0)} KB`,
+          compressedSize: formattedSize,
+          mimeType: savedMimeType,
+          documentId: docRecord.id,
+          publicUrl,
         },
+        req,
       });
     } catch (_) {}
 
@@ -112,6 +121,7 @@ export async function POST(req: Request) {
       success: true,
       url: publicUrl,
       name: savedFilename,
+      originalName: file.name,
       size: formattedSize,
       type: savedMimeType,
       documentId: docRecord.id,

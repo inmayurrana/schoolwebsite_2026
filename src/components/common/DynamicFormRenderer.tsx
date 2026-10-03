@@ -87,6 +87,109 @@ export default function DynamicFormRenderer({
   const [dragOverField, setDragOverField] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<{ field: string; message: string } | null>(null);
   const [manualUrlFields, setManualUrlFields] = useState<Record<string, boolean>>({});
+  const [uploadedFileMeta, setUploadedFileMeta] = useState<Record<string, { originalName: string; size?: string }>>({});
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadCurrentFileName, setUploadCurrentFileName] = useState<Record<string, string>>({});
+
+  const getCleanDisplayName = (urlOrPath: string, fieldName?: string, defaultFallback: string = "Document"): string => {
+    if (fieldName && uploadedFileMeta[fieldName]?.originalName) {
+      return uploadedFileMeta[fieldName].originalName;
+    }
+    if (!urlOrPath || typeof urlOrPath !== "string") return defaultFallback;
+    // Strip query strings and URL fragments
+    const cleanUrl = urlOrPath.split("?")[0].split("#")[0];
+    const raw = cleanUrl.split("/").pop()?.split("\\").pop() || "";
+    if (!raw) return defaultFallback;
+
+    // Strip generated hex hashes like _5580fb8867d0 or __7f8574f64f69 or _[a-f0-9]{8,36}
+    let withoutHash = raw
+      .replace(/_+[a-f0-9]{8,36}(\.[a-zA-Z0-9]+)$/i, "$1")
+      .replace(/^[a-f0-9]{8,36}_+/i, "")
+      .replace(/^\d{10,14}[-_]/, "");
+
+    const ext = withoutHash.includes(".") ? withoutHash.slice(withoutHash.lastIndexOf(".")) : "";
+    let base = withoutHash.slice(0, withoutHash.length - ext.length);
+
+    // Format numbered indices like ExportedReport__1__ to ExportedReport (1)
+    base = base.replace(/__(\d+)__/g, " ($1) ").replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+
+    if (!base || base.toLowerCase() === "uploads" || base.toLowerCase() === "file" || base.toLowerCase() === "document" || base.toLowerCase() === "image") {
+      return defaultFallback + (ext.toLowerCase() || "");
+    }
+
+    // Capitalize nicely if all lowercase
+    const formatted = base === base.toLowerCase()
+      ? base.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+      : base;
+
+    return formatted + (ext.toLowerCase() || "");
+  };
+
+  const renderUploadProgressBar = (fieldName: string, isImage: boolean = false) => {
+    const fileName = uploadCurrentFileName[fieldName] || (isImage ? "Passport Photo" : "Document");
+    const progress = uploadProgress[fieldName] || 0;
+
+    let stageText = "Preparing & optimizing file...";
+    if (progress >= 100) {
+      stageText = "Upload complete! Finalizing attachment...";
+    } else if (progress >= 80) {
+      stageText = "Verifying security & cloud storage...";
+    } else if (progress >= 40) {
+      stageText = isImage ? "Compressing & generating preview..." : "Uploading document to server...";
+    } else if (progress >= 15) {
+      stageText = "Starting encrypted transmission...";
+    }
+
+    return (
+      <div className="w-full max-w-md mx-auto py-5 px-3 space-y-3.5 animate-in fade-in duration-300">
+        {/* Header with icon, filename and live percentage */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center shrink-0 shadow-sm">
+              <Upload className="w-5 h-5 animate-bounce" />
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100 truncate">
+                {fileName}
+              </p>
+              <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block" />
+                <span>{stageText}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex items-center space-x-1 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-black font-mono text-amber-600 dark:text-amber-400">
+              {progress}%
+            </span>
+          </div>
+        </div>
+
+        {/* Animated Progress Bar Track */}
+        <div className="w-full h-3 sm:h-3.5 bg-slate-200/90 dark:bg-slate-800/90 rounded-full overflow-hidden p-0.5 border border-slate-300 dark:border-slate-700 shadow-inner relative">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 transition-all duration-300 ease-out relative overflow-hidden shadow-sm"
+            style={{ width: `${Math.max(6, progress)}%` }}
+          >
+            {/* Shimmer light sweep animation */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" />
+          </div>
+        </div>
+
+        {/* Bottom Subtitle / Indicators */}
+        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 font-medium pt-0.5">
+          <span className="flex items-center space-x-1">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Encrypted SSL Upload</span>
+          </span>
+          <span className="font-semibold text-slate-500 dark:text-slate-400">
+            {progress >= 100 ? "Ready!" : "Do not close window"}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch form definition if not provided as initialForm
   useEffect(() => {
@@ -166,29 +269,85 @@ export default function DynamicFormRenderer({
 
     setUploadingField(fieldName);
     setUploadError(null);
+    setUploadCurrentFileName((prev) => ({ ...prev, [fieldName]: file.name }));
+    setUploadProgress((prev) => ({ ...prev, [fieldName]: 12 }));
+
+    // Animated smooth progressive steps
+    let currentPct = 15;
+    const progressTimer = setInterval(() => {
+      currentPct = Math.min(currentPct + Math.floor(Math.random() * 12) + 6, 88);
+      setUploadProgress((prev) => ({ ...prev, [fieldName]: currentPct }));
+    }, 120);
 
     try {
       const uploadData = new FormData();
       uploadData.append("file", file);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
+      // Perform upload with real progress tracking via XMLHttpRequest
+      const uploadPromise = new Promise<{ url: string; originalName?: string; size?: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/upload");
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const calculated = Math.round((event.loaded / event.total) * 90);
+            setUploadProgress((prev) => ({ ...prev, [fieldName]: Math.max(calculated, currentPct) }));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const resData = JSON.parse(xhr.responseText);
+              if (resData.url) {
+                resolve(resData);
+              } else {
+                reject(new Error(resData.error || "Failed to process upload"));
+              }
+            } catch (_) {
+              reject(new Error("Invalid server response format"));
+            }
+          } else {
+            try {
+              const resData = JSON.parse(xhr.responseText);
+              reject(new Error(resData.error || `Upload failed (Status ${xhr.status})`));
+            } catch (_) {
+              reject(new Error(`Upload failed with status code ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network connection lost during upload"));
+        xhr.send(uploadData);
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "Failed to upload file");
-      }
+      const data = await uploadPromise;
+      clearInterval(progressTimer);
+
+      // Jump to 100% complete
+      setUploadProgress((prev) => ({ ...prev, [fieldName]: 100 }));
+
+      // 450ms pause to let user see "100% Complete" animated check
+      await new Promise((r) => setTimeout(r, 450));
+
+      setUploadedFileMeta((prev) => ({
+        ...prev,
+        [fieldName]: {
+          originalName: file.name,
+          size: data.size || `${(file.size / 1024).toFixed(0)} KB`,
+        },
+      }));
 
       handleInputChange(fieldName, data.url);
     } catch (err: any) {
+      clearInterval(progressTimer);
       console.error("Upload error:", err);
       setUploadError({
         field: fieldName,
         message: err.message || "Failed to upload file. Please try again.",
       });
     } finally {
+      clearInterval(progressTimer);
       setUploadingField(null);
     }
   };
@@ -351,26 +510,31 @@ export default function DynamicFormRenderer({
                           alt={f.label}
                           className="w-10 h-10 object-cover rounded-lg border border-amber-400 shadow-sm"
                         />
-                        <a
-                          href={String(val)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-amber-500 hover:underline text-xs font-bold flex items-center space-x-1"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          <span>View Photo</span>
-                        </a>
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate max-w-[150px]">
+                            {getCleanDisplayName(String(val), f.name)}
+                          </span>
+                          <a
+                            href={String(val)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-500 hover:underline text-[11px] font-bold flex items-center space-x-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            <span>View Photo</span>
+                          </a>
+                        </div>
                       </div>
                     ) : isDocVal ? (
                       <a
                         href={String(val)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1 text-amber-500 hover:underline text-xs font-bold pt-0.5"
+                        className="inline-flex items-center space-x-1.5 text-amber-500 hover:underline text-xs font-bold pt-0.5"
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span className="truncate max-w-[200px]">{String(val).split("/").pop() || "View Document"}</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <FileText className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate max-w-[200px]">{getCleanDisplayName(String(val), f.name)}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0" />
                       </a>
                     ) : (
                       <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
@@ -637,7 +801,11 @@ export default function DynamicFormRenderer({
                 {/* IMAGE UPLOAD */}
                 {field.type === "image" && (
                   <div className="space-y-2">
-                    {formData[field.name] ? (
+                    {uploadingField === field.name ? (
+                      <div className="border-2 border-dashed border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 rounded-2xl p-4 sm:p-6 shadow-inner">
+                        {renderUploadProgressBar(field.name, true)}
+                      </div>
+                    ) : formData[field.name] ? (
                       <div className="p-4 bg-amber-500/5 dark:bg-amber-400/5 border border-amber-400/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center space-x-3.5">
                           <img
@@ -650,9 +818,15 @@ export default function DynamicFormRenderer({
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Photo Attached</span>
                             </span>
-                            <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-[180px] sm:max-w-xs">
-                              {formData[field.name]}
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px] sm:max-w-xs">
+                              {getCleanDisplayName(formData[field.name], field.name, "Passport Photo")}
                             </p>
+                            <div className="flex items-center space-x-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20">
+                                {uploadedFileMeta[field.name]?.size || "Ready"}
+                              </span>
+                              <span>• Ready for submission</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
@@ -760,12 +934,7 @@ export default function DynamicFormRenderer({
                             className="hidden"
                           />
                           {uploadingField === field.name ? (
-                            <div className="space-y-2 py-2">
-                              <Loader2 className="w-7 h-7 animate-spin text-amber-500 mx-auto" />
-                              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                Uploading & compressing photo...
-                              </p>
-                            </div>
+                            renderUploadProgressBar(field.name, true)
                           ) : dragOverField === field.name ? (
                             <div className="space-y-2 py-1 animate-pulse">
                               <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-md">
@@ -832,7 +1001,11 @@ export default function DynamicFormRenderer({
                 {/* DOCUMENT & FILE UPLOAD */}
                 {(field.type === "document" || field.type === "file") && (
                   <div className="space-y-2">
-                    {formData[field.name] ? (
+                    {uploadingField === field.name ? (
+                      <div className="border-2 border-dashed border-amber-400 bg-amber-50/60 dark:bg-amber-950/20 rounded-2xl p-4 sm:p-6 shadow-inner">
+                        {renderUploadProgressBar(field.name, false)}
+                      </div>
+                    ) : formData[field.name] ? (
                       <div className="p-4 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center space-x-3.5">
                           <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
@@ -843,9 +1016,15 @@ export default function DynamicFormRenderer({
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Document Attached</span>
                             </span>
-                            <p className="text-[11px] font-mono text-slate-600 dark:text-slate-400 truncate max-w-[200px] sm:max-w-xs">
-                              {formData[field.name]}
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px] sm:max-w-xs">
+                              {getCleanDisplayName(formData[field.name], field.name, "Attached Document")}
                             </p>
+                            <div className="flex items-center space-x-2 text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/20">
+                                {uploadedFileMeta[field.name]?.size || "Verified"}
+                              </span>
+                              <span>• Ready for submission</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
@@ -953,12 +1132,7 @@ export default function DynamicFormRenderer({
                             className="hidden"
                           />
                           {uploadingField === field.name ? (
-                            <div className="space-y-2 py-2">
-                              <Loader2 className="w-7 h-7 animate-spin text-amber-500 mx-auto" />
-                              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                Uploading document to server...
-                              </p>
-                            </div>
+                            renderUploadProgressBar(field.name, false)
                           ) : dragOverField === field.name ? (
                             <div className="space-y-2 py-1 animate-pulse">
                               <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center mx-auto shadow-md">

@@ -2502,6 +2502,80 @@ export const DEFAULT_PAGE_REGISTRY: Record<string, PageRecord> = {
     },
     isPublished: true,
   },
+
+  // 35. PRIVACY POLICY & TERMS OF SERVICE
+  "privacy-policy": {
+    slug: "privacy-policy",
+    pageName: "Privacy Policy & Terms of Service",
+    heroBadge: "Data Protection & Privacy",
+    heroBadgeColor: "amber",
+    heroTitle: "Privacy Policy & Terms of Service",
+    heroSubtitle: "We are committed to safeguarding student and parent personal information with strict data confidentiality.",
+    heroImage: "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=1600&auto=format&fit=crop&q=80",
+    heroImageHeight: 280,
+    heroMediaType: "IMAGE",
+    heroOverlayOpacity: 0.45,
+    heroCtaText: "Contact DPO",
+    heroCtaLink: "mailto:admin@cismandi.edu.in",
+    sections: [
+      {
+        id: "privacy_sec_1",
+        type: "list",
+        title: "Data Protection & Policy Clauses",
+        subtitle: "Safeguarding student records, privacy standards, and statutory regulatory compliance.",
+        badge: "Data Protection",
+        badgeColor: "amber",
+        layout: "list",
+        items: [
+          {
+            title: "1. Information We Collect",
+            description: "Cambridge International School Mandi collects personal identification details (student name, date of birth, parent names, residential address, contact numbers, email addresses, and academic records) solely for admission processing, attendance, academic records, and statutory CBSE compliance.",
+            badge: "Clause 1",
+            badgeColor: "blue",
+          },
+          {
+            title: "2. Data Security & Confidentiality",
+            description: "We implement industry-standard encryption, SSL transport security, and role-based administrative access controls. We do not sell, rent, or trade student or parent information to third-party commercial marketing entities under any circumstances.",
+            badge: "Clause 2",
+            badgeColor: "emerald",
+          },
+          {
+            title: "3. Media & Photography Consent",
+            description: "Photographs and video footage of students participating in official school events, Olympiads, and athletic meets may be published on the official school website, annual school magazine, or accredited educational press with parental consent at the time of admission.",
+            badge: "Clause 3",
+            badgeColor: "purple",
+          },
+          {
+            title: "4. Contact the Data Protection Officer",
+            description: "For privacy inquiries, record correction, or consent modification, please write to admin@cismandi.edu.in or visit the administrative office during school working hours.",
+            badge: "Clause 4",
+            badgeColor: "rose",
+            link: "mailto:admin@cismandi.edu.in",
+            buttonText: "Email DPO Office",
+          },
+        ],
+      },
+    ],
+    customStyles: {
+      storyHeadline: "Student & Parent Trust is Our Highest Priority",
+      mainStory: "Cambridge International School Mandi adheres to strict Indian IT Act standards, CBSE data governance guidelines, and international child protection protocols. All academic and personal information is stored securely in encrypted environments with audited role-based access.",
+      stats: [
+        { number: "256-bit", label: "SSL Data Encryption" },
+        { number: "100%", label: "CBSE Compliance" },
+        { number: "Zero", label: "Third-party Sharing" },
+      ],
+      documents: [
+        {
+          id: "doc_privacy_1",
+          title: "CIS Mandi - Comprehensive Child Protection & Privacy Policy.pdf",
+          fileUrl: "/uploads/prospectus.pdf",
+          category: "Compliance",
+          fileSize: "1.2 MB",
+        },
+      ],
+    },
+    isPublished: true,
+  },
 };
 
 /**

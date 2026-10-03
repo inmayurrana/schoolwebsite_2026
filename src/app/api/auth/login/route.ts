@@ -148,7 +148,12 @@ export async function POST(req: Request) {
             entity: "User",
             entityId: user.id,
             details: `Account temporarily blocked for ${LOCKOUT_MINUTES} minutes after 5 consecutive failed password attempts. Alert email triggered.`,
-            ipAddress,
+            metadata: {
+              email: user.email,
+              failedAttempts: newFailedAttempts,
+              lockoutMinutes: LOCKOUT_MINUTES,
+            },
+            req,
           });
 
           // Dispatch security alert email to user
@@ -191,8 +196,13 @@ export async function POST(req: Request) {
           action: "FAILED_LOGIN",
           entity: "User",
           entityId: user.id,
-          details: `Failed password attempt (${newFailedAttempts}/${MAX_FAILED_ATTEMPTS}) from IP ${ipAddress}.`,
-          ipAddress,
+          details: `Failed password attempt (${newFailedAttempts}/${MAX_FAILED_ATTEMPTS}) for account ${user.email}.`,
+          metadata: {
+            email: user.email,
+            attemptCount: newFailedAttempts,
+            maxAllowed: MAX_FAILED_ATTEMPTS,
+          },
+          req,
         });
 
         const attemptsRemaining = MAX_FAILED_ATTEMPTS - newFailedAttempts;
@@ -237,8 +247,13 @@ export async function POST(req: Request) {
         action: "LOGIN",
         entity: "User",
         entityId: user.id,
-        details: `Successful login with role ${user.role} (${rememberMe ? "Remembered" : "Session"})`,
-        ipAddress,
+        details: `Successful login with role ${user.role} (${rememberMe ? "Remembered Session" : "Active Session"})`,
+        metadata: {
+          email: user.email,
+          role: user.role,
+          sessionType: rememberMe ? "7 Days" : "24 Hours",
+        },
+        req,
       });
 
       const response = NextResponse.json({
@@ -278,8 +293,12 @@ export async function POST(req: Request) {
         userName: "Anonymous / Unknown",
         action: "IP_BLOCKED",
         entity: "Security",
-        details: `IP ${ipAddress} temporarily blocked for ${LOCKOUT_MINUTES} minutes after 5 failed login attempts with non-existent accounts (${normalizedInput}).`,
-        ipAddress,
+        details: `Network temporarily blocked for ${LOCKOUT_MINUTES} minutes after 5 failed login attempts with non-existent account (${normalizedInput}).`,
+        metadata: {
+          attemptedAccount: normalizedInput,
+          lockoutMinutes: LOCKOUT_MINUTES,
+        },
+        req,
       });
 
       return NextResponse.json(

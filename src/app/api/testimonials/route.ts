@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
+import { logAuditAction } from "@/lib/audit";
 import {
   TestimonialItem,
   TestimonialsConfig,
@@ -108,16 +109,18 @@ export async function POST(req: Request) {
     // Invalidate RAM cache
     appCache.invalidateAll();
 
-    // Audit Log
+    // Audit Log with real public IP and activity intelligence
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: user.id || null,
-          userName: user.name || "Administrator",
-          action: "UPDATE_TESTIMONIALS",
-          entity: "Setting",
-          details: `Updated ${testimonials.length} Parent & Alumni Voices testimonials and UI effects.`,
+      await logAuditAction({
+        userId: user.id || null,
+        userName: user.name || "Administrator",
+        action: "UPDATE_TESTIMONIALS",
+        entity: "Setting",
+        details: `Updated ${testimonials.length} Parent & Alumni Voices testimonials and UI effects.`,
+        metadata: {
+          testimonialsCount: testimonials.length,
         },
+        req,
       });
     } catch (_) {}
 

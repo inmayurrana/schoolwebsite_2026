@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 
-export const DEFAULT_EMAIL_ALERTS = {
+const DEFAULT_EMAIL_ALERTS = {
   alert_new_contact: true,
   alert_new_admission: true,
   alert_new_career: true,

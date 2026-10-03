@@ -14,10 +14,19 @@ import { logAuditAction } from "@/lib/audit";
  * signs JWT, sets session cookie, and redirects user to /admin.
  */
 export async function GET(req: NextRequest) {
-  const appUrl =
-    process.env.NEXTAUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000";
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const proto =
+    req.headers.get("x-forwarded-proto") ||
+    (host?.includes("localhost") || host?.includes("127.0.0.1") ? "http" : "https");
+
+  const baseAppUrl =
+    host && (host.includes("localhost") || host.includes("127.0.0.1"))
+      ? `${proto}://${host}`
+      : process.env.NEXTAUTH_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "http://localhost:3000";
+
+  const appUrl = baseAppUrl.replace(/\/$/, "");
   const loginUrl = new URL("/admin/login", appUrl);
 
   try {
@@ -47,7 +56,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const redirectUri = `${appUrl.replace(/\/$/, "")}/api/auth/google/callback`;
+    const callbackPath = req.nextUrl?.pathname || "/api/auth/google/callback";
+    const redirectUri =
+      process.env.GOOGLE_REDIRECT_URI || `${appUrl}${callbackPath}`;
 
     // Exchange authorization code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -89,7 +100,7 @@ export async function GET(req: NextRequest) {
     const user = userResult.user;
     const token = signToken(user, "7d");
 
-    // Audit log
+    // Audit log with real public IP and activity intelligence
     try {
       await logAuditAction({
         userId: user.id,
@@ -98,6 +109,12 @@ export async function GET(req: NextRequest) {
         entity: "User",
         entityId: user.id,
         details: `Successful Google OAuth callback login as ${user.email}`,
+        metadata: {
+          email: user.email,
+          role: user.role,
+          provider: "Google Workspace SSO",
+        },
+        req,
       });
     } catch (_) {}
 

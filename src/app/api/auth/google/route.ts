@@ -100,11 +100,21 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const appUrl =
-    process.env.NEXTAUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000";
-  const redirectUri = `${appUrl.replace(/\/$/, "")}/api/auth/google/callback`;
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const proto =
+    req.headers.get("x-forwarded-proto") ||
+    (host?.includes("localhost") || host?.includes("127.0.0.1") ? "http" : "https");
+
+  const baseAppUrl =
+    host && (host.includes("localhost") || host.includes("127.0.0.1"))
+      ? `${proto}://${host}`
+      : process.env.NEXTAUTH_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "http://localhost:3000";
+
+  const appUrl = baseAppUrl.replace(/\/$/, "");
+  const redirectUri =
+    process.env.GOOGLE_REDIRECT_URI || `${appUrl}/api/auth/google/callback`;
 
   const state = Math.random().toString(36).substring(2, 15);
 

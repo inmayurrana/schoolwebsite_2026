@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { logAuditAction } from "@/lib/audit";
 
 const defaultDisclosureData = {
   schoolName: "CAMBRIDGE INTERNATIONAL SCHOOL, LUNAPANI,MANDI",
@@ -176,16 +177,20 @@ export async function POST(req: Request) {
       });
     }
 
-    // Record audit log entry in database
-    await prisma.auditLog.create({
-      data: {
-        userId: auth.id,
-        userName: auth.name || "Administrator",
-        action: "DISCLOSURE_UPDATE",
-        entity: "MandatoryDisclosure",
-        entityId: result.id,
-        details: `Saved CBSE Mandatory Public Disclosure details and statutory documents in database.`,
+    // Record audit log entry in database with real public IP and activity intelligence
+    await logAuditAction({
+      userId: auth.id,
+      userName: auth.name || "Administrator",
+      action: "DISCLOSURE_UPDATE",
+      entity: "MandatoryDisclosure",
+      entityId: result.id,
+      details: `Saved CBSE Mandatory Public Disclosure details and statutory documents in database.`,
+      metadata: {
+        schoolName: payload.schoolName,
+        affiliationNo: payload.affiliationNo,
+        principalName: payload.principalName,
       },
+      req,
     });
 
     return NextResponse.json({ success: true, disclosure: result });

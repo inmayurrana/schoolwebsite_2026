@@ -43,6 +43,19 @@ export async function POST(req: Request) {
       },
     });
 
+    // Background email alert with attachments
+    try {
+      const { emailService } = await import("@/lib/email/emailService");
+      emailService
+        .handleFormSubmission({
+          formSlug: "admissions-apply",
+          formTitle: "Admission Application",
+          submissionNo: applicationNo,
+          formData: data,
+        })
+        .catch((e) => console.error("Admissions direct apply email error:", e));
+    } catch (_) {}
+
     return NextResponse.json({
       success: true,
       applicationNo,

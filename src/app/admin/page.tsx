@@ -21,6 +21,10 @@ import {
   Mail,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { parseLogDetails } from "@/lib/audit";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminDashboardPage() {
   let admissionsCount = 0;
@@ -36,7 +40,11 @@ export default async function AdminDashboardPage() {
     pendingAdmissions = await prisma.admissionApplication.count({
       where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } },
     });
-    inquiriesCount = await prisma.inquiry.count();
+    inquiriesCount = await prisma.inquiry.count({
+      where: {
+        status: { not: "DELETED" },
+      },
+    });
     newsCount = await prisma.news.count();
     documentsCount = await prisma.document.count();
 
@@ -97,7 +105,7 @@ export default async function AdminDashboardPage() {
     {
       title: "Visitor Inquiries",
       value: inquiriesCount,
-      sublabel: "Prospective Leads",
+      sublabel: inquiriesCount === 0 ? "0 Active Inquiries" : `${inquiriesCount} Active Inquiries`,
       icon: MessageSquare,
       color: "from-amber-500 to-orange-600",
       link: "/admin/inquiries",
@@ -384,7 +392,7 @@ export default async function AdminDashboardPage() {
                   </div>
                   <p className="font-semibold text-white">{log.action}</p>
                   {log.details && (
-                    <p className="text-[11px] text-slate-400 line-clamp-1">{log.details}</p>
+                    <p className="text-[11px] text-slate-400 line-clamp-1">{parseLogDetails(log.details).message}</p>
                   )}
                 </div>
               ))

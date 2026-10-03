@@ -69,7 +69,7 @@ export default function LeadershipMessages({
   );
 
   return (
-    <section className="py-20 lg:py-28 bg-[#f0f7ff]/50 dark:bg-[#071933] relative w-full overflow-hidden">
+    <section className="py-20 lg:py-28 bg-[#f0f7ff]/50 dark:bg-[#071933] hover:bg-[#fffdf7] dark:hover:bg-[#081f3d] transition-colors duration-500 relative w-full overflow-hidden">
       {/* Ambient Glass Glow Orbs */}
       <div className="glass-orb-blue -top-20 left-1/3 opacity-30" />
       <div className="glass-orb-gold bottom-0 right-1/4 opacity-25" />

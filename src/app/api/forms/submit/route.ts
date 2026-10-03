@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getFormDefault } from "@/lib/formRegistry";
+import { logAuditAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -148,16 +149,24 @@ export async function POST(req: Request) {
       }
     } catch (_) {}
 
-    // 6. Record Audit Log
+    // 6. Record Audit Log with real public IP and activity details
     try {
-      await prisma.auditLog.create({
-        data: {
-          userName: "Public Visitor",
-          action: "SUBMIT_FORM",
-          entity: "FormSubmission",
-          entityId: submissionNo,
-          details: `Submitted form "${formDef.title}" (Ref: ${submissionNo})`,
+      const applicantName = formData.fullName || formData.name || formData.studentName || "Public Visitor";
+      await logAuditAction({
+        userName: applicantName,
+        action: "SUBMIT_FORM",
+        entity: "FormSubmission",
+        entityId: submissionNo,
+        details: `Public visitor submitted "${formDef.title}" (Application Ref: ${submissionNo})`,
+        metadata: {
+          formSlug,
+          formTitle: formDef.title,
+          submissionNo,
+          applicantName,
+          applicantEmail: formData.email || null,
+          applicantPhone: formData.phone || formData.mobileNumber || formData.fatherPhone || null,
         },
+        req,
       });
     } catch (_) {}
 

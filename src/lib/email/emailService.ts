@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import {
+  EmailAttachment,
   EmailConfigData,
   EmailConnectionResult,
   EmailSendOptions,
@@ -12,9 +13,13 @@ import {
   interpolateVariables,
   generateSubmissionFieldsTable,
   wrapWithEmailLayout,
+  getCleanFileName,
+  escapeHtml,
   TemplateVariables,
 } from "./templateRenderer";
 import { ensureDefaultTemplatesExist } from "./defaultTemplates";
+import path from "path";
+import fs from "fs";
 
 class EmailService {
   /**
@@ -445,6 +450,98 @@ class EmailService {
     }
   }
 
+  /**
+   * Scans submitted form data for uploaded files and documents located in /public/uploads/,
+   * verifies their existence on disk, and prepares them as physical Nodemailer attachments.
+   */
+  private extractAttachmentsFromFormData(formData: Record<string, any>): {
+    attachments: EmailAttachment[];
+    attachmentSummaries: Array<{ name: string; size: string; isImage: boolean }>;
+  } {
+    const attachments: EmailAttachment[] = [];
+    const attachmentSummaries: Array<{ name: string; size: string; isImage: boolean }> = [];
+    const MAX_TOTAL_SIZE = 24 * 1024 * 1024; // 24MB safety limit for email delivery
+    let totalSizeBytes = 0;
+
+    const findUploadPaths = (val: any): string[] => {
+      const paths: string[] = [];
+      if (!val) return paths;
+      if (typeof val === "string") {
+        if (val.startsWith("/uploads/") || val.startsWith("uploads/") || val.includes("/uploads/")) {
+          const match = val.match(/\/uploads\/[^"'\s]+/);
+          if (match) {
+            paths.push(match[0]);
+          } else {
+            paths.push(val);
+          }
+        }
+      } else if (Array.isArray(val)) {
+        for (const item of val) {
+          paths.push(...findUploadPaths(item));
+        }
+      } else if (typeof val === "object") {
+        for (const k of Object.keys(val)) {
+          paths.push(...findUploadPaths(val[k]));
+        }
+      }
+      return paths;
+    };
+
+    const seenPaths = new Set<string>();
+
+    for (const [key, value] of Object.entries(formData)) {
+      const paths = findUploadPaths(value);
+      for (const p of paths) {
+        if (seenPaths.has(p)) continue;
+        seenPaths.add(p);
+
+        try {
+          const relativePath = p.startsWith("/") ? p.slice(1) : p;
+          const fullPath = path.join(process.cwd(), "public", relativePath);
+
+          if (fs.existsSync(fullPath)) {
+            const stats = fs.statSync(fullPath);
+            if (stats.size > 0 && totalSizeBytes + stats.size <= MAX_TOTAL_SIZE) {
+              totalSizeBytes += stats.size;
+              const cleanName = getCleanFileName(p);
+              const ext = path.extname(fullPath).toLowerCase();
+              const isImage = [".webp", ".png", ".jpg", ".jpeg", ".gif", ".avif"].includes(ext);
+
+              let contentType = "application/octet-stream";
+              if (ext === ".pdf") contentType = "application/pdf";
+              else if (ext === ".webp") contentType = "image/webp";
+              else if (ext === ".png") contentType = "image/png";
+              else if (ext === ".jpg" || ext === ".jpeg") contentType = "image/jpeg";
+              else if (ext === ".doc") contentType = "application/msword";
+              else if (ext === ".docx") contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+              const formattedSize =
+                stats.size > 1024 * 1024
+                  ? `${(stats.size / (1024 * 1024)).toFixed(2)} MB`
+                  : `${(stats.size / 1024).toFixed(0)} KB`;
+
+              attachments.push({
+                filename: cleanName,
+                path: fullPath,
+                contentType,
+              });
+
+              attachmentSummaries.push({
+                name: cleanName,
+                size: formattedSize,
+                isImage,
+              });
+            }
+          }
+        } catch (fileErr) {
+          console.warn("Could not process attachment for email:", p, fileErr);
+        }
+      }
+    }
+
+    return { attachments, attachmentSummaries };
+  }
+
   private async dispatchAdminNotification({
     config,
     notifConfig,
@@ -455,22 +552,102 @@ class EmailService {
     variables,
   }: any) {
     try {
-      // Determine recipients
-      let recipients = notifConfig?.recipients || config.defaultRecipients || config.fromEmail;
-      if (!recipients) recipients = config.fromEmail;
+      // 1. Query administrative email alerts configuration from database
+      let alertRecipients: string[] = [];
+      let shouldSendAlert = true;
+      try {
+        const alertSetting = await (prisma as any).siteSetting.findUnique({
+          where: { key: "admin_email_alerts" },
+        });
+        if (alertSetting?.value) {
+          const parsed = JSON.parse(alertSetting.value);
+          if (parsed.alert_recipients) {
+            parsed.alert_recipients.split(",").forEach((email: string) => {
+              const trimmed = email.trim();
+              if (trimmed.includes("@")) alertRecipients.push(trimmed);
+            });
+          }
+          const lowerSlug = (formSlug || "").toLowerCase();
+          if (lowerSlug.includes("admission") && parsed.alert_new_admission === false) {
+            shouldSendAlert = false;
+          } else if (lowerSlug.includes("career") && parsed.alert_new_career === false) {
+            shouldSendAlert = false;
+          } else if ((lowerSlug.includes("contact") || lowerSlug.includes("inquir")) && parsed.alert_new_contact === false) {
+            shouldSendAlert = false;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not read admin_email_alerts setting:", err);
+      }
 
-      const recipientList = recipients
-        .split(",")
-        .map((e: string) => e.trim())
-        .filter((e: string) => e.includes("@"));
+      if (!shouldSendAlert) {
+        console.log(`Email alert suppressed by admin settings for form: ${formSlug}`);
+        return;
+      }
+
+      // Determine recipients: Combine alert_recipients + notifConfig + config
+      const recipientSet = new Set<string>();
+      alertRecipients.forEach((e) => recipientSet.add(e));
+      if (notifConfig?.recipients) {
+        notifConfig.recipients.split(",").forEach((e: string) => {
+          const trimmed = e.trim();
+          if (trimmed.includes("@")) recipientSet.add(trimmed);
+        });
+      }
+      if (recipientSet.size === 0 && config.defaultRecipients) {
+        config.defaultRecipients.split(",").forEach((e: string) => {
+          const trimmed = e.trim();
+          if (trimmed.includes("@")) recipientSet.add(trimmed);
+        });
+      }
+      if (recipientSet.size === 0 && config.fromEmail) {
+        recipientSet.add(config.fromEmail);
+      }
+      const recipientList = Array.from(recipientSet);
 
       if (recipientList.length === 0) return;
+
+      // Extract uploaded documents & images to attach physically to the email alert
+      const { attachments, attachmentSummaries } = this.extractAttachmentsFromFormData(formData);
 
       // Determine Reply-To from form field if valid
       let replyToEmail: string | undefined = undefined;
       const replyField = notifConfig?.replyToField || "email";
       if (formData[replyField] && typeof formData[replyField] === "string" && formData[replyField].includes("@")) {
         replyToEmail = formData[replyField].trim();
+      }
+
+      // Build Attachment Highlight Banner if files are attached
+      let attachmentBannerHtml = "";
+      if (attachmentSummaries.length > 0) {
+        const items = attachmentSummaries
+          .map(
+            (att) => `
+            <li style="margin: 6px 0; font-size: 13px;">
+              <span style="font-size: 15px; margin-right: 4px;">${att.isImage ? "🖼️" : "📄"}</span>
+              <strong style="color: #0f172a;">${escapeHtml(att.name)}</strong>
+              <span style="color: #64748b; font-size: 11px; margin-left: 4px;">(${att.size})</span>
+              <span style="background-color: #22c55e; color: #ffffff; font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 9999px; margin-left: 8px;">
+                ATTACHED TO EMAIL
+              </span>
+            </li>
+          `
+          )
+          .join("");
+
+        attachmentBannerHtml = `
+          <div style="margin: 20px 0; padding: 16px 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #f59e0b; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+              📎 ${attachmentSummaries.length} Uploaded File${attachmentSummaries.length > 1 ? "s" : ""} Attached:
+            </div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+              The submitted documents and images have been physically attached to this email alert for immediate review:
+            </div>
+            <ul style="margin: 0; padding-left: 20px; color: #334155; line-height: 1.6;">
+              ${items}
+            </ul>
+          </div>
+        `;
       }
 
       // Fetch or assemble template
@@ -499,21 +676,29 @@ class EmailService {
       }
 
       const fieldsTable = generateSubmissionFieldsTable(formData);
-      const enhancedVars = { ...variables, fields_table: fieldsTable };
+      const enhancedVars = {
+        ...variables,
+        fields_table: fieldsTable + attachmentBannerHtml,
+        attached_files_banner: attachmentBannerHtml,
+      };
 
       if (template) {
         subject = interpolateVariables(template.subject, enhancedVars, false);
         bodyHtml = interpolateVariables(template.htmlBody, enhancedVars, false);
+        if (!template.htmlBody.includes("{{fields_table}}") && !template.htmlBody.includes("{{attached_files_banner}}")) {
+          bodyHtml += attachmentBannerHtml;
+        }
       } else {
         bodyHtml = `
           <h2>New Submission Received for ${formTitle}</h2>
           <p>A new entry was submitted on <strong>${variables.submission_date}</strong> (Ref: <strong>${submissionNo}</strong>).</p>
+          ${attachmentBannerHtml}
           ${fieldsTable}
         `;
       }
 
       const finalHtml = await wrapWithEmailLayout(bodyHtml, {
-        previewText: `New ${formTitle} submission: ${submissionNo}`,
+        previewText: `New ${formTitle} submission: ${submissionNo}${attachments.length > 0 ? ` (${attachments.length} files attached)` : ""}`,
         actionUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/admin/forms`,
         actionText: "View Submission in CMS",
       });
@@ -533,8 +718,11 @@ class EmailService {
           formSlug,
           submissionId: submissionNo,
           attempts: 1,
-          bodySnippet: `Form ${formTitle} submission (${submissionNo})`,
-          metadataJson: JSON.stringify({ html: finalHtml }),
+          bodySnippet: `Form ${formTitle} submission (${submissionNo})${attachments.length > 0 ? ` [${attachments.length} file(s) attached]` : ""}`,
+          metadataJson: JSON.stringify({
+            html: finalHtml,
+            attachments: attachmentSummaries.map((a) => `${a.name} (${a.size})`),
+          }),
         },
       });
 
@@ -545,6 +733,7 @@ class EmailService {
         replyTo: replyToEmail,
         subject,
         html: finalHtml,
+        attachments,
       });
 
       await (prisma as any).emailLog.update({

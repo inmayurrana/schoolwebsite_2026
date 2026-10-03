@@ -165,6 +165,7 @@ const PAGE_PATHS: Record<string, string> = {
   downloads: "/downloads",
   "mandatory-disclosure": "/mandatory-disclosure",
   "cbse-information": "/cbse-information",
+  "privacy-policy": "/privacy-policy",
   careers: "/careers",
   contact: "/contact",
 };

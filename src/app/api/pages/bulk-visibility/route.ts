@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { appCache } from "@/lib/cache";
 import { invalidatePageCache, setCachedVisibility } from "@/lib/pageContentCache";
+import { logAuditAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -41,16 +42,19 @@ export async function POST(req: Request) {
     appCache.set("pages:visibility", { visibility: visibilityMap, pages: pagesList }, 900);
     appCache.invalidate("pages");
 
-    // Log the bulk update action
+    // Log the bulk update action with real public IP and activity intelligence
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: user?.id || null,
-          userName: user?.name || "Administrator",
-          action: "BULK_VISIBILITY_APPLY",
-          entity: "PageContent",
-          details: `Applied visibility status for ${Object.keys(visibilityMap).length} website pages live.`,
+      await logAuditAction({
+        userId: user?.id || null,
+        userName: user?.name || "Administrator",
+        action: "BULK_VISIBILITY_APPLY",
+        entity: "PageContent",
+        details: `Applied visibility status for ${Object.keys(visibilityMap).length} website pages live.`,
+        metadata: {
+          updatedCount: Object.keys(visibilityMap).length,
+          updatedPages: Object.keys(visibilityMap).slice(0, 10),
         },
+        req,
       });
     } catch (_) {}
 

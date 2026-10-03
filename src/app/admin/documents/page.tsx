@@ -405,33 +405,45 @@ export default function AdminDocumentsPage() {
                     </label>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="font-semibold text-slate-400 text-[11px]">Storage URL:</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="/uploads/... or https://..."
-                      value={formData.fileUrl}
-                      onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
-                      className="w-full bg-slate-900 text-white p-2.5 rounded-xl border border-slate-800 font-mono text-xs focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-
-                  {formData.fileUrl && (
-                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                  {formData.fileUrl ? (
+                    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-white">Verified Upload</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{formData.fileSize}</span>
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span className="font-bold text-xs text-white">Document Stored & Verified</span>
+                        </div>
+                        <span className="text-[10px] text-amber-400 font-mono px-2 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">{formData.fileSize || "Verified"}</span>
                       </div>
-                      <a
-                        href={formData.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-xs text-blue-400 hover:text-blue-300 font-bold"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Preview Uploaded PDF File</span>
-                      </a>
+                      <div className="flex items-center justify-between text-xs pt-1">
+                        <span className="text-slate-300 font-medium truncate max-w-[200px]">
+                          {formData.title ? `${formData.title}.pdf` : "Uploaded Document"}
+                        </span>
+                        <a
+                          href={formData.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-1 text-xs text-blue-400 hover:text-blue-300 font-bold"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Preview File</span>
+                        </a>
+                      </div>
+                      <details className="text-[11px] text-slate-500 pt-2 border-t border-slate-800/80">
+                        <summary className="cursor-pointer hover:text-slate-400 font-mono text-[10px]">
+                          Advanced: Direct Storage Link
+                        </summary>
+                        <input
+                          type="text"
+                          value={formData.fileUrl}
+                          onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
+                          placeholder="/uploads/... or https://..."
+                          className="w-full mt-1.5 bg-slate-950 text-slate-400 p-2 rounded-lg border border-slate-800 font-mono text-[10px] focus:border-amber-400 focus:outline-none"
+                        />
+                      </details>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl border border-dashed border-slate-800 text-center text-slate-500 text-xs">
+                      No document attached yet. Click "Upload File" above to attach a document.
                     </div>
                   )}
                 </div>

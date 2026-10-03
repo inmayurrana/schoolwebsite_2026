@@ -43,11 +43,15 @@ function getCleanYouTubeEmbed(url?: string): string {
 // Helper to extract or generate clean Facebook Page embed URL
 function getCleanFacebookEmbed(fbUrl?: string, customEmbed?: string): string {
   if (customEmbed && customEmbed.trim()) {
-    return customEmbed.trim();
+    let embed = customEmbed.trim();
+    if (embed.includes("height=")) {
+      embed = embed.replace(/height=\d+/, "height=800");
+    }
+    return embed;
   }
   const targetPage = fbUrl || "https://www.facebook.com/cismandi";
   const encoded = encodeURIComponent(targetPage);
-  return `https://www.facebook.com/plugins/page.php?href=${encoded}&tabs=timeline&width=500&height=550&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true`;
+  return `https://www.facebook.com/plugins/page.php?href=${encoded}&tabs=timeline&width=500&height=800&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true`;
 }
 
 export default function SocialFeedsEmbed({
@@ -65,7 +69,7 @@ export default function SocialFeedsEmbed({
   const finalFacebookSrc = getCleanFacebookEmbed(facebookUrl, facebookEmbedUrl);
 
   return (
-    <section className={`py-20 bg-[#0A192F] dark:bg-[#051329] text-white relative overflow-hidden ${className}`}>
+    <section className={`py-20 bg-[#0A192F] dark:bg-[#051329] hover:bg-[#0c1f3b] dark:hover:bg-[#071933] transition-colors duration-500 text-white relative overflow-hidden ${className}`}>
       {/* Background Glow Accents */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -149,7 +153,7 @@ export default function SocialFeedsEmbed({
           {/* YOUTUBE CHANNEL / VIDEO EMBED (7 COLS) */}
           {(activeTab === "all" || activeTab === "youtube") && (
             <div
-              className={`lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 flex flex-col justify-between ${
+              className={`lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 flex flex-col justify-between min-h-[640px] sm:min-h-[720px] lg:min-h-[780px] ${
                 activeTab === "youtube" ? "col-span-12" : ""
               }`}
             >
@@ -177,8 +181,8 @@ export default function SocialFeedsEmbed({
                 </Link>
               </div>
 
-              {/* YouTube Video Player Iframe */}
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-inner">
+              {/* YouTube Video Player Iframe - Expanded Height */}
+              <div className="relative w-full h-[480px] sm:h-[560px] lg:h-[620px] xl:h-[660px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-inner flex items-center justify-center">
                 <iframe
                   src={finalYouTubeSrc}
                   title="Cambridge Mandi YouTube Channel Video"
@@ -214,7 +218,7 @@ export default function SocialFeedsEmbed({
           {/* FACEBOOK PAGE STREAM (5 COLS) */}
           {(activeTab === "all" || activeTab === "facebook") && (
             <div
-              className={`lg:col-span-5 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 flex flex-col justify-between ${
+              className={`lg:col-span-5 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 flex flex-col justify-between min-h-[640px] sm:min-h-[720px] lg:min-h-[780px] ${
                 activeTab === "facebook" ? "col-span-12" : ""
               }`}
             >
@@ -242,8 +246,8 @@ export default function SocialFeedsEmbed({
                 </Link>
               </div>
 
-              {/* Facebook Page Plugin Iframe */}
-              <div className="relative w-full h-[380px] sm:h-[420px] rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center">
+              {/* Facebook Page Plugin Iframe - Expanded Height */}
+              <div className="relative w-full h-[480px] sm:h-[560px] lg:h-[620px] xl:h-[660px] rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center">
                 <iframe
                   src={finalFacebookSrc}
                   title="Cambridge Mandi Facebook Page Stream"

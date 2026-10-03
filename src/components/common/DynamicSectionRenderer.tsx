@@ -110,8 +110,8 @@ export default function DynamicSectionRenderer({
             style={bgStyle}
             className={`relative transition-all duration-500 rounded-3xl ${paddingClass} ${
               sec.bgColor || sec.bgGradient
-                ? `p-6 sm:p-10 ${sectionRounding} ${sectionShadow} border border-slate-200 dark:border-slate-800`
-                : "p-4 sm:p-8 hover:bg-slate-50/70 dark:hover:bg-[#071933]/50 border border-transparent hover:border-slate-200/60 dark:hover:border-slate-800/60 transition-colors duration-500"
+                ? `p-6 sm:p-10 ${sectionRounding} ${sectionShadow} border border-slate-200 dark:border-slate-800 hover:border-amber-400/50 transition-all duration-500`
+                : "p-4 sm:p-8 hover:bg-[#fffdf7] dark:hover:bg-[#081e3d] border border-transparent hover:border-amber-400/40 dark:hover:border-amber-400/30 transition-colors duration-500"
             }`}
           >
             {/* Section Header */}

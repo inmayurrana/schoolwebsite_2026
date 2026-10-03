@@ -200,7 +200,7 @@ export default async function HomePage() {
       <WhyChooseUs customStyles={homeCustom} />
 
       {/* 6. Interactive Campus Explorer Map */}
-      <section className="py-20 bg-blue-50/40 dark:bg-[#051329]">
+      <section className="py-20 bg-blue-50/40 dark:bg-[#051329] hover:bg-amber-50/20 dark:hover:bg-[#081f3d] transition-colors duration-500">
         <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16">
           <Campus3DViewer customStyles={homeCustom} />
         </div>
@@ -208,7 +208,7 @@ export default async function HomePage() {
 
       {/* 7. Student Achievements & Hall of Fame (Only when records exist) */}
       {achievementsList.length > 0 && (
-        <section className="py-20 bg-[#f0f7ff] dark:bg-[#071933] relative overflow-hidden">
+        <section className="py-20 bg-[#f0f7ff] dark:bg-[#071933] hover:bg-[#fffdf7] dark:hover:bg-[#081f3d] transition-colors duration-500 relative overflow-hidden">
           {/* Ambient Glass Glow Orbs */}
           <div className="glass-orb-gold -top-20 left-1/4 opacity-25" />
           <div className="glass-orb-blue bottom-0 right-1/4 opacity-25" />
@@ -237,7 +237,7 @@ export default async function HomePage() {
               {achievementsList.map((ach) => (
                 <div
                   key={ach.id}
-                  className="glass-card-interactive rounded-3xl overflow-hidden shadow-xl group flex flex-col justify-between"
+                  className="glass-card-interactive rounded-3xl overflow-hidden shadow-xl group flex flex-col justify-between hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-[#071933] hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-[0_20px_45px_-12px_rgba(245,158,11,0.3)] transition-all duration-300"
                 >
                   <div className="relative h-52 overflow-hidden">
                     <OptimizedImage
@@ -271,7 +271,7 @@ export default async function HomePage() {
 
       {/* 8. Latest News & Upcoming Events Split Grid */}
       {(newsList.length > 0 || eventsList.length > 0) && (
-        <section className="py-20 bg-white dark:bg-[#051329] relative overflow-hidden">
+        <section className="py-20 bg-white dark:bg-[#051329] hover:bg-[#fffdf7] dark:hover:bg-[#071c38] transition-colors duration-500 relative overflow-hidden">
           <div className="glass-orb-purple -top-24 right-10 opacity-20" />
           <div className="glass-orb-blue bottom-10 left-10 opacity-25" />
 
@@ -307,7 +307,7 @@ export default async function HomePage() {
                       <Link
                         key={item.id}
                         href={`/news`}
-                        className="glass-card-interactive rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 group block"
+                        className="glass-card-interactive rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 group block hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-[#071933] hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-[0_20px_45px_-12px_rgba(245,158,11,0.3)] transition-all duration-300"
                       >
                         <OptimizedImage
                           src={item.coverImage}
@@ -366,7 +366,7 @@ export default async function HomePage() {
                     eventsList.map((ev) => (
                       <div
                         key={ev.id}
-                        className="glass-card-interactive rounded-2xl p-4 flex items-start space-x-4 group"
+                        className="glass-card-interactive rounded-2xl p-4 flex items-start space-x-4 group hover:bg-gradient-to-br hover:from-amber-500/15 hover:via-orange-500/10 hover:to-white dark:hover:from-amber-950/40 dark:hover:via-orange-950/20 dark:hover:to-[#071933] hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-[0_20px_45px_-12px_rgba(245,158,11,0.3)] transition-all duration-300"
                       >
                         {/* Date Block */}
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-school-primary to-school-secondary text-white flex flex-col items-center justify-center flex-shrink-0 shadow-lg border border-white/20">
@@ -414,7 +414,7 @@ export default async function HomePage() {
 
       {/* 10. Campus Life & Photo Albums Showcase */}
       {galleryAlbums.length > 0 && (
-        <section className="py-20 bg-slate-50 dark:bg-[#071326] relative overflow-hidden">
+        <section className="py-20 bg-slate-50 dark:bg-[#071326] hover:bg-[#fffdf7] dark:hover:bg-[#071830] transition-colors duration-500 relative overflow-hidden">
           <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 space-y-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
               <div>
@@ -440,7 +440,7 @@ export default async function HomePage() {
                 <Link
                   key={alb.id}
                   href="/gallery"
-                  className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:border-amber-400/80 transition-all duration-300 flex flex-col justify-between"
+                  className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xl hover:shadow-2xl hover:border-amber-400/80 hover:bg-gradient-to-br hover:from-white hover:via-amber-50/40 hover:to-white dark:hover:from-slate-900 dark:hover:via-amber-950/20 dark:hover:to-slate-900 transition-all duration-300 flex flex-col justify-between"
                 >
                   <div className="relative h-48 overflow-hidden bg-slate-950">
                     <img
@@ -475,7 +475,7 @@ export default async function HomePage() {
 
       {/* Dynamic Modular Canvas Sections (Elementor Pro Built) */}
       {homeSections && homeSections.length > 0 && (
-        <section className="py-12 bg-white dark:bg-[#071326] transition-colors duration-500 hover:bg-slate-50/60 dark:hover:bg-[#081830]">
+        <section className="py-12 bg-white dark:bg-[#071326] transition-colors duration-500 hover:bg-[#fffdf7] dark:hover:bg-[#081830]">
           <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16">
             <DynamicSectionRenderer sections={homeSections} customStyles={homeCustom} />
           </div>
@@ -489,7 +489,7 @@ export default async function HomePage() {
       />
 
       {/* 12. Grand Call to Action Banner */}
-      <section className="py-20 bg-gradient-to-r from-school-primary via-blue-950 to-school-primary text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-r from-school-primary via-blue-950 to-school-primary hover:from-[#071f45] hover:via-[#0c2a54] hover:to-[#071f45] transition-all duration-700 text-white relative overflow-hidden">
         {/* Ambient Glass Glow */}
         <div className="glass-orb-gold -top-20 left-1/4 opacity-25" />
         <div className="glass-orb-blue -bottom-20 right-1/4 opacity-30" />

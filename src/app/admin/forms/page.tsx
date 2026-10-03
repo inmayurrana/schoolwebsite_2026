@@ -1891,6 +1891,20 @@ export default function AdminFormsManager() {
                     key.toLowerCase().includes("doc") ||
                     key.toLowerCase().includes("cert"));
 
+                const getFriendlyDocName = (urlOrPath: string) => {
+                  if (!urlOrPath) return "View Document";
+                  const raw = urlOrPath.split("/").pop() || urlOrPath;
+                  const withoutHash = raw.replace(/_[a-f0-9]{8,16}(\.[a-zA-Z0-9]+)$/i, "$1");
+                  const ext = withoutHash.includes(".") ? withoutHash.slice(withoutHash.lastIndexOf(".")) : "";
+                  const base = withoutHash.slice(0, withoutHash.length - ext.length);
+                  const cleanBase = base.replace(/[_-]+/g, " ").trim();
+                  const formatted = cleanBase
+                    .split(" ")
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                    .join(" ");
+                  return (formatted || "Document") + ext.toLowerCase();
+                };
+
                 return (
                   <div key={key} className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
                     <span className="text-[10px] text-slate-400 font-semibold uppercase">{key}</span>
@@ -1919,9 +1933,9 @@ export default function AdminFormsManager() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-xl border border-slate-700 text-xs font-bold transition-all"
                         >
-                          <FileText className="w-3.5 h-3.5" />
-                          <span className="truncate max-w-[150px]">{strVal.split("/").pop() || "View Document"}</span>
-                          <ExternalLink className="w-3 h-3" />
+                          <FileText className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[150px]">{getFriendlyDocName(strVal)}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0" />
                         </a>
                       </div>
                     ) : (

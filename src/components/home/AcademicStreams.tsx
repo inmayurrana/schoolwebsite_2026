@@ -76,7 +76,7 @@ export default function AcademicStreams({ customStyles }: AcademicStreamsProps) 
   const subtitleText = customStyles?.academic_wings_subtitle || "A seamless educational pathway blending national curriculum benchmarks with international 21st-century inquiry skills.";
 
   return (
-    <section className="py-20 lg:py-28 relative overflow-hidden bg-[#f0f7ff]/40 dark:bg-[#051329] w-full">
+    <section className="py-20 lg:py-28 relative overflow-hidden bg-[#f0f7ff]/40 dark:bg-[#051329] hover:bg-[#fffdf7] dark:hover:bg-[#071c38] transition-colors duration-500 w-full">
       {/* Ambient Floating Glass Orbs */}
       <div className="glass-orb-purple -top-24 right-10 opacity-30" />
       <div className="glass-orb-blue bottom-10 left-10 opacity-35" />

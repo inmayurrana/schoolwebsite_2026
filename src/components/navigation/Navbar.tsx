@@ -24,6 +24,7 @@ import {
   Calendar,
   Lock,
   ExternalLink,
+  Briefcase,
 } from "lucide-react";
 import { useTheme } from "../providers/ThemeProvider";
 import { getInitialDisabledSlugs, fetchClientDisabledSlugs, updateClientVisibilityCache } from "@/lib/clientVisibility";
@@ -326,6 +327,7 @@ export default function Navbar() {
 
   let headerButtons: any[] = [
     { id: "apply-btn", label: "Apply for Admission", url: "/admissions/apply", variant: "primary", isVisible: true },
+    { id: "careers-btn", label: "Careers", url: "/careers", variant: "secondary", isVisible: true },
     { id: "pay-btn", label: "Pay Fee Online", url: "/admissions/fees-structure", variant: "accent", isVisible: true },
   ];
 
@@ -333,6 +335,17 @@ export default function Navbar() {
     try {
       const parsed = JSON.parse(siteSettings.header_buttons_json);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Ensure Careers button is present after Apply for Admission
+        const hasCareers = parsed.some((b: any) => b.url === "/careers" || b.id?.includes("career") || b.label?.toLowerCase().includes("career"));
+        if (!hasCareers) {
+          const applyIdx = parsed.findIndex((b: any) => b.url?.includes("/admissions/apply") || b.id?.includes("apply"));
+          const careerBtn = { id: "btn-careers", label: "Careers", url: "/careers", variant: "secondary", isVisible: true };
+          if (applyIdx !== -1) {
+            parsed.splice(applyIdx + 1, 0, careerBtn);
+          } else {
+            parsed.splice(1, 0, careerBtn);
+          }
+        }
         headerButtons = parsed;
       }
     } catch (e) {}
@@ -340,6 +353,16 @@ export default function Navbar() {
     try {
       const parsed = JSON.parse(themeConfig.headerButtonsJson);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        const hasCareers = parsed.some((b: any) => b.url === "/careers" || b.id?.includes("career") || b.label?.toLowerCase().includes("career"));
+        if (!hasCareers) {
+          const applyIdx = parsed.findIndex((b: any) => b.url?.includes("/admissions/apply") || b.id?.includes("apply"));
+          const careerBtn = { id: "careers-link", label: "Careers", url: "/careers", variant: "secondary", isVisible: true };
+          if (applyIdx !== -1) {
+            parsed.splice(applyIdx + 1, 0, careerBtn);
+          } else {
+            parsed.splice(1, 0, careerBtn);
+          }
+        }
         headerButtons = parsed;
       }
     } catch (e) {}
@@ -945,6 +968,25 @@ export default function Navbar() {
                   );
                 }
 
+                if (btn.variant === "secondary" || btn.url === "/careers" || btn.id === "btn-careers" || btn.id === "careers-btn" || btn.label?.toLowerCase() === "careers") {
+                  const isCareer = btn.url === "/careers" || btn.id?.includes("career") || btn.label?.toLowerCase().includes("career");
+                  return (
+                    <Link prefetch={true}
+                      key={btn.id}
+                      href={btn.url || (isCareer ? "/careers" : "#")}
+                      target={btn.openNewTab ? "_blank" : undefined}
+                      rel={btn.openNewTab ? "noopener noreferrer" : undefined}
+                      className="glass-btn inline-flex items-center space-x-1.5 px-3.5 2xl:px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-school-secondary dark:hover:text-amber-400 hover:bg-slate-100/80 dark:hover:bg-white/10 transition-all shadow-sm hover:scale-105 border border-slate-200 dark:border-white/10 whitespace-nowrap group cursor-pointer"
+                      title={btn.label || (isCareer ? "Careers" : "Link")}
+                    >
+                      {isCareer && (
+                        <Briefcase className="w-3.5 h-3.5 text-school-secondary dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+                      )}
+                      <span className="whitespace-nowrap">{btn.label || (isCareer ? "Careers" : "Learn More")}</span>
+                    </Link>
+                  );
+                }
+
                 if (btn.variant === "outline") {
                   return (
                     <Link prefetch={true}
@@ -1053,6 +1095,14 @@ export default function Navbar() {
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>Apply for Admission 2027</span>
+              </Link>
+              <Link prefetch={true}
+                href="/careers"
+                onClick={() => setMobileOpen(false)}
+                className="w-full glass-btn text-slate-800 dark:text-slate-100 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-2 border border-slate-200 dark:border-white/10 hover:border-amber-400/50"
+              >
+                <Briefcase className="w-4 h-4 text-school-secondary dark:text-amber-400" />
+                <span>Careers at CIS Mandi</span>
               </Link>
             </div>
           </div>
